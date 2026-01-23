@@ -58,6 +58,13 @@ const Product = () => {
     }
   };
 
+  const deleteProductFromList = async (id) => {
+    const isConfirmed = window.confirm("Are you sure you want to delete this product?");
+    if (!isConfirmed) return;
+    await deleteProduct(id);
+    fetchProducts(); // refresh after delete
+  }
+
   useEffect(() => {
     if (products && products.length > 0) {
         const appProducts = products.filter((p) => p.status === "approved");
@@ -73,6 +80,11 @@ const Product = () => {
     }
   }, [products]); // run whenever products changes
   
+
+  useEffect(() => {
+    fetchProducts();
+  }, []);
+
 
   return (
     <div className="dash">
@@ -109,14 +121,11 @@ const Product = () => {
                     </thead>
                     <tbody>
                         {products.map((p, index) => (
-                        <tr key={index}>
+                        <tr key={p._id}>
                             <td>{index + 1}</td>
                             <td>{p.name}</td>
                             <td>{p.price}</td>
-                            <td onClick={async () => {
-                                    await deleteProduct(p._id);
-                                    fetchProducts(); // refresh after delete
-                                }}
+                            <td onClick={()=> deleteProductFromList(p._id)}
                                 style={{ cursor: "pointer", color: "red" }}
                                 >
                                 <MdOutlineDeleteForever />
@@ -149,14 +158,11 @@ const Product = () => {
                     </thead>
                     <tbody>
                         {approvedProducts.map((p, index) => (
-                        <tr key={index}>
+                        <tr key={p._id}>
                             <td>{index + 1}</td>
                             <td>{p.name}</td>
                             <td>{p.price}</td>
-                            <td onClick={async () => {
-                                    await deleteProduct(p._id);
-                                    fetchProducts(); // refresh after delete
-                                }}
+                            <td onClick={()=> deleteProductFromList(p._id)}
                                 style={{ cursor: "pointer", color: "red" }}
                                 >
                                 <MdOutlineDeleteForever />
@@ -189,14 +195,11 @@ const Product = () => {
                     </thead>
                     <tbody>
                         {nonApprovedProducts.map((p, index) => (
-                        <tr key={index}>
+                        <tr key={p._id}>
                             <td>{index + 1}</td>
                             <td>{p.name}</td>
                             <td>{p.price}</td>
-                            <td onClick={async () => {
-                                    await deleteProduct(p._id);
-                                    fetchProducts(); // refresh after delete
-                                }}
+                            <td onClick={()=> deleteProductFromList(p._id)}
                                 style={{ cursor: "pointer", color: "red" }}
                                 >
                                 <MdOutlineDeleteForever />
@@ -229,14 +232,11 @@ const Product = () => {
                     </thead>
                     <tbody>
                         {registeredProducts.map((p, index) => (
-                        <tr key={index}>
+                        <tr key={p._id}>
                             <td>{index + 1}</td>
                             <td>{p.name}</td>
                             <td>{p.price}</td>
-                            <td onClick={async () => {
-                                    await deleteProduct(p._id);
-                                    fetchProducts(); // refresh after delete
-                                }}
+                            <td onClick={()=> deleteProductFromList(p._id)}
                                 style={{ cursor: "pointer", color: "red" }}
                                 >
                                 <MdOutlineDeleteForever />

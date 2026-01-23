@@ -16,17 +16,17 @@ import AdminLogin from "./pages/AdminLogin";
 import Admin from "./pages/Admin";
 
 const AppContent = () => {
-  const location = useLocation();
-  const hideHeaderRoutes = [
-    '/dashboard',
-    // '/',
-    '/application',
-    '/certificate',
-    '/products',
-    "/admin-signup",
-    "/admin-signin",
-    "/admin",
-  ];
+  // const location = useLocation();
+  // const hideHeaderRoutes = [
+  //   '/dashboard',
+  //   // '/',
+  //   '/application',
+  //   '/certificate',
+  //   '/products',
+  //   "/admin-signup",
+  //   "/admin-signin",
+  //   "/admin",
+  // ];
   // const hideFooterRoutes = [
   //   '/'
   // ];
@@ -40,17 +40,17 @@ const AppContent = () => {
   //   return route === location.pathname;
   // });
 
-  const shouldHideHeader = hideHeaderRoutes.some((route) => {
-    if (route.includes(':')) {
-      // Convert "/admin-message/:userId" to a regex like /^\/admin-message\/[^\/]+$/
-      const pattern = new RegExp('^' + route.replace(/:[^/]+/g, '[^/]+') + '$');
-      return pattern.test(location.pathname);
-    }
-    return route === location.pathname;
-  });
+  // const shouldHideHeader = hideHeaderRoutes.some((route) => {
+  //   if (route.includes(':')) {
+  //     // Convert "/admin-message/:userId" to a regex like /^\/admin-message\/[^\/]+$/
+  //     const pattern = new RegExp('^' + route.replace(/:[^/]+/g, '[^/]+') + '$');
+  //     return pattern.test(location.pathname);
+  //   }
+  //   return route === location.pathname;
+  // });
     return (
       <>
-        {!shouldHideHeader &&  <Header />}
+        {/* {!shouldHideHeader &&  <Header />} */}
 
         <AuthProvider>
         <ProductProvider>

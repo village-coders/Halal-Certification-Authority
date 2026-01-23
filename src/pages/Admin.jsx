@@ -39,13 +39,13 @@ function Admin() {
     {
       siteName: "rashidnew",
       certRef: "LE-BU/QR230504014749",
-      certType: "HFA Scheme",
+      certType: "HCA Scheme",
       status: "Active"
     },
     {
       siteName: "mainplant",
       certRef: "LE-BU/QR230504014750",
-      certType: "HFA Scheme",
+      certType: "HCA Scheme",
       status: "Active"
     }
   ];
