@@ -61,7 +61,7 @@ const AuthProvider = ({ children }) => {
         },
       });
 
-      console.log(res);
+      // console.log(res);
       
 
       setUser(res.data.user); // ✅ now your user is available everywhere

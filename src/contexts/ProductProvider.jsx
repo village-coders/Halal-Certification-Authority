@@ -54,8 +54,6 @@ const ProductProvider = ({ children }) => {
           Authorization: `Bearer ${token}`,
         },
       });
-
-      console.log(res);
       
 
       setProducts(res.data.products); // ✅ now your user is available everywhere
@@ -76,7 +74,6 @@ const ProductProvider = ({ children }) => {
         },
       });
 
-      console.log(res);
       toast.success(res.data.message)
       
     } catch (error) {
