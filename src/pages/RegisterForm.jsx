@@ -120,7 +120,7 @@ function RegisterForm() {
   return (
     <form className="modern-form" onSubmit={handleSubmit}>
       <div className="register-heading">
-        <h2>Register your account as Halal Food Authority Applicant</h2>
+        <h2>Register your Company</h2>
         <p>To enjoy our service</p>
       </div>
 
