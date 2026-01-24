@@ -416,6 +416,11 @@ nav a:hover,
     padding-top: var(--mobile-header-height);
   }
   
+  .sidebar{
+    display: block;
+    padding-top: 10px !important;
+  }
+  
   .sidebar.mobile {
     position: fixed;
     top: 0;

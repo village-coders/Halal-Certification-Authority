@@ -551,11 +551,15 @@ const Home = () => {
 
     setIsLoading(true);
 
+    
+    const randomNumber = Math.floor(Math.random() * 1000000000);
+    const regNo = `HCA-${randomNumber}`;
+
     const registerData = {
       email: formData.registerEmail,
       password: formData.registerPassword,
-      contactName: formData.contactName,
-      phoneNumber: formData.phoneNumber,
+      fullName: formData.contactName,
+      companyContact: formData.phoneNumber,
       companyName: formData.companyName,
       role: 'company'
     };

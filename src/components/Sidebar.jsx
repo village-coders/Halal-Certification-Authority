@@ -26,6 +26,11 @@ const Sidebar = ({activeD, activeApp, activeP, activeCert}) => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  useEffect(() => {
+    setIsCollapsed(true);
+  }, []);
+
+
   const toggleMenu = (menu) => {
     setOpenMenu(openMenu === menu ? "" : menu);
   };
@@ -59,7 +64,7 @@ const Sidebar = ({activeD, activeApp, activeP, activeCert}) => {
         <nav className={`sidebar-nav ${isMobile && !isCollapsed ? "mobile-expanded" : ""}`}>
           <ul>
             <li>
-              <button onClick={() =>{ if (isMobile) toggleSidebar();  navigate('/dashboard')}} className={`dropdown-btn ${activeD}`} title="Dashboard">
+              <button onClick={() =>{ if (isMobile) toggleSidebar(); setIsCollapsed(true); navigate('/dashboard')}} className={`dropdown-btn ${activeD}`} title="Dashboard">
                 <i className="fas fa-home"></i>
                 {!isCollapsed && <span>Dashboard</span>}
               </button>
@@ -67,7 +72,7 @@ const Sidebar = ({activeD, activeApp, activeP, activeCert}) => {
 
             <li className="has-submenu">
               <button
-                onClick={() =>{ if (isMobile) toggleSidebar();  navigate('/application')}} className={`dropdown-btn ${openMenu === "applications" ? "active" : ""} ${activeApp}`} title="Applications">
+                onClick={() =>{ if (isMobile) toggleSidebar(); setIsCollapsed(true); navigate('/application')}} className={`dropdown-btn ${openMenu === "applications" ? "active" : ""} ${activeApp}`} title="Applications">
                 <i className="fas fa-file-alt"></i>
                 {!isCollapsed &&  <span>Applications</span>}
               </button>
@@ -81,7 +86,7 @@ const Sidebar = ({activeD, activeApp, activeP, activeCert}) => {
             </li>
 
             <li className="has-submenu">
-              <button onClick={() =>{ if (isMobile) toggleSidebar();  navigate('/certificate')}} className={`dropdown-btn ${openMenu === "certificate" ? "active" : ""} ${activeCert}`} title="Certificate">
+              <button onClick={() =>{ if (isMobile) toggleSidebar(); setIsCollapsed(true); navigate('/certificate')}} className={`dropdown-btn ${openMenu === "certificate" ? "active" : ""} ${activeCert}`} title="Certificate">
                 <i className="fas fa-certificate"></i>
                 {!isCollapsed && <span>Certificate</span>}
               </button>
@@ -94,7 +99,7 @@ const Sidebar = ({activeD, activeApp, activeP, activeCert}) => {
             </li>
 
             <li>
-              <button onClick={() =>{ if (isMobile) toggleSidebar();  navigate('/products')}} className={`dropdown-btn ${openMenu === "products" ? "active" : ""} ${activeP}`} title="Products">
+              <button onClick={() =>{ if (isMobile) toggleSidebar(); setIsCollapsed(true); navigate('/products')}} className={`dropdown-btn ${openMenu === "products" ? "active" : ""} ${activeP}`} title="Products">
                 <i className="fas fa-cube"></i>
                 {!isCollapsed && <span>Products</span>}
               </button>
@@ -106,7 +111,7 @@ const Sidebar = ({activeD, activeApp, activeP, activeCert}) => {
               </button>
             </li> */}
             <li>
-              <button onClick={isMobile ? toggleSidebar : undefined} className="dropdown-btn" title="Messages">
+              <button onClick={()=> {if (isMobile)  toggleSidebar(); setIsCollapsed(true) }} className="dropdown-btn" title="Messages">
                 <i className="fas fa-envelope"></i>
                 {!isCollapsed && (
                   <>
@@ -117,7 +122,7 @@ const Sidebar = ({activeD, activeApp, activeP, activeCert}) => {
               </button>            
             </li>
             <li>
-              <button onClick={() =>{ if (isMobile) toggleSidebar();  navigate('/manage-users')}} className="dropdown-btn" title="Manage Users">
+              <button onClick={() =>{ if (isMobile) toggleSidebar(); setIsCollapsed(true);  navigate('/manage-users')}} className="dropdown-btn" title="Manage Users">
                 <i className="fas fa-users"></i>
                 {!isCollapsed && <span>Manage Users</span>}
               </button>
