@@ -1,9 +1,11 @@
 .login-card {
   background: white;
-  padding: 30px;
+  padding-left: 0px;
+  padding: 30px 30px;
   border-radius: 8px;
   box-shadow: 0px 4px 12px rgba(0,0,0,0.1);
-  width: 320px;
+  width: 100%;
+  max-width: 400px;
 }
 
 .login-card h2 {
@@ -65,6 +67,13 @@
 
 @media screen and (max-width: 768px){
   .login-card{
-    width: 450px;
+    max-width: 350px;
+    width: 100%;
+  }
+}
+
+@media screen and (max-width: 396px){
+  .login-card{
+    width: 250px;
   }
 }

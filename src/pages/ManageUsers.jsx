@@ -100,9 +100,9 @@ function ManageUsers() {
     
     
     if(editingUser){
-        if (!formData.fullName.trim()) newErrors.fullName = "Full name is required";
+        if (!formData.fullName?.trim()) newErrors.fullName = "Full name is required";
     }else{
-        if (!formData.fullName.trim()) newErrors.fullName = "Full name is required";
+        if (!formData.fullName?.trim()) newErrors.fullName = "Full name is required";
         if (!formData.password?.trim()) newErrors.password = "Password is required";
     }
 

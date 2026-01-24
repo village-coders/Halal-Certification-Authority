@@ -345,7 +345,7 @@
   width: 100px;
 }
 
-.manage-users-class .action-btn {
+/* .manage-users-class .action-btn {
   width: 32px;
   height: 32px;
   border-radius: 6px;
@@ -356,7 +356,7 @@
   justify-content: center;
   font-size: 14px;
   transition: all 0.2s ease;
-}
+} */
 
 .manage-users-class .view-btn {
   background: #e0f2fe;
