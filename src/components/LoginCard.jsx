@@ -26,41 +26,32 @@ function LoginCard() {
 
   return (
     <div className="login-card">
-      <h2>Login</h2>
-      <form onSubmit={handleSubmit}>
-        <label>Email</label>
-        <input 
-          name="email"
-          value={formData.email}
-          onChange={handleInput} 
-          type="email" 
-          placeholder="Enter your email" 
-          required 
-        />
-
-        <label>Password</label>
-        <input 
-          name="password"
-          value={formData.password}
-          onChange={handleInput} 
-          type="password" 
-          placeholder="Enter your password" 
-          required 
-        />
-
-        <div className="options">
-          <label>
-            <input type="checkbox" /> Keep me logged in
-          </label>
+      <form className="auth-form active" onSubmit={handleSubmit}>
+        <h2 className="form-title">Login to Your Account</h2>
+        <p className="form-subtitle">Enter your credentials to access the portal</p>
+        
+        <div className="form-group">
+            <label htmlFor="login-email" className="required">E-Mail</label>
+            <input type="email" name="email" onChange={handleInput} required/>
         </div>
-
-        <button disabled={signingIn} type="submit">
-          {signingIn ? 'Signing in...' : 'Sign in'}
+        
+        <div className="form-group">
+            <label htmlFor="password" className="required">Your Password</label>
+            <input type="password" name="password" required/>
+        </div>
+        
+        <div className="checkbox-group">
+            <input type="checkbox" id="remember-me"/>
+            <label htmlFor="remember-me">Keep me logged in</label>
+        </div>
+        
+        <button type="submit" className="btn btn-primary" style={{marginTop: "20px"}}>
+            <i className="fas fa-sign-in-alt"></i> Login
         </button>
-
-        <div className="links">
-          <a href="#">Forgot password?</a>
-          <a href="#">Resend Activation Email?</a>
+        
+        <div className="auth-links">
+            <a href="#" id="login-forgot-password">Forgot password?</a>
+            <a href="#" id="login-resend-activation">Resend Activation Email?</a>
         </div>
       </form>
     </div>

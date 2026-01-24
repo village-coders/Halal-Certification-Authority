@@ -75,3 +75,9 @@ input:focus, select:focus {
 .modern-btn:hover {
   background: var(--primary-shade);
 }
+
+@media (max-width: 768px) {
+  .modern-form{
+    padding: 8px;
+  }
+}

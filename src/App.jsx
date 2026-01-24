@@ -15,6 +15,7 @@ import AdminSignup from "./pages/AdminSignup";
 import AdminLogin from "./pages/AdminLogin";
 import Admin from "./pages/Admin";
 import ManageUsers from "./pages/ManageUsers";
+import AuthPage from "./pages/sdlfdlf";
 
 const AppContent = () => {
   // const location = useLocation();
@@ -67,6 +68,7 @@ const AppContent = () => {
             <Route path="/dashboard"  element={<Dashboard />}/>
             <Route path="/manage-users"  element={<ManageUsers />}/>
             <Route path="/verify/:token"  element={<VerifyAccount />}/>
+            <Route path="/test"  element={<AuthPage />}/>
 
             {/* <Route element={<ProtectedRoutes requiredRole="seller" />}>
               

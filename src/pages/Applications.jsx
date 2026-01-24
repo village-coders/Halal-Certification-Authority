@@ -1,82 +1,111 @@
 import { useState, useEffect } from "react";
 import "./css/Applications.css";
 import Sidebar from "../components/Sidebar";
+import axios from "axios";
+import { useAuth } from "../hooks/useAuth";
 
-const sampleApplications = [
+const API_BASE_URL = import.meta.env.VITE_BASE_URL;
+
+// Sample data for initial display
+const initialApplications = [
   {
-    date: "27-Apr-2023",
-    number: "M2-0429/1900000100775",
-    category: "Annual Certification – Food and General processing",
+    _id: "1",
+    applicationNumber: "APP-04291234",
+    category: "Annual Certification",
+    product: "Food Processing Equipment",
+    description: "Annual certification renewal",
     status: "Submitted",
-    site: "rashidnew"
+    requestedDate: "2024-01-15",
+    createdAt: "2024-01-10"
   },
   {
-    date: "03-Nov-2021",
-    number: "M2-0429/190000030653",
-    category: "Annual Certification – Food and General processing",
-    status: "In-Progress",
-    site: "Mushtaq"
-  },
-  {
-    date: "15-Dec-2022",
-    number: "M2-0429/1900000201542",
-    category: "Initial Certification",
+    _id: "2",
+    applicationNumber: "REN-12098765",
+    category: "Renewal Application",
+    product: "Medical Devices",
+    description: "Renewal of certification",
     status: "Approved",
-    site: "mainplant"
+    requestedDate: "2024-01-20",
+    createdAt: "2024-01-05"
   },
   {
-    date: "08-Mar-2023",
-    number: "M2-0429/1900000100987",
-    category: "Surveillance Audit",
-    status: "Rejected",
-    site: "distribution"
+    _id: "3",
+    applicationNumber: "APP-01152345",
+    category: "Initial Certification",
+    product: "Electrical Components",
+    description: "New product certification",
+    status: "In-Progress",
+    requestedDate: "2024-01-25",
+    createdAt: "2024-01-01"
   }
 ];
 
-// Application categories for the form
-const applicationCategories = [
-  "Initial Certification",
-  "Annual Certification – Food and General processing",
-  "Surveillance Audit",
-  "Recertification",
-  "Extension of Scope",
-  "Renewal Application"
-];
-
-// Sites for the form
-const sites = [
-  "mainplant",
-  "distribution",
-  "rashidnew",
-  "Mushtaq",
-  "warehouse"
-];
-
-// Existing applications for renewal (would come from API in real app)
-const existingApplications = [
-  { number: "M2-0429/1900000100775", category: "Annual Certification", site: "rashidnew", expiryDate: "2024-04-27" },
-  { number: "M2-0429/190000030653", category: "Food Processing", site: "Mushtaq", expiryDate: "2024-11-03" },
-  { number: "M2-0429/1900000201542", category: "Initial Certification", site: "mainplant", expiryDate: "2024-12-15" }
-];
-
 function Applications() {
+  const [applications, setApplications] = useState(initialApplications);
   const [searchNumber, setSearchNumber] = useState("");
   const [searchDate, setSearchDate] = useState("");
   const [isMobile, setIsMobile] = useState(window.innerWidth < 900);
   const [showFilters, setShowFilters] = useState(false);
   const [showApplicationForm, setShowApplicationForm] = useState(false);
   const [showRenewalForm, setShowRenewalForm] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+  const [products, setProducts] = useState([])
+
   const [formData, setFormData] = useState({
     category: "",
-    site: "",
-    description: ""
+    product: "",
+    description: "",
+    requestedDate: new Date().toISOString().split("T")[0]
   });
+
   const [renewalData, setRenewalData] = useState({
     existingApplication: "",
-    renewalDate: "",
+    renewalDate: new Date().toISOString().split("T")[0],
     reason: "",
     attachments: []
   });
+
+  const applicationCategories = [
+    "Initial Certification",
+    "Annual Certification",
+    "Surveillance Audit",
+    "Recertification",
+    "Extension of Scope",
+    "Renewal Application"
+  ];
+
+  // const products = [
+  //   "Food Processing Equipment",
+  //   "Medical Devices",
+  //   "Electrical Components",
+  //   "Construction Materials",
+  //   "Automotive Parts",
+  //   "Consumer Electronics"
+  // ];
+
+  const {user} = useAuth()
+
+
+  const fetchProducts = async () => {
+    try {
+      const companyId = user.registrationNo;
+      const token = JSON.parse(localStorage.getItem("accessToken"));
+      const response = await axios.get(`${API_BASE_URL}/products?companyId=${companyId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+      setProducts(response.data.products);
+      // console.log(response.data.products);
+      
+      setError("");
+    } catch (err) {
+      console.log(err);
+    }
+  };
+
 
   useEffect(() => {
     const handleResize = () => {
@@ -86,18 +115,32 @@ function Applications() {
       }
     };
 
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    window.addEventListener("resize", handleResize);
+    
+    fetchApplications();
+    fetchProducts();
+
+    return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  const filtered = sampleApplications.filter(app =>
-    app.number.toLowerCase().includes(searchNumber.toLowerCase()) &&
-    (searchDate ? app.date.includes(searchDate) : true)
-  );
-
-  const toggleFilters = () => {
-    setShowFilters(!showFilters);
+  const fetchApplications = async () => {
+    try {
+      setLoading(true);
+      const response = await axios.get(`${API_BASE_URL}/applications`);
+      setApplications(response.data);
+      
+      setError("");
+    } catch (err) {
+      console.log(err);
+    } finally {
+      setLoading(false);
+    }
   };
+
+  const filteredApplications = applications.filter(app =>
+    app.applicationNumber.toLowerCase().includes(searchNumber.toLowerCase()) &&
+    (searchDate ? app.createdAt.includes(searchDate) : true)
+  );
 
   const handleNewApplication = () => {
     setShowApplicationForm(true);
@@ -114,15 +157,18 @@ function Applications() {
     setShowRenewalForm(false);
     setFormData({
       category: "",
-      site: "",
-      description: ""
+      product: "",
+      description: "",
+      requestedDate: new Date().toISOString().split("T")[0]
     });
     setRenewalData({
       existingApplication: "",
-      renewalDate: "",
+      renewalDate: new Date().toISOString().split("T")[0],
       reason: "",
       attachments: []
     });
+    setError("");
+    setSuccess("");
   };
 
   const handleInputChange = (e) => {
@@ -156,60 +202,137 @@ function Applications() {
     }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Here you would typically send the data to your backend
-    console.log("Application submitted:", formData);
-    
-    // For demo purposes, we'll just close the form and reset
-    alert("Application submitted successfully!");
-    handleCloseForm();
+    try {
+      setLoading(true);
+      
+      // For demo - generate new application from form data
+      const newApp = {
+        _id: Date.now().toString(),
+        applicationNumber: `APP-${Date.now().toString().slice(-8)}`,
+        category: formData.category,
+        product: formData.product,
+        description: formData.description,
+        status: "Submitted",
+        requestedDate: formData.requestedDate,
+        createdAt: new Date().toISOString()
+      };
+      
+      // In real app, use:
+      const response = await axios.post(`${API_BASE_URL}/applications`, formData);
+      fetchApplications()
+      
+      // setApplications(prev => [newApp, ...prev]);
+      setSuccess("Application submitted successfully!");
+      
+      setTimeout(() => {
+        handleCloseForm();
+        setSuccess("");
+      }, 2000);
+    } catch (err) {
+      setError("Failed to submit application. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleRenewalSubmit = (e) => {
+  const handleRenewalSubmit = async (e) => {
     e.preventDefault();
-    // Here you would typically send the renewal data to your backend
-    console.log("Renewal application submitted:", renewalData);
-    
-    // For demo purposes, we'll just close the form and reset
-    alert("Renewal application submitted successfully!");
-    handleCloseForm();
+    try {
+      setLoading(true);
+      
+      const selectedApp = applications.find(app => app._id === renewalData.existingApplication);
+      
+      const newApp = {
+        _id: Date.now().toString(),
+        applicationNumber: `REN-${Date.now().toString().slice(-8)}`,
+        category: "Renewal Application",
+        product: selectedApp.product,
+        description: `Renewal of ${selectedApp.applicationNumber}. Reason: ${renewalData.reason}`,
+        status: "Submitted",
+        requestedDate: renewalData.renewalDate,
+        createdAt: new Date().toISOString()
+      };
+
+      const response = axios.post(`${API_BASE_URL}/eligible/renewal`, newApp);
+
+      if (response.status !== 200) {
+        throw new Error("Failed to submit renewal application.");
+      }else{
+        fetchApplications();
+        // setApplications(prev => [newApp, ...prev]);
+        setSuccess("Renewal application submitted successfully!");
+      }
+
+      
+      setTimeout(() => {
+        handleCloseForm();
+        setSuccess("");
+      }, 1000);
+    } catch (err) {
+      setError("Failed to submit renewal application. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const getSelectedApplication = () => {
-    return existingApplications.find(app => app.number === renewalData.existingApplication);
+  const getStatusColor = (status) => {
+    const colors = {
+      "Submitted": "#0077cc",
+      "In-Progress": "#ff9900",
+      "Approved": "#28a745",
+      "Certified": "#28a745",
+      "Rejected": "#d93025",
+      "Pending Review": "#6c757d"
+    };
+    return colors[status] || "#6c757d";
+  };
+
+  const formatDate = (dateString) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
   };
 
   return (
     <div className="dash">
-      <Sidebar activeApp='active' />
-      <main className="content">
+      <Sidebar activeApp="active" />
+      <main className="content cert">
         <div className="manage-applications">
           <div className="header">
             <h2>Manage Applications</h2>
             <div className="header-actions">
               <button className="renew-btn" onClick={handleRenewApplication}>
-                <i className="fas fa-sync-alt"></i> Renew Application
+                <i className="fas fa-sync-alt"></i> Renew
               </button>
               <button className="new-btn" onClick={handleNewApplication}>
-                + New Application
+                <i className="fas fa-plus"></i> New Application
               </button>
             </div>
           </div>
 
-          {/* Mobile filter toggle */}
-          {isMobile && (
-            <button className="filter-toggle" onClick={toggleFilters}>
-              <i className="fas fa-filter"></i> {showFilters ? 'Hide Filters' : 'Show Filters'}
-            </button>
+          {success && (
+            <div className="alert success">
+              <i className="fas fa-check-circle"></i> {success}
+            </div>
           )}
 
-          <div className={`search-box ${showFilters ? 'mobile-visible' : ''}`}>
+          {error && (
+            <div className="alert error">
+              <i className="fas fa-exclamation-circle"></i> {error}
+            </div>
+          )}
+
+          {/* Search & Filters */}
+          <div className="search-box">
             <div className="field">
               <label>Application Number</label>
               <input
                 type="text"
-                placeholder="Enter number..."
+                placeholder="Search..."
                 value={searchNumber}
                 onChange={(e) => setSearchNumber(e.target.value)}
               />
@@ -222,109 +345,81 @@ function Applications() {
                 onChange={(e) => setSearchDate(e.target.value)}
               />
             </div>
-            <button className="search-btn">Search</button>
-            {isMobile && (
-              <button className="close-filters" onClick={() => setShowFilters(false)}>
-                <i className="fas fa-times"></i>
-              </button>
-            )}
+            <button className="search-btn">
+              <i className="fas fa-search"></i> Search
+            </button>
           </div>
 
+          {/* Applications Table */}
           <div className="table-wrapper">
             <div className="table-header">
-              <h3>Applications List (Total: {filtered.length})</h3>
-              {isMobile && (
-                <div className="table-actions">
-                  <button className="action-btn" title="Export">
-                    <i className="fas fa-download"></i>
-                  </button>
-                  <button className="action-btn" title="Refresh">
-                    <i className="fas fa-sync-alt"></i>
-                  </button>
-                </div>
-              )}
+              <h3>Applications ({filteredApplications.length})</h3>
+              <div className="table-actions">
+                <button className="action-btn" onClick={fetchApplications}>
+                  <i className="fas fa-sync-alt"></i>
+                </button>
+              </div>
             </div>
             
-            {/* Desktop Table */}
-            {!isMobile ? (
-              <table className="desktop-table">
+            {loading ? (
+              <div className="loading">
+                <i className="fas fa-spinner fa-spin"></i> Loading...
+              </div>
+            ) : (
+              <table className="applications-table">
                 <thead>
                   <tr>
-                    <th>Date</th>
-                    <th>Application Number</th>
-                    <th>Application Category</th>
+                    <th>App Number</th>
+                    <th>Category</th>
+                    <th>Product</th>
                     <th>Status</th>
-                    <th>Site</th>
-                    <th>Menu</th>
+                    <th>Created</th>
+                    <th>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {filtered.map((app, i) => (
-                    <tr key={i}>
-                      <td>{app.date}</td>
-                      <td>{app.number}</td>
-                      <td>{app.category}</td>
+                  {filteredApplications.map((app) => (
+                    <tr key={app._id}>
                       <td>
-                        <span className={`status ${app.status.toLowerCase().replace(" ", "-")}`}>
+                        <span className="app-number">{app.applicationNumber}</span>
+                      </td>
+                      <td>{app.category}</td>
+                      <td>{app.product}</td>
+                      <td>
+                        <span 
+                          className="status-badge"
+                          style={{ 
+                            backgroundColor: getStatusColor(app.status) + '20',
+                            color: getStatusColor(app.status)
+                          }}
+                        >
                           {app.status}
                         </span>
                       </td>
-                      <td>{app.site}</td>
+                      <td>{formatDate(app.createdAt)}</td>
                       <td>
-                        <button className="menu-btn">⋮</button>
+                        <button className="view-btn" title="View">
+                          <i className="fas fa-eye"></i>
+                        </button>
                       </td>
                     </tr>
                   ))}
-                  {filtered.length === 0 && (
+                  {filteredApplications.length === 0 && (
                     <tr>
-                      <td colSpan="6" className="no-data">No applications found</td>
+                      <td colSpan="6" className="no-data">
+                        No applications found
+                      </td>
                     </tr>
                   )}
                 </tbody>
               </table>
-            ) : (
-              /* Mobile Cards */
-              <div className="mobile-cards">
-                {filtered.length > 0 ? (
-                  filtered.map((app, i) => (
-                    <div key={i} className="application-card">
-                      <div className="card-header">
-                        <div className="app-number">{app.number}</div>
-                        <button className="menu-btn">⋮</button>
-                      </div>
-                      <div className="card-details">
-                        <div className="detail-item">
-                          <span className="label">Date:</span>
-                          <span className="value">{app.date}</span>
-                        </div>
-                        <div className="detail-item">
-                          <span className="label">Category:</span>
-                          <span className="value">{app.category}</span>
-                        </div>
-                        <div className="detail-item">
-                          <span className="label">Status:</span>
-                          <span className={`status ${app.status.toLowerCase().replace(" ", "-")}`}>
-                            {app.status}
-                          </span>
-                        </div>
-                        <div className="detail-item">
-                          <span className="label">Site:</span>
-                          <span className="value">{app.site}</span>
-                        </div>
-                      </div>
-                    </div>
-                  ))
-                ) : (
-                  <div className="no-data">No applications found</div>
-                )}
-              </div>
             )}
           </div>
         </div>
 
-        {/* New Application Form Modal */}
+        {/* New Application Modal */}
         {showApplicationForm && (
-          <div className="modal-overlay">
+          <div className="modal">
             <div className="modal-content">
               <div className="modal-header">
                 <h3>New Application</h3>
@@ -333,61 +428,65 @@ function Applications() {
                 </button>
               </div>
               
-              <form onSubmit={handleSubmit} className="application-form">
+              <form onSubmit={handleSubmit}>
                 <div className="form-group">
-                  <label htmlFor="category">Application Category *</label>
+                  <label>Category *</label>
                   <select
-                    id="category"
                     name="category"
                     value={formData.category}
                     onChange={handleInputChange}
                     required
                   >
                     <option value="">Select Category</option>
-                    {applicationCategories.map((category, index) => (
-                      <option key={index} value={category}>
-                        {category}
-                      </option>
+                    {applicationCategories.map((cat, i) => (
+                      <option key={i} value={cat}>{cat}</option>
                     ))}
                   </select>
                 </div>
 
                 <div className="form-group">
-                  <label htmlFor="site">Site *</label>
+                  <label>Product *</label>
                   <select
-                    id="site"
-                    name="site"
-                    value={formData.site}
+                    name="product"
+                    value={formData.product}
                     onChange={handleInputChange}
                     required
                   >
-                    <option value="">Select Site</option>
-                    {sites.map((site, index) => (
-                      <option key={index} value={site}>
-                        {site}
-                      </option>
+                    <option value="">Select Product</option>
+                    {products.map((prod, i) => (
+                      <option key={prod._id} value={prod.name}>{prod.name}</option>
                     ))}
                   </select>
                 </div>
 
                 <div className="form-group">
-                  <label htmlFor="description">Description</label>
+                  <label>Requested Date *</label>
+                  <input
+                    type="date"
+                    name="requestedDate"
+                    value={formData.requestedDate}
+                    onChange={handleInputChange}
+                    required
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label>Description</label>
                   <textarea
-                    id="description"
                     name="description"
                     value={formData.description}
                     onChange={handleInputChange}
-                    rows="4"
-                    placeholder="Enter any additional details about your application..."
-                  ></textarea>
+                    rows="3"
+                    placeholder="Additional details..."
+                  />
                 </div>
 
                 <div className="form-actions">
-                  <button type="button" className="cancel-btn" onClick={handleCloseForm}>
+                  <button type="button" className="btn btn-cancel" onClick={handleCloseForm}>
                     Cancel
                   </button>
-                  <button type="submit" className="submit-btn">
-                    Submit Application
+                  <button type="submit" className="btn btn-submit" disabled={loading}>
+                    {loading ? 'Submitting...' : 'Submit'}
                   </button>
                 </div>
               </form>
@@ -395,9 +494,9 @@ function Applications() {
           </div>
         )}
 
-        {/* Renewal Application Form Modal */}
+        {/* Renewal Application Modal */}
         {showRenewalForm && (
-          <div className="modal-overlay">
+          <div className="modal">
             <div className="modal-content">
               <div className="modal-header">
                 <h3>Renew Application</h3>
@@ -406,117 +505,75 @@ function Applications() {
                 </button>
               </div>
               
-              <form onSubmit={handleRenewalSubmit} className="application-form">
+              <form onSubmit={handleRenewalSubmit}>
                 <div className="form-group">
-                  <label htmlFor="existingApplication">Select Application to Renew *</label>
+                  <label>Select Application *</label>
                   <select
-                    id="existingApplication"
                     name="existingApplication"
                     value={renewalData.existingApplication}
                     onChange={handleRenewalInputChange}
                     required
                   >
-                    <option value="">Select Application</option>
-                    {existingApplications.map((app, index) => (
-                      <option key={index} value={app.number}>
-                        {app.number} - {app.category} ({app.site}) - Expires: {app.expiryDate}
-                      </option>
-                    ))}
+                    <option value="">Choose application</option>
+                    {applications
+                      .filter(app => app.status === "Approved" || app.status === "Certified")
+                      .map((app) => (
+                        <option key={app._id} value={app._id}>
+                          {app.applicationNumber} - {app.product}
+                        </option>
+                      ))
+                    }
                   </select>
                 </div>
 
-                {renewalData.existingApplication && (
-                  <div className="application-info">
-                    <h4>Application Details</h4>
-                    <div className="info-grid">
-                      <div className="info-item">
-                        <span className="info-label">Category:</span>
-                        <span className="info-value">{getSelectedApplication()?.category}</span>
-                      </div>
-                      <div className="info-item">
-                        <span className="info-label">Site:</span>
-                        <span className="info-value">{getSelectedApplication()?.site}</span>
-                      </div>
-                      <div className="info-item">
-                        <span className="info-label">Expiry Date:</span>
-                        <span className="info-value">{getSelectedApplication()?.expiryDate}</span>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
                 <div className="form-group">
-                  <label htmlFor="renewalDate">Requested Renewal Date *</label>
+                  <label>Renewal Date *</label>
                   <input
                     type="date"
-                    id="renewalDate"
                     name="renewalDate"
                     value={renewalData.renewalDate}
                     onChange={handleRenewalInputChange}
                     required
-                    min={new Date().toISOString().split('T')[0]}
                   />
                 </div>
 
                 <div className="form-group">
-                  <label htmlFor="reason">Reason for Renewal *</label>
+                  <label>Reason *</label>
                   <select
-                    id="reason"
                     name="reason"
                     value={renewalData.reason}
                     onChange={handleRenewalInputChange}
                     required
                   >
-                    <option value="">Select Reason</option>
+                    <option value="">Select reason</option>
                     <option value="continuing_operations">Continuing Operations</option>
                     <option value="contract_requirement">Contract Requirement</option>
                     <option value="regulatory_compliance">Regulatory Compliance</option>
-                    <option value="business_expansion">Business Expansion</option>
                     <option value="other">Other</option>
                   </select>
                 </div>
 
-                {renewalData.reason === 'other' && (
-                  <div className="form-group">
-                    <label htmlFor="otherReason">Specify Other Reason *</label>
-                    <textarea
-                      id="otherReason"
-                      name="otherReason"
-                      rows="3"
-                      placeholder="Please specify the reason for renewal..."
-                    ></textarea>
-                  </div>
-                )}
-
                 <div className="form-group">
-                  <label htmlFor="attachments">Supporting Documents</label>
+                  <label>Supporting Documents</label>
                   <div className="file-upload">
                     <input
                       type="file"
-                      id="attachments"
                       multiple
                       onChange={handleFileUpload}
-                      accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
                     />
-                    <label htmlFor="attachments" className="file-upload-label">
-                      <i className="fas fa-cloud-upload-alt"></i>
-                      Choose Files
-                    </label>
-                    <small>Supported formats: PDF, DOC, JPG, PNG (Max 10MB each)</small>
+                    <button type="button" className="btn btn-upload">
+                      <i className="fas fa-upload"></i> Upload Files
+                    </button>
                   </div>
-
                   {renewalData.attachments.length > 0 && (
-                    <div className="attachments-list">
-                      <h5>Selected Files:</h5>
-                      {renewalData.attachments.map((file, index) => (
-                        <div key={index} className="attachment-item">
-                          <span className="file-name">
-                            <i className="fas fa-file"></i> {file.name}
-                          </span>
-                          <button
-                            type="button"
+                    <div className="file-list">
+                      {renewalData.attachments.map((file, i) => (
+                        <div key={i} className="file-item">
+                          <span>{file.name}</span>
+                          <button 
+                            type="button" 
                             className="remove-file"
-                            onClick={() => removeAttachment(index)}
+                            onClick={() => removeAttachment(i)}
                           >
                             <i className="fas fa-times"></i>
                           </button>
@@ -526,20 +583,12 @@ function Applications() {
                   )}
                 </div>
 
-                <div className="renewal-notice">
-                  <i className="fas fa-info-circle"></i>
-                  <p>
-                    <strong>Important:</strong> Renewal applications should be submitted at least 
-                    30 days before the expiry date. Late submissions may incur additional fees.
-                  </p>
-                </div>
-
                 <div className="form-actions">
-                  <button type="button" className="cancel-btn" onClick={handleCloseForm}>
+                  <button type="button" className="btn btn-cancel" onClick={handleCloseForm}>
                     Cancel
                   </button>
-                  <button type="submit" className="submit-btn">
-                    <i className="fas fa-sync-alt"></i> Submit Renewal
+                  <button type="submit" className="btn btn-submit" disabled={loading}>
+                    {loading ? 'Processing...' : 'Submit Renewal'}
                   </button>
                 </div>
               </form>

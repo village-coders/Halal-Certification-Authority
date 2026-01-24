@@ -1,0 +1,110 @@
+* {
+  box-sizing: border-box;
+  font-family: "Poppins", sans-serif;
+}
+
+.portal-wrapper {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: linear-gradient(135deg, #e6f7ff, #f0f9eb);
+}
+
+.portal-container {
+  width: 900px;
+  max-width: 95%;
+  display: flex;
+  background: white;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+}
+
+.welcome-section {
+  flex: 1;
+  padding: 40px;
+  background: linear-gradient(135deg, #1a5f7a, #159895);
+  color: white;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.create-account-btn {
+  margin-top: 20px;
+  background: #ffc107;
+  border: none;
+  padding: 12px;
+  font-weight: 600;
+  border-radius: 30px;
+  cursor: pointer;
+}
+
+.auth-section {
+  flex: 1;
+  padding: 40px;
+}
+
+.auth-tabs {
+  display: flex;
+  margin-bottom: 20px;
+}
+
+.auth-tab {
+  flex: 1;
+  padding: 12px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-weight: 600;
+  border-bottom: 2px solid #ddd;
+}
+
+.auth-tab.active {
+  border-color: #1a5f7a;
+  color: #1a5f7a;
+}
+
+.auth-form {
+  animation: fadeIn 0.4s ease;
+}
+
+.form-group {
+  margin-bottom: 15px;
+}
+
+.form-group input {
+  width: 100%;
+  padding: 12px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+}
+
+.btn-primary {
+  width: 100%;
+  padding: 14px;
+  background: linear-gradient(135deg, #1a5f7a, #159895);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 768px) {
+  .portal-container {
+    flex-direction: column;
+  }
+}

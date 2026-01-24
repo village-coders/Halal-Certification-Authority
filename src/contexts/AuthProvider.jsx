@@ -11,6 +11,7 @@ const AuthProvider = ({ children }) => {
   const [verifyingAccount, setVerifyingAccount] = useState(false);
   const [verificationData, setVerificationData] = useState();
   const [signingIn, setSigningIn] = useState(false);
+  const [signingUp, setSigningUp] = useState(false);
   const [userLoading, setUserLoading] = useState(false);
 
   const baseUrl = import.meta.env.VITE_BASE_URL;
@@ -98,6 +99,31 @@ const AuthProvider = ({ children }) => {
   };
 
 
+  const signup = async (userData) => {
+    setSigningUp(true);
+    try {
+      const response = await axios.post(`${baseUrl}/auth/signup`, userData);
+      const { message } = response.data;
+      
+      return message;
+    } catch (error) {
+      throw new Error(error.response?.data?.message || 'Registration failed');
+    } finally {
+      setSigningUp(false);
+    }
+  };
+
+
+  const resetPassword = async (email) => {
+    try {
+      const response = await axios.post(`${baseUrl}/auth/update-password/${user.id}`, { email });
+      return response.data.message;
+    } catch (error) {
+      throw new Error(error.response?.data?.message || 'Password reset failed');
+    }
+  };
+
+
   // ✅ Verify account
   const verifyAccount = async (token) => {
     setVerifyingAccount(true);
@@ -127,6 +153,9 @@ const AuthProvider = ({ children }) => {
     signin,
     verifyAccount,
     logout,
+    signingUp,
+    signup,
+    resetPassword,
     userLoading,
   };
 
