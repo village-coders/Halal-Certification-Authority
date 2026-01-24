@@ -211,7 +211,7 @@ function ManageUsers() {
 
   return (
     <div className="dash manage-users-class">       
-      <Sidebar /> 
+      <Sidebar activeUse="active" /> 
       <main className="content">
         <div className="manage-users-container">
           <DashboardHeader title="User Management" />

@@ -4,7 +4,7 @@ import logo from '../assets/hcaLogo.webp';
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 
-const Sidebar = ({activeD, activeApp, activeP, activeCert}) => {
+const Sidebar = ({activeD, activeApp, activeP, activeCert, activeUse}) => {
   const [openMenu, setOpenMenu] = useState("");
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 900);
@@ -122,7 +122,7 @@ const Sidebar = ({activeD, activeApp, activeP, activeCert}) => {
               </button>            
             </li>
             <li>
-              <button onClick={() =>{ if (isMobile) toggleSidebar(); setIsCollapsed(true);  navigate('/manage-users')}} className="dropdown-btn" title="Manage Users">
+              <button onClick={() =>{ if (isMobile) toggleSidebar(); setIsCollapsed(true);  navigate('/manage-users')}} className={`dropdown-btn ${openMenu === "products" ? "active" : ""} ${activeUse}`} title="Manage Users">
                 <i className="fas fa-users"></i>
                 {!isCollapsed && <span>Manage Users</span>}
               </button>

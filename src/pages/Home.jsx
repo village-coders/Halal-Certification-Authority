@@ -21,9 +21,17 @@ const Home = () => {
   const [showEmailModal, setShowEmailModal] = useState(false);
   const [modalAction, setModalAction] = useState('');
   const [modalEmail, setModalEmail] = useState('');
+  const [registrationStep, setRegistrationStep] = useState(1); // 1: Company Info, 2: Login Info
   
   const navigate = useNavigate();
   const auth = useAuth();
+
+  // Reset registration step when switching tabs
+  useEffect(() => {
+    if (activeTab === 'register') {
+      setRegistrationStep(1);
+    }
+  }, [activeTab]);
 
   // Styles
   const styles = {
@@ -151,7 +159,7 @@ const Home = () => {
     },
     authForm: {
       display: 'none',
-      animation: 'slideIn 0.5s ease'
+      animation: 'slideIn 0.5s ease',
     },
     authFormActive: {
       display: 'block'
@@ -244,9 +252,19 @@ const Home = () => {
       color: 'white',
       width: '100%'
     },
+    btnSecondary: {
+      background: '#f8f9fa',
+      color: '#2d3e50',
+      border: '2px solid #e2e8f0'
+    },
     btnHover: {
       transform: 'translateY(-3px)',
       boxShadow: '0 7px 14px rgba(26, 95, 122, 0.2)'
+    },
+    btnSecondaryHover: {
+      transform: 'translateY(-3px)',
+      boxShadow: '0 7px 14px rgba(0, 0, 0, 0.1)',
+      background: '#e9ecef'
     },
     btnDisabled: {
       opacity: 0.6,
@@ -267,6 +285,67 @@ const Home = () => {
     authLinkHover: {
       color: '#159895',
       textDecoration: 'underline'
+    },
+    // Registration Steps
+    registrationSteps: {
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      marginBottom: '30px',
+      position: 'relative'
+    },
+    step: {
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      position: 'relative',
+      zIndex: 2
+    },
+    stepCircle: {
+      width: '40px',
+      height: '40px',
+      borderRadius: '50%',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      fontWeight: 600,
+      fontSize: '1.1rem',
+      marginBottom: '10px',
+      transition: 'all 0.3s ease'
+    },
+    stepCircleActive: {
+      background: 'linear-gradient(135deg, #1a5f7a 0%, #159895 100%)',
+      color: 'white',
+      boxShadow: '0 4px 10px rgba(26, 95, 122, 0.3)'
+    },
+    stepCircleInactive: {
+      background: '#e9ecef',
+      color: '#6c757d'
+    },
+    stepLine: {
+      height: '3px',
+      background: '#e9ecef',
+      flex: 1,
+      margin: '0 20px'
+    },
+    stepLineActive: {
+      background: 'linear-gradient(to right, #1a5f7a, #159895)'
+    },
+    stepLabel: {
+      fontSize: '0.9rem',
+      fontWeight: 500,
+      color: '#6c757d'
+    },
+    stepLabelActive: {
+      color: '#1a5f7a',
+      fontWeight: 600
+    },
+    // Form Navigation
+    formNavigation: {
+      display: 'flex',
+      justifyContent: 'space-between',
+      gap: '15px',
+      marginTop: '30px'
     },
     // Modal Styles
     modalOverlay: {
@@ -472,6 +551,73 @@ const Home = () => {
     );
   };
 
+  // Registration Steps Component
+  const RegistrationSteps = () => {
+    return (
+      <div style={styles.registrationSteps}>
+        <div style={styles.step}>
+          <div style={{
+            ...styles.stepCircle,
+            ...(registrationStep === 1 ? styles.stepCircleActive : styles.stepCircleInactive)
+          }}>
+            1
+          </div>
+          <div style={{
+            ...styles.stepLabel,
+            ...(registrationStep === 1 ? styles.stepLabelActive : {})
+          }}>
+            Company Info
+          </div>
+        </div>
+        
+        <div style={{
+          ...styles.stepLine,
+          ...(registrationStep >= 2 ? styles.stepLineActive : {})
+        }}></div>
+        
+        <div style={styles.step}>
+          <div style={{
+            ...styles.stepCircle,
+            ...(registrationStep === 2 ? styles.stepCircleActive : styles.stepCircleInactive)
+          }}>
+            2
+          </div>
+          <div style={{
+            ...styles.stepLabel,
+            ...(registrationStep === 2 ? styles.stepLabelActive : {})
+          }}>
+            Login Info
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  // Handle Next Step in Registration
+  const handleNextStep = (e) => {
+    e.preventDefault();
+    
+    // Validate company information
+    if (!formData.contactName.trim() || !formData.phoneNumber.trim() || !formData.companyName.trim()) {
+      toast.error('Please fill in all company information fields');
+      return;
+    }
+
+    // Additional validation for phone number if needed
+    if (formData.phoneNumber.trim().length < 10) {
+      toast.error('Please enter a valid phone number');
+      return;
+    }
+
+    setRegistrationStep(2);
+  };
+
+  // Handle Previous Step in Registration
+  const handlePrevStep = (e) => {
+    e.preventDefault();
+    setRegistrationStep(1);
+  };
+
   // Handle Forgot Password
   const handleForgotPassword = (prefilledEmail = '') => {
     if (prefilledEmail && isValidEmail(prefilledEmail)) {
@@ -544,16 +690,7 @@ const Home = () => {
       return;
     }
 
-    if (!formData.contactName.trim() || !formData.phoneNumber.trim() || !formData.companyName.trim()) {
-      toast.error('Please fill in all company information fields');
-      return;
-    }
-
     setIsLoading(true);
-
-    
-    const randomNumber = Math.floor(Math.random() * 1000000000);
-    const regNo = `HCA-${randomNumber}`;
 
     const registerData = {
       email: formData.registerEmail,
@@ -580,6 +717,7 @@ const Home = () => {
         phoneNumber: '',
         companyName: ''
       }));
+      setRegistrationStep(1); // Reset to step 1
     } catch (error) {
       toast.error(`Registration failed: ${error.message || 'Server error'}`);
     } finally {
@@ -608,6 +746,14 @@ const Home = () => {
           from { opacity: 0; transform: translateX(20px); }
           to { opacity: 1; transform: translateX(0); }
         }
+        @keyframes slideOut {
+          from { opacity: 1; transform: translateX(0); }
+          to { opacity: 0; transform: translateX(-20px); }
+        }
+        @keyframes slideInRight {
+          from { opacity: 0; transform: translateX(20px); }
+          to { opacity: 1; transform: translateX(0); }
+        }
         @keyframes pulse {
           0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(26, 95, 122, 0.7); }
           70% { transform: scale(1.05); box-shadow: 0 0 0 10px rgba(26, 95, 122, 0); }
@@ -633,6 +779,14 @@ const Home = () => {
           animation: float 3s ease-in-out infinite;
         }
         
+        .slide-out {
+          animation: slideOut 0.3s ease forwards;
+        }
+        
+        .slide-in-right {
+          animation: slideInRight 0.3s ease forwards;
+        }
+        
         @media (max-width: 900px) {
           .portal-container {
             flex-direction: column !important;
@@ -646,7 +800,7 @@ const Home = () => {
           
           .auth-section {
             order: 1;
-            padding: 30px;
+            padding: 20px !important;
           }
         }
 
@@ -676,6 +830,25 @@ const Home = () => {
             flex-direction: column;
             gap: 10px;
             align-items: flex-start;
+          }
+          
+          .registration-steps {
+            flex-direction: column;
+            gap: 20px;
+          }
+          
+          .step-line {
+            width: 3px;
+            height: 40px;
+            margin: 10px 0;
+          }
+          
+          .form-navigation {
+            flex-direction: column;
+          }
+          
+          .form-navigation button {
+            width: 100%;
           }
         }
       `}
@@ -751,7 +924,7 @@ const Home = () => {
           </div>
           
           {/* Auth Section */}
-          <div style={styles.authSection}>
+          <div className='auth-section' style={styles.authSection}>
             <div style={styles.authTabs}>
               <div 
                 style={{
@@ -875,133 +1048,195 @@ const Home = () => {
             </form>
             
             {/* Registration Form */}
-            <form 
+            <div 
               style={{ 
                 ...styles.authForm, 
                 ...(activeTab === 'register' ? styles.authFormActive : {})
               }} 
               id="register-form"
-              onSubmit={handleRegister}
             >
               <h2 style={styles.formTitle}>Register your account as Halal Certification Authority Applicant</h2>
               <p style={styles.formSubtitle}>To enjoy our service</p>
               
-              <div style={styles.formSection}>
-                <h3 style={styles.sectionTitle}>
-                  <i className="fas fa-building" style={styles.sectionIcon}></i> Company Information
-                </h3>
-                
-                <div style={styles.formGroup}>
-                  <label htmlFor="contactName" style={styles.formLabel} className="required">Contact Name</label>
-                  <input
-                    type="text"
-                    id="contactName"
-                    value={formData.contactName}
-                    onChange={handleInputChange}
-                    required
-                    style={styles.formInput}
-                    onFocus={(e) => Object.assign(e.target.style, styles.formInputFocus)}
-                    onBlur={(e) => Object.assign(e.target.style, styles.formInput)}
-                  />
-                </div>
-                <div style={styles.formGroup}>
-                  <label htmlFor="phoneNumber" style={styles.formLabel} className="required">Phone Number</label>
-                  <input
-                    type="tel"
-                    id="phoneNumber"
-                    value={formData.phoneNumber}
-                    onChange={handleInputChange}
-                    required
-                    style={styles.formInput}
-                    onFocus={(e) => Object.assign(e.target.style, styles.formInputFocus)}
-                  />
-                </div>
-                <div style={styles.formGroup}>
-                  <label htmlFor="companyName" style={styles.formLabel} className="required">Company Name</label>
-                  <input
-                    type="text"
-                    id="companyName"
-                    value={formData.companyName}
-                    onChange={handleInputChange}
-                    required
-                    style={styles.formInput}
-                    onFocus={(e) => Object.assign(e.target.style, styles.formInputFocus)}
-                  />
-                </div>
-              </div>
+              {/* Registration Steps */}
+              <RegistrationSteps />
               
-              <div style={styles.formSection}>
-                <h3 style={styles.sectionTitle}>
-                  <i className="fas fa-user-lock" style={styles.sectionIcon}></i> Login Information
-                </h3>
-                
-                <div style={styles.formGroup}>
-                  <label htmlFor="registerEmail" style={styles.formLabel} className="required">Login Email Address</label>
-                  <input
-                    type="email"
-                    id="registerEmail"
-                    value={formData.registerEmail}
-                    onChange={handleInputChange}
-                    required
-                    style={styles.formInput}
-                    onFocus={(e) => Object.assign(e.target.style, styles.formInputFocus)}
-                  />
-                </div>
-                
-                <div style={styles.formGroup}>
-                  <label htmlFor="registerPassword" style={styles.formLabel} className="required">Password</label>
-                  <input
-                    type="password"
-                    id="registerPassword"
-                    value={formData.registerPassword}
-                    onChange={handleInputChange}
-                    required
-                    style={styles.formInput}
-                    onFocus={(e) => Object.assign(e.target.style, styles.formInputFocus)}
-                  />
-                </div>
-                
-                <div style={styles.formGroup}>
-                  <label htmlFor="confirmPassword" style={styles.formLabel} className="required">Confirm Password</label>
-                  <input
-                    type="password"
-                    id="confirmPassword"
-                    value={formData.confirmPassword}
-                    onChange={handleInputChange}
-                    required
-                    style={styles.formInput}
-                    onFocus={(e) => Object.assign(e.target.style, styles.formInputFocus)}
-                  />
-                </div>
-              </div>
-              
-              <button 
-                type="submit" 
+              {/* Step 1: Company Information */}
+              <form 
+                onSubmit={handleNextStep}
                 style={{ 
-                  ...styles.btn, 
-                  ...styles.btnPrimary,
-                  ...((isLoading || auth.signingUp) ? styles.btnDisabled : {})
-                }}
-                disabled={isLoading || auth.signingUp}
-                onMouseEnter={(e) => {
-                  if (!isLoading && !auth.signingUp) {
-                    Object.assign(e.target.style, styles.btnHover);
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  Object.assign(e.target.style, { ...styles.btn, ...styles.btnPrimary });
+                  display: registrationStep === 1 ? 'block' : 'none',
+                  animation: registrationStep === 1 ? 'slideIn 0.5s ease' : 'slideOut 0.3s ease'
                 }}
               >
-                {(isLoading || auth.signingUp) ? (
-                  <>
-                    <i className="fas fa-spinner fa-spin"></i> Registering...
-                  </>
-                ) : (
-                  <>
-                    <i className="fas fa-user-plus"></i> Register Account
-                  </>
-                )}
-              </button>
+                <div style={styles.formSection}>
+                  <h3 style={styles.sectionTitle}>
+                    <i className="fas fa-building" style={styles.sectionIcon}></i> Company Information
+                  </h3>
+                  
+                  <div style={styles.formGroup}>
+                    <label htmlFor="contactName" style={styles.formLabel} className="required">Contact Name</label>
+                    <input
+                      type="text"
+                      id="contactName"
+                      value={formData.contactName}
+                      onChange={handleInputChange}
+                      required
+                      style={styles.formInput}
+                      onFocus={(e) => Object.assign(e.target.style, styles.formInputFocus)}
+                      onBlur={(e) => Object.assign(e.target.style, styles.formInput)}
+                    />
+                  </div>
+                  <div style={styles.formGroup}>
+                    <label htmlFor="phoneNumber" style={styles.formLabel} className="required">Phone Number</label>
+                    <input
+                      type="tel"
+                      id="phoneNumber"
+                      value={formData.phoneNumber}
+                      onChange={handleInputChange}
+                      required
+                      style={styles.formInput}
+                      onFocus={(e) => Object.assign(e.target.style, styles.formInputFocus)}
+                      onBlur={(e) => Object.assign(e.target.style, styles.formInput)}
+                      placeholder="+1 234 567 8900"
+                    />
+                  </div>
+                  <div style={styles.formGroup}>
+                    <label htmlFor="companyName" style={styles.formLabel} className="required">Company Name</label>
+                    <input
+                      type="text"
+                      id="companyName"
+                      value={formData.companyName}
+                      onChange={handleInputChange}
+                      required
+                      style={styles.formInput}
+                      onFocus={(e) => Object.assign(e.target.style, styles.formInputFocus)}
+                      onBlur={(e) => Object.assign(e.target.style, styles.formInput)}
+                    />
+                  </div>
+                </div>
+                
+                <div style={styles.formNavigation}>
+                  <div style={{ flex: 1 }}></div>
+                  <button 
+                    type="submit"
+                    style={{ 
+                      ...styles.btn, 
+                      ...styles.btnPrimary,
+                      padding: '14px 30px',
+                      minWidth: '150px'
+                    }}
+                    onMouseEnter={(e) => Object.assign(e.target.style, styles.btnHover)}
+                    onMouseLeave={(e) => Object.assign(e.target.style, { ...styles.btn, ...styles.btnPrimary })}
+                  >
+                    Next <i className="fas fa-arrow-right"></i>
+                  </button>
+                </div>
+              </form>
+              
+              {/* Step 2: Login Information */}
+              <form 
+                onSubmit={handleRegister}
+                style={{ 
+                  display: registrationStep === 2 ? 'block' : 'none',
+                  animation: registrationStep === 2 ? 'slideInRight 0.5s ease' : 'slideOut 0.3s ease'
+                }}
+              >
+                <div style={styles.formSection}>
+                  <h3 style={styles.sectionTitle}>
+                    <i className="fas fa-user-lock" style={styles.sectionIcon}></i> Login Information
+                  </h3>
+                  
+                  <div style={styles.formGroup}>
+                    <label htmlFor="registerEmail" style={styles.formLabel} className="required">Login Email Address</label>
+                    <input
+                      type="email"
+                      id="registerEmail"
+                      value={formData.registerEmail}
+                      onChange={handleInputChange}
+                      required
+                      style={styles.formInput}
+                      onFocus={(e) => Object.assign(e.target.style, styles.formInputFocus)}
+                      onBlur={(e) => Object.assign(e.target.style, styles.formInput)}
+                    />
+                  </div>
+                  
+                  <div style={styles.formGroup}>
+                    <label htmlFor="registerPassword" style={styles.formLabel} className="required">Password</label>
+                    <input
+                      type="password"
+                      id="registerPassword"
+                      value={formData.registerPassword}
+                      onChange={handleInputChange}
+                      required
+                      style={styles.formInput}
+                      onFocus={(e) => Object.assign(e.target.style, styles.formInputFocus)}
+                      onBlur={(e) => Object.assign(e.target.style, styles.formInput)}
+                      placeholder="At least 6 characters"
+                    />
+                  </div>
+                  
+                  <div style={styles.formGroup}>
+                    <label htmlFor="confirmPassword" style={styles.formLabel} className="required">Confirm Password</label>
+                    <input
+                      type="password"
+                      id="confirmPassword"
+                      value={formData.confirmPassword}
+                      onChange={handleInputChange}
+                      required
+                      style={styles.formInput}
+                      onFocus={(e) => Object.assign(e.target.style, styles.formInputFocus)}
+                      onBlur={(e) => Object.assign(e.target.style, styles.formInput)}
+                    />
+                  </div>
+                </div>
+                
+                <div style={styles.formNavigation}>
+                  <button 
+                    type="button"
+                    onClick={handlePrevStep}
+                    style={{ 
+                      ...styles.btn, 
+                      ...styles.btnSecondary,
+                      padding: '14px 30px',
+                      minWidth: '150px'
+                    }}
+                    onMouseEnter={(e) => Object.assign(e.target.style, styles.btnSecondaryHover)}
+                    onMouseLeave={(e) => Object.assign(e.target.style, { ...styles.btn, ...styles.btnSecondary })}
+                  >
+                    <i className="fas fa-arrow-left"></i> Back
+                  </button>
+                  <button 
+                    type="submit" 
+                    style={{ 
+                      ...styles.btn, 
+                      ...styles.btnPrimary,
+                      padding: '14px 30px',
+                      minWidth: '150px',
+                      ...((isLoading || auth.signingUp) ? styles.btnDisabled : {})
+                    }}
+                    disabled={isLoading || auth.signingUp}
+                    onMouseEnter={(e) => {
+                      if (!isLoading && !auth.signingUp) {
+                        Object.assign(e.target.style, styles.btnHover);
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      Object.assign(e.target.style, { ...styles.btn, ...styles.btnPrimary });
+                    }}
+                  >
+                    {(isLoading || auth.signingUp) ? (
+                      <>
+                        <i className="fas fa-spinner fa-spin"></i> Registering...
+                      </>
+                    ) : (
+                      <>
+                        <i className="fas fa-user-plus"></i> Register
+                      </>
+                    )}
+                  </button>
+                </div>
+              </form>
               
               <div style={styles.authLinks}>
                 <a 
@@ -1013,7 +1248,7 @@ const Home = () => {
                   Already have an account? Login
                 </a>
               </div>
-            </form>
+            </div>
           </div>
         </div>
       </div>
