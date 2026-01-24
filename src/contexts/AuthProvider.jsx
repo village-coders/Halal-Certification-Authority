@@ -61,7 +61,7 @@ const AuthProvider = ({ children }) => {
         },
       });
 
-      // console.log(res);
+      // console.log(res.data.user);
       
 
       setUser(res.data.user); // ✅ now your user is available everywhere
@@ -84,10 +84,10 @@ const AuthProvider = ({ children }) => {
         toast.success(message);
         localStorage.setItem("accessToken", JSON.stringify(accessToken));
         localStorage.setItem("user", JSON.stringify(user));
-        if (user.role === "admin") {
-          navigate("/admin");
-        } else if(user.role === 'company') {
+        if (user.role === "company") {
           navigate("/dashboard");
+        } else {
+          toast.error("No account found");
         }
       }
     } catch (error) {

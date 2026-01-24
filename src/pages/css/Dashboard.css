@@ -308,6 +308,32 @@ tr:last-child td {
   border-radius: 20px;
 }
 
+/* Add to ManageUsers.css */
+
+.disabled-input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 14px;
+  color: #6b7280;
+  background: #f9fafb;
+  cursor: not-allowed;
+}
+
+.helper-text {
+  font-size: 12px;
+  color: #6b7280;
+  margin-top: 4px;
+  margin-bottom: 0;
+  font-style: italic;
+}
+
+/* Remove role column selector from modal form */
+.user-form .form-group:has(.disabled-input) {
+  margin-bottom: 8px;
+}
+
 /* Responsive Design */
 @media (max-width: 900px) {
   .dashboard-container {

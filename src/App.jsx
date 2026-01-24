@@ -14,6 +14,7 @@ import ProductProvider from "./contexts/ProductProvider";
 import AdminSignup from "./pages/AdminSignup";
 import AdminLogin from "./pages/AdminLogin";
 import Admin from "./pages/Admin";
+import ManageUsers from "./pages/ManageUsers";
 
 const AppContent = () => {
   // const location = useLocation();
@@ -64,6 +65,7 @@ const AppContent = () => {
             <Route path="/application"  element={<Applications />}/>
             <Route path="/certificate"  element={<Certificate />}/>
             <Route path="/dashboard"  element={<Dashboard />}/>
+            <Route path="/manage-users"  element={<ManageUsers />}/>
             <Route path="/verify/:token"  element={<VerifyAccount />}/>
 
             {/* <Route element={<ProtectedRoutes requiredRole="seller" />}>

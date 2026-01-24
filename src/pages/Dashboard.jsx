@@ -70,7 +70,7 @@ function Dashboard() {
                     </button>
                     </div>
                 </div> */}
-                <DashboardHeader /> 
+                <DashboardHeader  title='Dashboard'/> 
 
                 {/* Quick Actions */}
                 <div className="quick-actions">

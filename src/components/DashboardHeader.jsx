@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import './css/DashboardHeader.css'
 import { useAuth } from "../hooks/useAuth";
 
-const DashboardHeader = () => {
+const DashboardHeader = ({title}) => {
   const [openMenu, setOpenMenu] = useState(false);
 
   const toggleMenu = () => setOpenMenu((prev) => !prev);
@@ -25,7 +25,7 @@ const DashboardHeader = () => {
 
   return (
     <div className="dashboard-header">
-      <h1>Dashboard</h1>
+      <h1>{title}</h1>
       <div className="header-actions">
         <button className="notification-btn">
           <i className="fas fa-bell"></i>

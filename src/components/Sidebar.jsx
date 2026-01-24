@@ -117,7 +117,7 @@ const Sidebar = ({activeD, activeApp, activeP, activeCert}) => {
               </button>            
             </li>
             <li>
-              <button onClick={() =>{ if (isMobile) toggleSidebar();  navigate('/manage-user')}} className="dropdown-btn" title="Manage Users">
+              <button onClick={() =>{ if (isMobile) toggleSidebar();  navigate('/manage-users')}} className="dropdown-btn" title="Manage Users">
                 <i className="fas fa-users"></i>
                 {!isCollapsed && <span>Manage Users</span>}
               </button>
