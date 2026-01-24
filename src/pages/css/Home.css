@@ -2,6 +2,7 @@
   font-family: Arial, sans-serif;
   background: #f8f9fa;
   min-height: 100vh;
+  width: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -13,7 +14,7 @@
   justify-content: space-between;
   /* align-items: flex-start; */
   /* margin: 50px; */
-  gap: 100px;
+  gap: 200px;
 
   padding-top: 50px;
 }
@@ -66,12 +67,12 @@
     flex-direction: column;
     justify-content: center;
     align-items: left;
-
+    gap: 60px;
   }
 
   .app-container{
-    width: 100%;
-    padding: 10px;
+    /* width: 100%; */
+    padding: 8px;
   }
   .welcome img{
     width: 200px; 
@@ -82,12 +83,13 @@
   .welcome h1{
     max-width: 300px;
   } */
+   
 }
 
 @media (max-width: 576px) {
     .app-container{
       /* width: 100%; */
-      padding: 0px;
+      /* padding: 10px; */
       padding-left: 6px;
     }
 }

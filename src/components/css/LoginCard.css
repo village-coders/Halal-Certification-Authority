@@ -67,13 +67,20 @@
 
 @media screen and (max-width: 768px){
   .login-card{
-    max-width: 350px;
+    max-width: 400px;
     width: 100%;
   }
 }
 
-@media screen and (max-width: 396px){
+@media screen and (max-width: 596px){
   .login-card{
-    width: 250px;
+    max-width: 350px;
+    width: 100%;
+  }
+}
+@media screen and (max-width: 400px){
+  .login-card{
+    max-width: 250px;
+    width: 100%;
   }
 }
