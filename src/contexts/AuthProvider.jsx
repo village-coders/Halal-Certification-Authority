@@ -29,12 +29,12 @@ const AuthProvider = ({ children }) => {
         if (payload.exp && payload.exp < currentTime) {
           localStorage.removeItem("accessToken");
           toast.error("Session expired. Please log in again.");
-          navigate("/signin");
+          navigate("/");
         }
       } catch (err) {
         console.error("Token parsing error", err);
         localStorage.removeItem("accessToken");
-        navigate("/signin");
+        navigate("/");
       }
     }, 60000); // check every 60 seconds
 
@@ -86,18 +86,12 @@ const AuthProvider = ({ children }) => {
         localStorage.setItem("user", JSON.stringify(user));
         if (user.role === "admin") {
           navigate("/admin");
-        } else if(user.role === 'customer') {
+        } else if(user.role === 'company') {
           navigate("/dashboard");
         }
       }
     } catch (error) {
-      if (error.response?.status === 403) {
-        toast.error(error.response.data.message);
-      } else if (error.response?.status === 401) {
-        toast.error("Unauthorized. Please login again.");
-      } else {
-        toast.error("Something went wrong. Try again.");
-      }
+        console.log(error);        
     } finally {
       setSigningIn(false);
     }
