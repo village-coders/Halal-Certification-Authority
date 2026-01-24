@@ -3,6 +3,7 @@ import "./css/RegisterForm.css";
 import { useState, useEffect } from "react";
 import { FaBuilding, FaUser, FaLock } from "react-icons/fa";
 import { toast } from "sonner";
+import logo from "../assets/hcaLogo.webp"
 
 function RegisterForm() {
   const countries = [
@@ -120,6 +121,7 @@ function RegisterForm() {
   return (
     <form className="modern-form" onSubmit={handleSubmit}>
       <div className="register-heading">
+        <img style={{width: "300px"}} src={logo} alt="Hca logo" />
         <h2>Register your Company</h2>
         <p>To enjoy our service</p>
       </div>

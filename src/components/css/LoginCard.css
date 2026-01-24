@@ -61,3 +61,10 @@
 .links a:hover {
   text-decoration: underline;
 }
+
+
+@media screen and (max-width: 768px){
+  .login-card{
+    width: 450px;
+  }
+}
