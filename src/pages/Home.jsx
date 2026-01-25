@@ -662,7 +662,7 @@ const Home = () => {
 
     try {
       await auth.signin(loginData, navigate);
-      toast.success('Login successful!');
+
     } catch (error) {
       toast.error(`Login failed: ${error.message || 'Invalid credentials'}`);
     } finally {
@@ -902,23 +902,8 @@ const Home = () => {
                 </ul>
               </div>
               
-              <div style={{ ...styles.authLinks, marginTop: '20px', justifyContent: 'flex-start', gap: '20px' }}>
-                <a 
-                  style={styles.authLink}
-                  onClick={() => handleForgotPassword()}
-                  onMouseEnter={(e) => Object.assign(e.target.style, styles.authLinkHover)}
-                  onMouseLeave={(e) => Object.assign(e.target.style, styles.authLink)}
-                >
-                  Forgot password?
-                </a>
-                <a 
-                  style={styles.authLink}
-                  onClick={() => handleResendActivation()}
-                  onMouseEnter={(e) => Object.assign(e.target.style, styles.authLinkHover)}
-                  onMouseLeave={(e) => Object.assign(e.target.style, styles.authLink)}
-                >
-                  Resend Activation Email?
-                </a>
+              <div style={{ ...styles.authLinks, marginTop: '20px', justifyContent: 'center', alignItems: "Center", gap: '20px' }}>
+                <a href='https://theyoungpioneers.com/' style={{textAlign: "center", color: "#ffc107"}}>Developed by TheYoungPioneers</a>
               </div>
             </div>
           </div>
@@ -1251,7 +1236,9 @@ const Home = () => {
             </div>
           </div>
         </div>
+
       </div>
+      
     </>
   );
 };

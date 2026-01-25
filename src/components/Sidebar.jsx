@@ -27,7 +27,9 @@ const Sidebar = ({activeD, activeApp, activeP, activeCert, activeUse}) => {
   }, []);
 
   useEffect(() => {
-    setIsCollapsed(true);
+    if(isMobile){
+      setIsCollapsed(true);
+    }
   }, []);
 
 

@@ -126,7 +126,7 @@ function Applications() {
   const fetchApplications = async () => {
     try {
       setLoading(true);
-      const response = await axios.get(`${API_BASE_URL}/applications`);
+      const response = await axios.get(`${API_BASE_URL}/applications?companyId=${user.registrationNo}`);
       setApplications(response.data);
       
       setError("");
@@ -208,19 +208,25 @@ function Applications() {
       setLoading(true);
       
       // For demo - generate new application from form data
-      const newApp = {
-        _id: Date.now().toString(),
-        applicationNumber: `APP-${Date.now().toString().slice(-8)}`,
-        category: formData.category,
-        product: formData.product,
-        description: formData.description,
-        status: "Submitted",
-        requestedDate: formData.requestedDate,
-        createdAt: new Date().toISOString()
-      };
+      // const newApp = {
+      //   _id: Date.now().toString(),
+      //   applicationNumber: `APP-${Date.now().toString().slice(-8)}`,
+      //   category: formData.category,
+      //   product: formData.product,
+      //   description: formData.description,
+      //   status: "Submitted",
+      //   requestedDate: formData.requestedDate,
+      //   createdAt: new Date().toISOString()
+      // };
       
       // In real app, use:
-      const response = await axios.post(`${API_BASE_URL}/applications`, formData);
+      const response = await axios.post(`${API_BASE_URL}/applications`, formData, {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${JSON.parse(localStorage.getItem("accessToken"))}`
+        }
+      });
+
       fetchApplications()
       
       // setApplications(prev => [newApp, ...prev]);
@@ -231,6 +237,8 @@ function Applications() {
         setSuccess("");
       }, 2000);
     } catch (err) {
+      console.log(err);
+      
       setError("Failed to submit application. Please try again.");
     } finally {
       setLoading(false);
@@ -245,7 +253,7 @@ function Applications() {
       const selectedApp = applications.find(app => app._id === renewalData.existingApplication);
       
       const newApp = {
-        _id: Date.now().toString(),
+        // _id: Date.now().toString(),
         applicationNumber: `REN-${Date.now().toString().slice(-8)}`,
         category: "Renewal Application",
         product: selectedApp.product,

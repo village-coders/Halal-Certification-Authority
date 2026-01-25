@@ -80,7 +80,8 @@ const AuthProvider = ({ children }) => {
     try {
       const res = await axios.post(`${baseUrl}/auth/login`, formData);
       const { message, accessToken, status, user } = res.data;
-
+      console.log(res.data);
+      
       if (status === "success") {
         toast.success(message);
         localStorage.setItem("accessToken", JSON.stringify(accessToken));
@@ -89,10 +90,12 @@ const AuthProvider = ({ children }) => {
           navigate("/dashboard");
         } else {
           toast.error("No account found");
+          // navigate("/");
         }
       }
     } catch (error) {
-        console.log(error);        
+      console.log(error);
+      toast.error(error.response?.data?.message || "Login failed");
     } finally {
       setSigningIn(false);
     }
