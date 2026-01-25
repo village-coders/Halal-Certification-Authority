@@ -4,11 +4,15 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { toast } from "sonner";
 import { ProductContext } from "./productContext";
+import { useAuth } from "../hooks/useAuth";
 
 const ProductProvider = ({ children }) => {
   const navigate = useNavigate();
   const [products, setProducts] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [errors, setErrors] = useState("");
+
+
 
   const baseUrl = import.meta.env.VITE_BASE_URL;
   const token = JSON.parse(localStorage.getItem("accessToken"));
@@ -51,12 +55,13 @@ const ProductProvider = ({ children }) => {
 
       const res = await axios.get(`${baseUrl}/products`, {
         headers: {
-          Authorization: `Bearer ${token}`,
-        },
+          Authorization: `Bearer ${token}`
+        }
       });
       
 
-      setProducts(res.data.products); // ✅ now your user is available everywhere
+      setProducts(res.data.products); // ✅ now your product is available everywhere
+      setErrors("");
     } catch (error) {
       console.error("Failed to fetch user:", error);
       setProducts(null);
@@ -64,6 +69,7 @@ const ProductProvider = ({ children }) => {
       setIsLoading(false);
     }
   };
+
   const deleteProduct = async (id) => {
     try {
       if (!token) return;
@@ -87,7 +93,8 @@ const ProductProvider = ({ children }) => {
     setIsLoading,
     fetchProducts,
     isLoading,
-    deleteProduct
+    deleteProduct,
+    errors
   };
 
   return <ProductContext.Provider value={value}>{children}</ProductContext.Provider>;

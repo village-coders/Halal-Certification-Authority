@@ -63,8 +63,8 @@ const AppContent = () => {
             <Route path="/admin-signin"  element={<AdminLogin />}/>
             <Route path="/admin"  element={<Admin />}/>
             <Route path="/products"  element={<Product />}/>
-            <Route path="/application"  element={<Applications />}/>
-            <Route path="/certificate"  element={<Certificate />}/>
+            <Route path="/applications"  element={<Applications />}/>
+            <Route path="/certificates"  element={<Certificate />}/>
             <Route path="/dashboard"  element={<Dashboard />}/>
             <Route path="/manage-users"  element={<ManageUsers />}/>
             <Route path="/verify/:token"  element={<VerifyAccount />}/>

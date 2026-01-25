@@ -430,11 +430,19 @@ nav a:hover,
   
   .sidebar.mobile:not(.collapsed) .sidebar-nav {
     display: block;
+    margin-top: 20px;
   }
   
   /* Hide tooltips on mobile */
   .sidebar.mobile.collapsed nav ul li .dropdown-btn::after,
   .sidebar.mobile.collapsed nav ul li a::after {
     display: none;
+  }
+
+  .sidebar-footer{
+    display: flex;
+    align-items: flex-end;
+    justify-self: start;
+    margin-top: 360px;
   }
 }

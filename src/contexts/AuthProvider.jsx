@@ -68,7 +68,7 @@ const AuthProvider = ({ children }) => {
       setUser(res.data.user); // ✅ now your user is available everywhere
     } catch (error) {
       console.error("Failed to fetch user:", error);
-      setUser(null);
+      // setUser(null);
     } finally{
       setUserLoading(false);
     }

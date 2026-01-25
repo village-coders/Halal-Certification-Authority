@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
+import logo from '../assets/hcaLogo.webp'
 import { useAuth } from '../hooks/useAuth'; // Adjust the path to your useAuth hook
 
 const Home = () => {
@@ -35,6 +36,7 @@ const Home = () => {
 
   // Styles
   const styles = {
+
     root: {
       background: 'linear-gradient(135deg, #e6f7ff 0%, #f0f9eb 100%)',
       color: '#2d3e50',
@@ -867,6 +869,9 @@ const Home = () => {
           <div style={styles.welcomeSection}>
             <div style={styles.welcomeSectionBefore}></div>
             <div style={styles.welcomeContent}>
+              <a target='blank' href="https://halalcert.vercel.app/">
+                <img width={350} src={logo} alt="HCA logo" />
+              </a>
               <h1 style={styles.welcomeTitle}>Welcome to HCA Certification Portal</h1>
               <p style={styles.welcomeText}>
                 Register, apply, submit, track the progress of application and download your certificate through the HCA certification portal.
@@ -876,7 +881,7 @@ const Home = () => {
                 <h3 style={styles.userGuideTitle}>User's guide</h3>
                 <button
                   style={styles.createAccountBtn}
-                  onClick={() => setActiveTab('register')}
+                  onClick={() => {activeTab === "login" ? setActiveTab('register') : setActiveTab('login')}}
                   onMouseEnter={(e) => {
                     e.target.style.transform = 'translateY(-3px)';
                     e.target.style.boxShadow = '0 6px 15px rgba(0, 0, 0, 0.2)';
@@ -886,7 +891,7 @@ const Home = () => {
                     e.target.style.boxShadow = '0 4px 10px rgba(0, 0, 0, 0.15)';
                   }}
                 >
-                  Click Here To Create Account
+                  {activeTab === "login" ? "Click Here To Create Account" : "Click Here To Login" }
                 </button>
               </div>
               

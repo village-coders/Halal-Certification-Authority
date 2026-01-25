@@ -1,47 +1,14 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import "./css/Applications.css";
 import Sidebar from "../components/Sidebar";
 import axios from "axios";
 import { useAuth } from "../hooks/useAuth";
+import { useProducts } from "../hooks/useProducts";
 
 const API_BASE_URL = import.meta.env.VITE_BASE_URL;
 
-// Sample data for initial display
-const initialApplications = [
-  {
-    _id: "1",
-    applicationNumber: "APP-04291234",
-    category: "Annual Certification",
-    product: "Food Processing Equipment",
-    description: "Annual certification renewal",
-    status: "Submitted",
-    requestedDate: "2024-01-15",
-    createdAt: "2024-01-10"
-  },
-  {
-    _id: "2",
-    applicationNumber: "REN-12098765",
-    category: "Renewal Application",
-    product: "Medical Devices",
-    description: "Renewal of certification",
-    status: "Approved",
-    requestedDate: "2024-01-20",
-    createdAt: "2024-01-05"
-  },
-  {
-    _id: "3",
-    applicationNumber: "APP-01152345",
-    category: "Initial Certification",
-    product: "Electrical Components",
-    description: "New product certification",
-    status: "In-Progress",
-    requestedDate: "2024-01-25",
-    createdAt: "2024-01-01"
-  }
-];
-
 function Applications() {
-  const [applications, setApplications] = useState(initialApplications);
+  const [applications, setApplications] = useState([]);
   const [searchNumber, setSearchNumber] = useState("");
   const [searchDate, setSearchDate] = useState("");
   const [isMobile, setIsMobile] = useState(window.innerWidth < 900);
@@ -51,7 +18,6 @@ function Applications() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
-  const [products, setProducts] = useState([])
 
   const [formData, setFormData] = useState({
     category: "",
@@ -76,36 +42,48 @@ function Applications() {
     "Renewal Application"
   ];
 
-  // const products = [
-  //   "Food Processing Equipment",
-  //   "Medical Devices",
-  //   "Electrical Components",
-  //   "Construction Materials",
-  //   "Automotive Parts",
-  //   "Consumer Electronics"
-  // ];
+  const { user, fetchUser } = useAuth();
+  const { products, fetchProducts, isLoading: productsLoading } = useProducts();
 
-  const {user} = useAuth()
+  useEffect(() => {
+    fetchUser();
+  }, []);
 
+  // Memoized fetchApplications to prevent unnecessary recreations
+  const fetchApplications = useCallback(async () => {
+    // if (!user?.registrationNo) {
+    //   setError("User registration number not found");
+    //   return;
+    // }
 
-  const fetchProducts = async () => {
     try {
-      const companyId = user.registrationNo;
-      const token = JSON.parse(localStorage.getItem("accessToken"));
-      const response = await axios.get(`${API_BASE_URL}/products?companyId=${companyId}`, {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      });
-      setProducts(response.data.products);
-      // console.log(response.data.products);
-      
+      setLoading(true);
       setError("");
-    } catch (err) {
-      console.log(err);
-    }
-  };
 
+      const token = JSON.parse(localStorage.getItem("accessToken"));
+      const response = await axios.get(
+        `${API_BASE_URL}/applications`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        }
+      );
+      
+      if (response.data && Array.isArray(response.data)) {
+        setApplications(response.data);
+      } else {
+        console.error("Unexpected response format:", response.data);
+        setError("Failed to load applications. Invalid data format.");
+      }
+    } catch (err) {
+      console.error("Error fetching applications:", err);
+      const errorMessage = err.response?.data?.message || err.message || "Failed to fetch applications";
+      setError(errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
     const handleResize = () => {
@@ -116,30 +94,19 @@ function Applications() {
     };
 
     window.addEventListener("resize", handleResize);
-    
-    fetchApplications();
-    fetchProducts();
-
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  const fetchApplications = async () => {
-    try {
-      setLoading(true);
-      const response = await axios.get(`${API_BASE_URL}/applications?companyId=${user.registrationNo}`);
-      setApplications(response.data);
-      
-      setError("");
-    } catch (err) {
-      console.log(err);
-    } finally {
-      setLoading(false);
-    }
-  };
+  useEffect(() => {
+    // if (user?.registrationNo) {
+      fetchApplications();
+      fetchProducts();
+    // }
+  }, []);
 
   const filteredApplications = applications.filter(app =>
-    app.applicationNumber.toLowerCase().includes(searchNumber.toLowerCase()) &&
-    (searchDate ? app.createdAt.includes(searchDate) : true)
+    app.applicationNumber?.toLowerCase().includes(searchNumber.toLowerCase()) &&
+    (searchDate ? app.createdAt?.includes(searchDate) : true)
   );
 
   const handleNewApplication = () => {
@@ -204,42 +171,53 @@ function Applications() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    if (!user?.registrationNo) {
+      setError("User not authenticated. Please log in again.");
+      return;
+    }
+
     try {
       setLoading(true);
-      
-      // For demo - generate new application from form data
-      // const newApp = {
-      //   _id: Date.now().toString(),
-      //   applicationNumber: `APP-${Date.now().toString().slice(-8)}`,
-      //   category: formData.category,
-      //   product: formData.product,
-      //   description: formData.description,
-      //   status: "Submitted",
-      //   requestedDate: formData.requestedDate,
-      //   createdAt: new Date().toISOString()
-      // };
-      
-      // In real app, use:
-      const response = await axios.post(`${API_BASE_URL}/applications`, formData, {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${JSON.parse(localStorage.getItem("accessToken"))}`
-        }
-      });
+      setError("");
+      setSuccess("");
 
-      fetchApplications()
+      const token = JSON.parse(localStorage.getItem("accessToken"));
       
-      // setApplications(prev => [newApp, ...prev]);
-      setSuccess("Application submitted successfully!");
-      
-      setTimeout(() => {
-        handleCloseForm();
-        setSuccess("");
-      }, 2000);
+      // Prepare the application data
+      const applicationData = {
+        ...formData,
+        companyId: user.registrationNo,
+        status: "Submitted",
+        // applicationNumber: `APP-${Date.now().toString().slice(-8)}`
+      };
+
+      const response = await axios.post(
+        `${API_BASE_URL}/applications`,
+        applicationData,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`
+          }
+        }
+      );
+
+      if (response.data && response.data._id) {
+        setSuccess("Application submitted successfully!");
+        fetchApplications(); // Refresh the applications list
+        
+        setTimeout(() => {
+          handleCloseForm();
+        }, 2000);
+      } else {
+        throw new Error("Invalid response from server");
+      }
     } catch (err) {
-      console.log(err);
-      
-      setError("Failed to submit application. Please try again.");
+      handleCloseForm();
+      const errorMessage = err.response?.data?.message || err.message || "Failed to submit application";
+      setError(errorMessage);
+      console.error("Error submitting application:", err);
     } finally {
       setLoading(false);
     }
@@ -247,39 +225,62 @@ function Applications() {
 
   const handleRenewalSubmit = async (e) => {
     e.preventDefault();
+    
+    if (!user?.registrationNo) {
+      setError("User not authenticated. Please log in again.");
+      return;
+    }
+
     try {
       setLoading(true);
-      
+      setError("");
+      setSuccess("");
+
       const selectedApp = applications.find(app => app._id === renewalData.existingApplication);
       
-      const newApp = {
-        // _id: Date.now().toString(),
-        applicationNumber: `REN-${Date.now().toString().slice(-8)}`,
+      if (!selectedApp) {
+        throw new Error("Selected application not found");
+      }
+
+      const token = JSON.parse(localStorage.getItem("accessToken"));
+      
+      // Prepare renewal data
+      const renewalApplicationData = {
         category: "Renewal Application",
         product: selectedApp.product,
         description: `Renewal of ${selectedApp.applicationNumber}. Reason: ${renewalData.reason}`,
-        status: "Submitted",
         requestedDate: renewalData.renewalDate,
-        createdAt: new Date().toISOString()
+        companyId: user.registrationNo,
+        status: "Submitted",
+        applicationNumber: `REN-${Date.now().toString().slice(-8)}`,
+        originalApplicationId: selectedApp._id
       };
 
-      const response = axios.post(`${API_BASE_URL}/eligible/renewal`, newApp);
+      const response = await axios.post(
+        `${API_BASE_URL}/applications`,
+        renewalApplicationData,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`
+          }
+        }
+      );
 
-      if (response.status !== 200) {
-        throw new Error("Failed to submit renewal application.");
-      }else{
-        fetchApplications();
-        // setApplications(prev => [newApp, ...prev]);
+      if (response.data && response.data._id) {
         setSuccess("Renewal application submitted successfully!");
+        fetchApplications(); // Refresh the applications list
+        
+        setTimeout(() => {
+          handleCloseForm();
+        }, 2000);
+      } else {
+        throw new Error("Invalid response from server");
       }
-
-      
-      setTimeout(() => {
-        handleCloseForm();
-        setSuccess("");
-      }, 1000);
     } catch (err) {
-      setError("Failed to submit renewal application. Please try again.");
+      console.error("Error submitting renewal:", err);
+      const errorMessage = err.response?.data?.message || err.message || "Failed to submit renewal application";
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -298,11 +299,27 @@ function Applications() {
   };
 
   const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    });
+    if (!dateString) return "N/A";
+    
+    try {
+      const date = new Date(dateString);
+      return isNaN(date.getTime()) 
+        ? "Invalid Date" 
+        : date.toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric'
+          });
+    } catch (err) {
+      console.error("Error formatting date:", err);
+      return "Invalid Date";
+    }
+  };
+
+  // Fix for clear button
+  const handleClearFilters = () => {
+    setSearchNumber("");
+    setSearchDate("");
   };
 
   return (
@@ -313,7 +330,11 @@ function Applications() {
           <div className="header">
             <h2>Manage Applications</h2>
             <div className="header-actions">
-              <button className="renew-btn" onClick={handleRenewApplication}>
+              <button 
+                className="renew-btn" 
+                onClick={handleRenewApplication}
+                disabled={applications.filter(app => app.status === "Approved" || app.status === "Certified").length === 0}
+              >
                 <i className="fas fa-sync-alt"></i> Renew
               </button>
               <button className="new-btn" onClick={handleNewApplication}>
@@ -353,8 +374,11 @@ function Applications() {
                 onChange={(e) => setSearchDate(e.target.value)}
               />
             </div>
-            <button className="search-btn">
-              <i className="fas fa-search"></i> Search
+            <button 
+              className="search-btn"
+              onClick={handleClearFilters}
+            >
+              <i className="fas fa-times"></i> Clear
             </button>
           </div>
 
@@ -363,15 +387,19 @@ function Applications() {
             <div className="table-header">
               <h3>Applications ({filteredApplications.length})</h3>
               <div className="table-actions">
-                <button className="action-btn" onClick={fetchApplications}>
-                  <i className="fas fa-sync-alt"></i>
+                <button 
+                  className="action-btn" 
+                  onClick={fetchApplications}
+                  disabled={loading}
+                >
+                  <i className={`fas fa-sync-alt ${loading ? 'fa-spin' : ''}`}></i>
                 </button>
               </div>
             </div>
             
             {loading ? (
               <div className="loading">
-                <i className="fas fa-spinner fa-spin"></i> Loading...
+                <i className="fas fa-spinner fa-spin"></i> Loading applications...
               </div>
             ) : (
               <table className="applications-table">
@@ -389,10 +417,10 @@ function Applications() {
                   {filteredApplications.map((app) => (
                     <tr key={app._id}>
                       <td>
-                        <span className="app-number">{app.applicationNumber}</span>
+                        <span className="app-number">{app.applicationNumber || "N/A"}</span>
                       </td>
-                      <td>{app.category}</td>
-                      <td>{app.product}</td>
+                      <td>{app.category || "N/A"}</td>
+                      <td>{app.product || "N/A"}</td>
                       <td>
                         <span 
                           className="status-badge"
@@ -401,7 +429,7 @@ function Applications() {
                             color: getStatusColor(app.status)
                           }}
                         >
-                          {app.status}
+                          {app.status || "Unknown"}
                         </span>
                       </td>
                       <td>{formatDate(app.createdAt)}</td>
@@ -415,7 +443,7 @@ function Applications() {
                   {filteredApplications.length === 0 && (
                     <tr>
                       <td colSpan="6" className="no-data">
-                        No applications found
+                        {applications.length === 0 ? "No applications found" : "No matching applications"}
                       </td>
                     </tr>
                   )}
@@ -431,7 +459,11 @@ function Applications() {
             <div className="modal-content">
               <div className="modal-header">
                 <h3>New Application</h3>
-                <button className="close-btn" onClick={handleCloseForm}>
+                <button 
+                  className="close-btn" 
+                  onClick={handleCloseForm}
+                  disabled={loading}
+                >
                   <i className="fas fa-times"></i>
                 </button>
               </div>
@@ -444,6 +476,7 @@ function Applications() {
                     value={formData.category}
                     onChange={handleInputChange}
                     required
+                    disabled={loading}
                   >
                     <option value="">Select Category</option>
                     {applicationCategories.map((cat, i) => (
@@ -459,11 +492,18 @@ function Applications() {
                     value={formData.product}
                     onChange={handleInputChange}
                     required
+                    disabled={loading || productsLoading}
                   >
                     <option value="">Select Product</option>
-                    {products.map((prod, i) => (
-                      <option key={prod._id} value={prod.name}>{prod.name}</option>
-                    ))}
+                    {productsLoading ? (
+                      <option value="" disabled>Loading products...</option>
+                    ) : products.length > 0 ? (
+                      products.map((prod) => (
+                        <option key={prod._id} value={prod.name }>{prod.name}</option>
+                      ))
+                    ) : (
+                      <option value="" disabled>No products found</option>
+                    )}
                   </select>
                 </div>
 
@@ -475,6 +515,7 @@ function Applications() {
                     value={formData.requestedDate}
                     onChange={handleInputChange}
                     required
+                    disabled={loading}
                   />
                 </div>
 
@@ -486,15 +527,25 @@ function Applications() {
                     onChange={handleInputChange}
                     rows="3"
                     placeholder="Additional details..."
+                    disabled={loading}
                   />
                 </div>
 
                 <div className="form-actions">
-                  <button type="button" className="btn btn-cancel" onClick={handleCloseForm}>
+                  <button 
+                    type="button" 
+                    className="btn btn-cancel" 
+                    onClick={handleCloseForm}
+                    disabled={loading}
+                  >
                     Cancel
                   </button>
-                  <button type="submit" className="btn btn-submit" disabled={loading}>
-                    {loading ? 'Submitting...' : 'Submit'}
+                  <button 
+                    type="submit" 
+                    className="btn btn-submit" 
+                    disabled={loading || !formData.category || !formData.product}
+                  >
+                    {loading ? 'Submitting...' : 'Submit Application'}
                   </button>
                 </div>
               </form>
@@ -508,7 +559,11 @@ function Applications() {
             <div className="modal-content">
               <div className="modal-header">
                 <h3>Renew Application</h3>
-                <button className="close-btn" onClick={handleCloseForm}>
+                <button 
+                  className="close-btn" 
+                  onClick={handleCloseForm}
+                  disabled={loading}
+                >
                   <i className="fas fa-times"></i>
                 </button>
               </div>
@@ -521,6 +576,7 @@ function Applications() {
                     value={renewalData.existingApplication}
                     onChange={handleRenewalInputChange}
                     required
+                    disabled={loading}
                   >
                     <option value="">Choose application</option>
                     {applications
@@ -531,6 +587,9 @@ function Applications() {
                         </option>
                       ))
                     }
+                    {applications.filter(app => app.status === "Approved" || app.status === "Certified").length === 0 && (
+                      <option value="" disabled>No eligible applications found</option>
+                    )}
                   </select>
                 </div>
 
@@ -542,6 +601,7 @@ function Applications() {
                     value={renewalData.renewalDate}
                     onChange={handleRenewalInputChange}
                     required
+                    disabled={loading}
                   />
                 </div>
 
@@ -552,6 +612,7 @@ function Applications() {
                     value={renewalData.reason}
                     onChange={handleRenewalInputChange}
                     required
+                    disabled={loading}
                   >
                     <option value="">Select reason</option>
                     <option value="continuing_operations">Continuing Operations</option>
@@ -568,8 +629,9 @@ function Applications() {
                       type="file"
                       multiple
                       onChange={handleFileUpload}
+                      disabled={loading}
                     />
-                    <button type="button" className="btn btn-upload">
+                    <button type="button" className="btn btn-upload" disabled={loading}>
                       <i className="fas fa-upload"></i> Upload Files
                     </button>
                   </div>
@@ -582,6 +644,7 @@ function Applications() {
                             type="button" 
                             className="remove-file"
                             onClick={() => removeAttachment(i)}
+                            disabled={loading}
                           >
                             <i className="fas fa-times"></i>
                           </button>
@@ -592,10 +655,19 @@ function Applications() {
                 </div>
 
                 <div className="form-actions">
-                  <button type="button" className="btn btn-cancel" onClick={handleCloseForm}>
+                  <button 
+                    type="button" 
+                    className="btn btn-cancel" 
+                    onClick={handleCloseForm}
+                    disabled={loading}
+                  >
                     Cancel
                   </button>
-                  <button type="submit" className="btn btn-submit" disabled={loading}>
+                  <button 
+                    type="submit" 
+                    className="btn btn-submit" 
+                    disabled={loading || !renewalData.existingApplication || !renewalData.reason}
+                  >
                     {loading ? 'Processing...' : 'Submit Renewal'}
                   </button>
                 </div>

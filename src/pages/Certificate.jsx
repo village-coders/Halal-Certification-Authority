@@ -6,53 +6,17 @@ import { useAuth } from "../hooks/useAuth";
 
 const API_BASE_URL = import.meta.env.VITE_BASE_URL;
 
-// Sample data for initial display
-const initialCertificates = [
-  {
-    _id: "1",
-    certificateNumber: "CERT-2024-001",
-    certificateType: "Food Safety Certification",
-    standard: "ISO 22000:2018",
-    status: "Active",
-    product: "Food Processing Equipment",
-    issueDate: "2024-05-15",
-    expiryDate: "2025-05-14",
-    createdAt: "2024-05-15"
-  },
-  {
-    _id: "2",
-    certificateNumber: "CERT-2024-002",
-    certificateType: "Quality Management System",
-    standard: "ISO 9001:2015",
-    status: "Active",
-    product: "Medical Devices",
-    issueDate: "2024-04-20",
-    expiryDate: "2025-04-19",
-    createdAt: "2024-04-20"
-  },
-  {
-    _id: "3",
-    certificateNumber: "CERT-2024-003",
-    certificateType: "Environmental Management",
-    standard: "ISO 14001:2015",
-    status: "Expiring Soon",
-    product: "Electrical Components",
-    issueDate: "2023-12-10",
-    expiryDate: "2024-12-09",
-    createdAt: "2023-12-10"
-  }
-];
-
 function Certificate() {
-  const [certificates, setCertificates] = useState(initialCertificates);
+  const [certificates, setCertificates] = useState([]);
   const [searchNumber, setSearchNumber] = useState("");
   const [searchDate, setSearchDate] = useState("");
   const [isMobile, setIsMobile] = useState(window.innerWidth < 900);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [selectedCertificate, setSelectedCertificate] = useState(null);
   const [showCertificateModal, setShowCertificateModal] = useState(false);
+  const [downloading, setDownloading] = useState(false);
 
   const certificateCategories = [
     "Food Safety Certification",
@@ -74,7 +38,7 @@ function Certificate() {
     "FSSC 22000"
   ];
 
-  const { user } = useAuth();
+  // const { user } = useAuth();
 
   useEffect(() => {
     const handleResize = () => {
@@ -90,20 +54,37 @@ function Certificate() {
   const fetchCertificates = async () => {
     try {
       setLoading(true);
-      const response = await axios.get(`${API_BASE_URL}/certificates`);
-      setCertificates(response.data);
       setError("");
+      
+      // If user is authenticated, fetch their certificates
+
+        const token = JSON.parse(localStorage.getItem("accessToken"));
+        const response = await axios.get(
+          `${API_BASE_URL}/certificates`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`
+            }
+          }
+        );
+        if (response.data && Array.isArray(response.data)) {
+          setCertificates(response.data);
+        } else {
+          setCertificates([]);
+        }
     } catch (err) {
-      console.log("Using sample data - API not connected");
-      setError("Failed to load certificates. Using sample data.");
+      console.error("Error fetching certificates:", err);
+      const errorMessage = err.response?.data?.message || err.message || "Failed to load certificates";
+      setError(errorMessage);
+      setCertificates([]);
     } finally {
       setLoading(false);
     }
   };
 
   const filteredCertificates = certificates.filter(cert =>
-    cert.certificateNumber.toLowerCase().includes(searchNumber.toLowerCase()) &&
-    (searchDate ? cert.issueDate.includes(searchDate) : true)
+    cert.certificateNumber?.toLowerCase().includes(searchNumber.toLowerCase()) &&
+    (searchDate ? cert.issueDate?.includes(searchDate) : true)
   );
 
   const handleViewCertificate = (certificate) => {
@@ -113,11 +94,20 @@ function Certificate() {
 
   const handleDownloadCertificate = async (certificate) => {
     try {
-      setLoading(true);
+      setDownloading(true);
+      setError("");
+      setSuccess("");
+      
       // In real implementation, this would download the PDF
+      const token = JSON.parse(localStorage.getItem("accessToken"));
       const response = await axios.get(
         `${API_BASE_URL}/certificates/${certificate._id}/download`,
-        { responseType: 'blob' }
+        { 
+          responseType: 'blob',
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        }
       );
       
       const url = window.URL.createObjectURL(new Blob([response.data]));
@@ -131,17 +121,17 @@ function Certificate() {
       setSuccess("Certificate downloaded successfully!");
       setTimeout(() => setSuccess(""), 3000);
     } catch (err) {
-      setError("Failed to download certificate.");
+      console.error("Error downloading certificate:", err);
+      setError("Failed to download certificate. The file may not be available yet.");
       setTimeout(() => setError(""), 3000);
     } finally {
-      setLoading(false);
+      setDownloading(false);
     }
   };
 
   const handleRenewCertificate = (certificate) => {
-    alert(`Redirecting to renewal for: ${certificate.certificateNumber}`);
-    // In real app, this would navigate to application renewal page
-    // window.location.href = `/applications/renew?certificateId=${certificate._id}`;
+    // Navigate to applications page with certificate ID for renewal
+    window.location.href = `/applications?renewCertificate=${certificate._id}`;
   };
 
   const getStatusColor = (status) => {
@@ -157,19 +147,41 @@ function Certificate() {
   };
 
   const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    });
+    if (!dateString) return "N/A";
+    
+    try {
+      const date = new Date(dateString);
+      return isNaN(date.getTime()) 
+        ? "Invalid Date" 
+        : date.toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric'
+          });
+    } catch (err) {
+      console.error("Error formatting date:", err);
+      return "Invalid Date";
+    }
   };
 
   const calculateDaysRemaining = (expiryDate) => {
-    const today = new Date();
-    const expiry = new Date(expiryDate);
-    const diffTime = expiry - today;
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    return diffDays;
+    if (!expiryDate) return null;
+    
+    try {
+      const today = new Date();
+      const expiry = new Date(expiryDate);
+      const diffTime = expiry - today;
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      return diffDays;
+    } catch (err) {
+      console.error("Error calculating days remaining:", err);
+      return null;
+    }
+  };
+
+  const handleClearFilters = () => {
+    setSearchNumber("");
+    setSearchDate("");
   };
 
   return (
@@ -180,10 +192,18 @@ function Certificate() {
           <div className="header">
             <h2>Manage Certificates</h2>
             <div className="header-actions">
-              <button className="renew-btn" onClick={() => alert('Export feature coming soon')}>
+              <button 
+                className="renew-btn" 
+                onClick={() => alert('Export feature coming soon')}
+                disabled={loading}
+              >
                 <i className="fas fa-file-export"></i> Export
               </button>
-              <button className="new-btn" onClick={() => alert('Generate certificate feature coming soon')}>
+              <button 
+                className="new-btn" 
+                onClick={() => alert('Generate certificate feature coming soon')}
+                disabled={loading}
+              >
                 <i className="fas fa-file-certificate"></i> Generate
               </button>
             </div>
@@ -210,6 +230,7 @@ function Certificate() {
                 placeholder="Search..."
                 value={searchNumber}
                 onChange={(e) => setSearchNumber(e.target.value)}
+                disabled={loading}
               />
             </div>
             <div className="field">
@@ -218,10 +239,15 @@ function Certificate() {
                 type="date"
                 value={searchDate}
                 onChange={(e) => setSearchDate(e.target.value)}
+                disabled={loading}
               />
             </div>
-            <button className="search-btn">
-              <i className="fas fa-search"></i> Search
+            <button 
+              className="search-btn"
+              onClick={handleClearFilters}
+              disabled={loading}
+            >
+              <i className="fas fa-times"></i> Clear
             </button>
           </div>
 
@@ -230,15 +256,25 @@ function Certificate() {
             <div className="table-header">
               <h3>Certificates ({filteredCertificates.length})</h3>
               <div className="table-actions">
-                <button className="action-btn" onClick={fetchCertificates}>
-                  <i className="fas fa-sync-alt"></i>
+                <button 
+                  className="action-btn" 
+                  onClick={fetchCertificates}
+                  disabled={loading}
+                >
+                  <i className={`fas fa-sync-alt ${loading ? 'fa-spin' : ''}`}></i>
                 </button>
               </div>
             </div>
             
             {loading ? (
               <div className="loading">
-                <i className="fas fa-spinner fa-spin"></i> Loading...
+                <i className="fas fa-spinner fa-spin"></i> Loading certificates...
+              </div>
+            ) : certificates.length === 0 ? (
+              <div className="no-data-message">
+                <i className="fas fa-file-certificate" style={{ fontSize: '48px', color: '#6b7280', marginBottom: '16px' }}></i>
+                <h3>No Certificates Found</h3>
+                <p>You don't have any certificates yet. Submit an application to get certified.</p>
               </div>
             ) : (
               <table className="applications-table">
@@ -256,14 +292,14 @@ function Certificate() {
                 <tbody style={{overflowY: "auto"}}>
                   {filteredCertificates.map((cert) => {
                     const daysRemaining = calculateDaysRemaining(cert.expiryDate);
-                    const isExpiringSoon = daysRemaining <= 30 && daysRemaining > 0;
+                    const isExpiringSoon = daysRemaining !== null && daysRemaining <= 30 && daysRemaining > 0;
                     
                     return (
                       <tr key={cert._id}>
                         <td>
-                          <span className="app-number">{cert.certificateNumber}</span>
+                          <span className="app-number">{cert.certificateNumber || "N/A"}</span>
                         </td>
-                        <td>{cert.certificateType}</td>
+                        <td>{cert.certificateType || "N/A"}</td>
                         <td>
                           <span 
                             className="status-badge"
@@ -275,7 +311,7 @@ function Certificate() {
                               textWrap: "nowrap"
                             }}
                           >
-                            {cert.standard}
+                            {cert.standard || "N/A"}
                           </span>
                         </td>
                         <td>
@@ -289,11 +325,11 @@ function Certificate() {
                               textWrap: "nowrap"
                             }}
                           >
-                            {cert.status}
+                            {cert.status || "Unknown"}
                             {isExpiringSoon && ` (${daysRemaining}d)`}
                           </span>
                         </td>
-                        <td>{cert.product}</td>
+                        <td>{cert.product || "N/A"}</td>
                         <td>{formatDate(cert.expiryDate)}</td>
                         <td>
                           <div className="action-buttons">
@@ -308,6 +344,7 @@ function Certificate() {
                               className="view-btn" 
                               title="Download"
                               onClick={() => handleDownloadCertificate(cert)}
+                              disabled={downloading}
                             >
                               <i className="fas fa-download"></i>
                             </button>
@@ -325,10 +362,10 @@ function Certificate() {
                       </tr>
                     );
                   })}
-                  {filteredCertificates.length === 0 && (
+                  {filteredCertificates.length === 0 && certificates.length > 0 && (
                     <tr>
                       <td colSpan="7" className="no-data">
-                        No certificates found
+                        No matching certificates found
                       </td>
                     </tr>
                   )}
@@ -349,6 +386,7 @@ function Certificate() {
                 <button 
                   className="close-btn" 
                   onClick={() => setShowCertificateModal(false)}
+                  disabled={downloading}
                 >
                   <i className="fas fa-times"></i>
                 </button>
@@ -358,15 +396,15 @@ function Certificate() {
                 <div className="info-grid" style={{ marginBottom: '24px' }}>
                   <div className="info-item">
                     <span className="info-label">Certificate Number:</span>
-                    <span className="info-value">{selectedCertificate.certificateNumber}</span>
+                    <span className="info-value">{selectedCertificate.certificateNumber || "N/A"}</span>
                   </div>
                   <div className="info-item">
                     <span className="info-label">Certificate Type:</span>
-                    <span className="info-value">{selectedCertificate.certificateType}</span>
+                    <span className="info-value">{selectedCertificate.certificateType || "N/A"}</span>
                   </div>
                   <div className="info-item">
                     <span className="info-label">Standard:</span>
-                    <span className="info-value">{selectedCertificate.standard}</span>
+                    <span className="info-value">{selectedCertificate.standard || "N/A"}</span>
                   </div>
                   <div className="info-item">
                     <span className="info-label">Status:</span>
@@ -378,13 +416,13 @@ function Certificate() {
                           color: getStatusColor(selectedCertificate.status)
                         }}
                       >
-                        {selectedCertificate.status}
+                        {selectedCertificate.status || "Unknown"}
                       </span>
                     </span>
                   </div>
                   <div className="info-item">
                     <span className="info-label">Product:</span>
-                    <span className="info-value">{selectedCertificate.product}</span>
+                    <span className="info-value">{selectedCertificate.product || "N/A"}</span>
                   </div>
                   <div className="info-item">
                     <span className="info-label">Issue Date:</span>
@@ -430,7 +468,7 @@ function Certificate() {
                   }}>
                     <h3 style={{ color: '#111827', marginBottom: '10px' }}>CERTIFICATE OF COMPLIANCE</h3>
                     <p style={{ color: '#6b7280', marginBottom: '20px' }}>
-                      This certifies that {selectedCertificate.product} complies with {selectedCertificate.standard}
+                      This certifies that {selectedCertificate.product || "the product"} complies with {selectedCertificate.standard || "the standard"}
                     </p>
                     <div style={{ 
                       borderTop: '1px solid #e5e7eb', 
@@ -438,7 +476,7 @@ function Certificate() {
                       marginTop: '20px'
                     }}>
                       <p style={{ fontSize: '12px', color: '#9ca3af' }}>
-                        Certificate Number: {selectedCertificate.certificateNumber}<br />
+                        Certificate Number: {selectedCertificate.certificateNumber || "N/A"}<br />
                         Valid until: {formatDate(selectedCertificate.expiryDate)}
                       </p>
                     </div>
@@ -450,6 +488,7 @@ function Certificate() {
                     type="button" 
                     className="btn btn-cancel" 
                     onClick={() => setShowCertificateModal(false)}
+                    disabled={downloading}
                   >
                     Close
                   </button>
@@ -457,9 +496,9 @@ function Certificate() {
                     type="button" 
                     className="btn btn-submit"
                     onClick={() => handleDownloadCertificate(selectedCertificate)}
-                    disabled={loading}
+                    disabled={downloading}
                   >
-                    {loading ? (
+                    {downloading ? (
                       <>
                         <i className="fas fa-spinner fa-spin"></i> Downloading...
                       </>
@@ -474,6 +513,7 @@ function Certificate() {
                       type="button" 
                       className="btn renew-btn"
                       onClick={() => handleRenewCertificate(selectedCertificate)}
+                      disabled={downloading}
                     >
                       <i className="fas fa-sync-alt"></i> Renew Certificate
                     </button>

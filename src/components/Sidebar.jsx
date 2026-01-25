@@ -30,7 +30,7 @@ const Sidebar = ({activeD, activeApp, activeP, activeCert, activeUse}) => {
     if(isMobile){
       setIsCollapsed(true);
     }
-  }, []);
+  }, [isMobile]);
 
 
   const toggleMenu = (menu) => {
@@ -55,7 +55,7 @@ const Sidebar = ({activeD, activeApp, activeP, activeCert, activeUse}) => {
       <aside className={`sidebar ${isCollapsed ? "collapsed" : ""} ${isMobile ? "mobile" : ""}`}>
         <div className="sidebar-header">
           <div className="side-logo">
-            {(!isCollapsed || isMobile) && <img src={logo} alt="HCA Logo" />}
+            {(!isCollapsed || isMobile) && <a target="blank" href="https://halalcert.vercel.app/"><img src={logo} alt="HCA Logo" /></a>}
             {(!isCollapsed || isMobile) && <h2>HCA Portal</h2>}
           </div>
           <button className="hamburger-btn" onClick={toggleSidebar}>
@@ -66,7 +66,7 @@ const Sidebar = ({activeD, activeApp, activeP, activeCert, activeUse}) => {
         <nav className={`sidebar-nav ${isMobile && !isCollapsed ? "mobile-expanded" : ""}`}>
           <ul>
             <li>
-              <button onClick={() =>{ if (isMobile) toggleSidebar(); setIsCollapsed(true); navigate('/dashboard')}} className={`dropdown-btn ${activeD}`} title="Dashboard">
+              <button onClick={() =>{ if (isMobile) {toggleSidebar(); setIsCollapsed(true);} navigate('/dashboard')}} className={`dropdown-btn ${activeD}`} title="Dashboard">
                 <i className="fas fa-home"></i>
                 {!isCollapsed && <span>Dashboard</span>}
               </button>
@@ -74,7 +74,7 @@ const Sidebar = ({activeD, activeApp, activeP, activeCert, activeUse}) => {
 
             <li className="has-submenu">
               <button
-                onClick={() =>{ if (isMobile) toggleSidebar(); setIsCollapsed(true); navigate('/application')}} className={`dropdown-btn ${openMenu === "applications" ? "active" : ""} ${activeApp}`} title="Applications">
+                onClick={() =>{ if (isMobile) {toggleSidebar(); setIsCollapsed(true);} navigate('/applications')}} className={`dropdown-btn ${openMenu === "applications" ? "active" : ""} ${activeApp}`} title="Applications">
                 <i className="fas fa-file-alt"></i>
                 {!isCollapsed &&  <span>Applications</span>}
               </button>
@@ -88,7 +88,7 @@ const Sidebar = ({activeD, activeApp, activeP, activeCert, activeUse}) => {
             </li>
 
             <li className="has-submenu">
-              <button onClick={() =>{ if (isMobile) toggleSidebar(); setIsCollapsed(true); navigate('/certificate')}} className={`dropdown-btn ${openMenu === "certificate" ? "active" : ""} ${activeCert}`} title="Certificate">
+              <button onClick={() =>{ if (isMobile) {toggleSidebar(); setIsCollapsed(true);} navigate('/certificates')}} className={`dropdown-btn ${openMenu === "certificate" ? "active" : ""} ${activeCert}`} title="Certificate">
                 <i className="fas fa-certificate"></i>
                 {!isCollapsed && <span>Certificate</span>}
               </button>
@@ -101,7 +101,7 @@ const Sidebar = ({activeD, activeApp, activeP, activeCert, activeUse}) => {
             </li>
 
             <li>
-              <button onClick={() =>{ if (isMobile) toggleSidebar(); setIsCollapsed(true); navigate('/products')}} className={`dropdown-btn ${openMenu === "products" ? "active" : ""} ${activeP}`} title="Products">
+              <button onClick={() =>{ if (isMobile) {toggleSidebar(); setIsCollapsed(true);} navigate('/products')}} className={`dropdown-btn ${openMenu === "products" ? "active" : ""} ${activeP}`} title="Products">
                 <i className="fas fa-cube"></i>
                 {!isCollapsed && <span>Products</span>}
               </button>
@@ -113,7 +113,7 @@ const Sidebar = ({activeD, activeApp, activeP, activeCert, activeUse}) => {
               </button>
             </li> */}
             <li>
-              <button onClick={()=> {if (isMobile)  toggleSidebar(); setIsCollapsed(true) }} className="dropdown-btn" title="Messages">
+              <button onClick={()=> {if (isMobile)  {toggleSidebar(); setIsCollapsed(true)} }} className="dropdown-btn" title="Messages">
                 <i className="fas fa-envelope"></i>
                 {!isCollapsed && (
                   <>
@@ -124,7 +124,7 @@ const Sidebar = ({activeD, activeApp, activeP, activeCert, activeUse}) => {
               </button>            
             </li>
             <li>
-              <button onClick={() =>{ if (isMobile) toggleSidebar(); setIsCollapsed(true);  navigate('/manage-users')}} className={`dropdown-btn ${openMenu === "products" ? "active" : ""} ${activeUse}`} title="Manage Users">
+              <button onClick={() =>{ if (isMobile) {toggleSidebar(); setIsCollapsed(true);}  navigate('/manage-users')}} className={`dropdown-btn ${openMenu === "products" ? "active" : ""} ${activeUse}`} title="Manage Users">
                 <i className="fas fa-users"></i>
                 {!isCollapsed && <span>Manage Users</span>}
               </button>
@@ -138,20 +138,20 @@ const Sidebar = ({activeD, activeApp, activeP, activeCert, activeUse}) => {
           </ul>
         </nav>
         
-        {!isMobile && (
+        {/* {!isMobile && ( */}
           <div className="sidebar-footer">
-            {!isCollapsed && (
+            {/* {!isCollapsed && ( */}
               <button
-                onClick={() =>{ if (isMobile) toggleSidebar();  logout()}}
+                onClick={() =>{ if (isMobile) {toggleSidebar();}  logout()}}
                 className="logout-btn dropdown-btn"
                 title="Logout"
               >
                 <i className="fas fa-sign-out-alt"></i>
                 {!isCollapsed && <span>Logout</span>}
               </button>
-            )}
+            {/* )} */}
           </div>
-        )}
+        {/* )} */}
       </aside>
     </>
   );
