@@ -183,7 +183,7 @@ function ManageUsers() {
     if (!window.confirm("Are you sure you want to delete this user?")) return;
     
     try {
-      const token = localStorage.getItem("accessToken");
+      const token = JSON.parse(localStorage.getItem("accessToken"));
       const response = await axios.delete(`${baseUrl}/users/${userId}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -193,7 +193,7 @@ function ManageUsers() {
         fetchUsers();
       }
     } catch (error) {
-      toast.error("Failed to delete user");
+      toast.error(error?.response?.data?.message || "Failed to delete user");
       console.error(error);
     }
   };
