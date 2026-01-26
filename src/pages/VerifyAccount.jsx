@@ -47,7 +47,7 @@ const VerifyAccount = () => {
 
         {!verifyingAccount && verificationData?.status === "success" && (
           <div className="verify-account-actions">
-            <a href="/login" className="login-btn">
+            <a href="/" className="login-btn">
               <i className="fas fa-sign-in-alt"></i>
               Go to Login
             </a>

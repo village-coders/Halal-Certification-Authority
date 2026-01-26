@@ -16,6 +16,7 @@ import AdminLogin from "./pages/AdminLogin";
 import Admin from "./pages/Admin";
 import ManageUsers from "./pages/ManageUsers";
 import AuthPage from "./pages/sdlfdlf";
+import NotFound from "./components/NotFound";
 
 const AppContent = () => {
   // const location = useLocation();
@@ -76,7 +77,7 @@ const AppContent = () => {
             
             </Route> */}
 
-            <Route path="*" element={<h1 style={{marginTop: "100px", textAlign: "center"}}>Page not found</h1>} />
+            <Route path="*" element={<NotFound />} />
           </Routes>
 
           <Toaster
