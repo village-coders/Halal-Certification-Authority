@@ -20,7 +20,8 @@
   flex-direction: column;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   box-shadow: 0 0 15px rgba(0, 0, 0, 0.03);
-  /* position: fixed; */
+  height: 100vh;
+  position: relative;
   /* left: 0;
   top: 0; */
   transition: width var(--transition-speed) ease, transform var(--transition-speed) ease;

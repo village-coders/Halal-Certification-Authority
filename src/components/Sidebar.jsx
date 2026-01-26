@@ -124,6 +124,12 @@ const Sidebar = ({activeD, activeApp, activeP, activeCert, activeUse}) => {
               </button>            
             </li>
             <li>
+              <button onClick={() =>{ if (isMobile) {toggleSidebar(); setIsCollapsed(true);}  navigate('/profile')}} className={`dropdown-btn ${openMenu === "products" ? "active" : ""} ${activeUse}`} title="Manage Users">
+                <i className="fas fa-user-circle"></i>
+                {!isCollapsed && <span>Profile</span>}
+              </button>
+            </li>
+            <li>
               <button onClick={() =>{ if (isMobile) {toggleSidebar(); setIsCollapsed(true);}  navigate('/manage-users')}} className={`dropdown-btn ${openMenu === "products" ? "active" : ""} ${activeUse}`} title="Manage Users">
                 <i className="fas fa-users"></i>
                 {!isCollapsed && <span>Manage Users</span>}
