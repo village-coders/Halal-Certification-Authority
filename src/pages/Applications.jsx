@@ -4,6 +4,8 @@ import Sidebar from "../components/Sidebar";
 import axios from "axios";
 import { useAuth } from "../hooks/useAuth";
 import { useProducts } from "../hooks/useProducts";
+import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
 
 const API_BASE_URL = import.meta.env.VITE_BASE_URL;
 
@@ -16,14 +18,20 @@ function Applications() {
   const [showApplicationForm, setShowApplicationForm] = useState(false);
   const [showRenewalForm, setShowRenewalForm] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
 
   const [formData, setFormData] = useState({
     category: "",
     product: "",
     description: "",
-    requestedDate: new Date().toISOString().split("T")[0]
+    requestedDate: new Date().toISOString().split("T")[0],
+    // New fields for Halal certification history
+    hasAppliedBefore: "", // "yes" or "no"
+    previousHalalAgency: "",
+    hasBeenSupervisedBefore: "", // "yes" or "no"
+    supervisingHalalAgency: "",
+    // New fields for food safety programs
+    foodSafetyPrograms: [], // Array of selected programs
+    otherFoodSafetyProgram: ""
   });
 
   const [renewalData, setRenewalData] = useState({
@@ -42,23 +50,61 @@ function Applications() {
     "Renewal Application"
   ];
 
+  const foodSafetyProgramOptions = [
+    "HACCP",
+    "ISO-22000", 
+    "GMP",
+    "QMS",
+    "Other"
+  ];
+
   const { user, fetchUser } = useAuth();
   const { products, fetchProducts, isLoading: productsLoading } = useProducts();
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchUser();
   }, []);
 
-  // Memoized fetchApplications to prevent unnecessary recreations
-  const fetchApplications = useCallback(async () => {
-    // if (!user?.registrationNo) {
-    //   setError("User registration number not found");
-    //   return;
-    // }
+  // Filter approved products only
+  const approvedProducts = products.filter(product => 
+    product.status === "approved" || product.status === "Approved"
+  );
 
+  // Check if user has approved products before creating application
+  const handleNewApplication = () => {
+    if (!productsLoading) {
+      if (approvedProducts.length === 0) {
+        toast.error("You need to have an approved product before submitting an application");
+        navigate("/products");
+        return;
+      }
+    }
+    setShowApplicationForm(true);
+    setShowRenewalForm(false);
+  };
+
+  const handleRenewApplication = () => {
+    if (!productsLoading) {
+      if (approvedProducts.length === 0) {
+        toast.error("You need to have an approved product before renewing an application");
+        navigate("/products");
+        return;
+      }
+    }
+    
+    if (applications.filter(app => app.status === "Approved" || app.status === "Certified").length === 0) {
+      toast.error("No eligible applications found for renewal");
+      return;
+    }
+    
+    setShowRenewalForm(true);
+    setShowApplicationForm(false);
+  };
+
+  const fetchApplications = useCallback(async () => {
     try {
       setLoading(true);
-      setError("");
 
       const token = JSON.parse(localStorage.getItem("accessToken"));
       const response = await axios.get(
@@ -74,12 +120,12 @@ function Applications() {
         setApplications(response.data);
       } else {
         console.error("Unexpected response format:", response.data);
-        setError("Failed to load applications. Invalid data format.");
+        toast.error("Failed to load applications. Invalid data format.");
       }
     } catch (err) {
       console.error("Error fetching applications:", err);
       const errorMessage = err.response?.data?.message || err.message || "Failed to fetch applications";
-      setError(errorMessage);
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -98,26 +144,14 @@ function Applications() {
   }, []);
 
   useEffect(() => {
-    // if (user?.registrationNo) {
-      fetchApplications();
-      fetchProducts();
-    // }
+    fetchApplications();
+    fetchProducts();
   }, []);
 
   const filteredApplications = applications.filter(app =>
     app.applicationNumber?.toLowerCase().includes(searchNumber.toLowerCase()) &&
     (searchDate ? app.createdAt?.includes(searchDate) : true)
   );
-
-  const handleNewApplication = () => {
-    setShowApplicationForm(true);
-    setShowRenewalForm(false);
-  };
-
-  const handleRenewApplication = () => {
-    setShowRenewalForm(true);
-    setShowApplicationForm(false);
-  };
 
   const handleCloseForm = () => {
     setShowApplicationForm(false);
@@ -126,7 +160,13 @@ function Applications() {
       category: "",
       product: "",
       description: "",
-      requestedDate: new Date().toISOString().split("T")[0]
+      requestedDate: new Date().toISOString().split("T")[0],
+      hasAppliedBefore: "",
+      previousHalalAgency: "",
+      hasBeenSupervisedBefore: "",
+      supervisingHalalAgency: "",
+      foodSafetyPrograms: [],
+      otherFoodSafetyProgram: ""
     });
     setRenewalData({
       existingApplication: "",
@@ -134,8 +174,6 @@ function Applications() {
       reason: "",
       attachments: []
     });
-    setError("");
-    setSuccess("");
   };
 
   const handleInputChange = (e) => {
@@ -144,6 +182,41 @@ function Applications() {
       ...prev,
       [name]: value
     }));
+  };
+
+  // Special handler for radio buttons
+  const handleRadioChange = (fieldName, value) => {
+    setFormData(prev => ({
+      ...prev,
+      [fieldName]: value
+    }));
+  };
+
+  // Handler for checkbox selection (food safety programs)
+  const handleFoodSafetyProgramChange = (program) => {
+    setFormData(prev => {
+      const isSelected = prev.foodSafetyPrograms.includes(program);
+      let updatedPrograms;
+      
+      if (isSelected) {
+        updatedPrograms = prev.foodSafetyPrograms.filter(p => p !== program);
+        // If "Other" is deselected, clear the other field
+        if (program === "Other") {
+          return {
+            ...prev,
+            foodSafetyPrograms: updatedPrograms,
+            otherFoodSafetyProgram: ""
+          };
+        }
+      } else {
+        updatedPrograms = [...prev.foodSafetyPrograms, program];
+      }
+      
+      return {
+        ...prev,
+        foodSafetyPrograms: updatedPrograms
+      };
+    });
   };
 
   const handleRenewalInputChange = (e) => {
@@ -173,23 +246,47 @@ function Applications() {
     e.preventDefault();
     
     if (!user?.registrationNo) {
-      setError("User not authenticated. Please log in again.");
+      toast.error("User not authenticated. Please log in again.");
+      return;
+    }
+
+    if (approvedProducts.length === 0) {
+      toast.error("You need to have an approved product before submitting an application");
+      navigate("/products");
+      handleCloseForm();
+      return;
+    }
+
+    // Validate food safety programs
+    if (formData.foodSafetyPrograms.length === 0) {
+      toast.error("Please select at least one food safety program");
+      return;
+    }
+
+    // Validate "Other" field if selected
+    if (formData.foodSafetyPrograms.includes("Other") && !formData.otherFoodSafetyProgram.trim()) {
+      toast.error("Please specify the 'Other' food safety program");
+      return;
+    }
+
+    // Check if selected product is approved
+    const selectedProduct = approvedProducts.find(p => p.name === formData.product);
+    if (!selectedProduct) {
+      toast.error("Selected product must be approved");
       return;
     }
 
     try {
       setLoading(true);
-      setError("");
-      setSuccess("");
 
       const token = JSON.parse(localStorage.getItem("accessToken"));
       
-      // Prepare the application data
+      // Prepare application data - regular JSON, not FormData
       const applicationData = {
         ...formData,
+        foodSafetyPrograms: formData.foodSafetyPrograms.join(','), // Convert array to string
         companyId: user.registrationNo,
         status: "Submitted",
-        // applicationNumber: `APP-${Date.now().toString().slice(-8)}`
       };
 
       const response = await axios.post(
@@ -204,8 +301,8 @@ function Applications() {
       );
 
       if (response.data && response.data._id) {
-        setSuccess("Application submitted successfully!");
-        fetchApplications(); // Refresh the applications list
+        toast.success("Application submitted successfully!");
+        fetchApplications();
         
         setTimeout(() => {
           handleCloseForm();
@@ -214,10 +311,10 @@ function Applications() {
         throw new Error("Invalid response from server");
       }
     } catch (err) {
-      handleCloseForm();
       const errorMessage = err.response?.data?.message || err.message || "Failed to submit application";
-      setError(errorMessage);
+      toast.error(errorMessage);
       console.error("Error submitting application:", err);
+      handleCloseForm();
     } finally {
       setLoading(false);
     }
@@ -227,14 +324,19 @@ function Applications() {
     e.preventDefault();
     
     if (!user?.registrationNo) {
-      setError("User not authenticated. Please log in again.");
+      toast.error("User not authenticated. Please log in again.");
+      return;
+    }
+
+    if (approvedProducts.length === 0) {
+      toast.error("You need to have an approved product before renewing an application");
+      navigate("/products");
+      handleCloseForm();
       return;
     }
 
     try {
       setLoading(true);
-      setError("");
-      setSuccess("");
 
       const selectedApp = applications.find(app => app._id === renewalData.existingApplication);
       
@@ -244,7 +346,7 @@ function Applications() {
 
       const token = JSON.parse(localStorage.getItem("accessToken"));
       
-      // Prepare renewal data
+      // For renewal, we can keep the original food safety programs
       const renewalApplicationData = {
         category: "Renewal Application",
         product: selectedApp.product,
@@ -253,7 +355,15 @@ function Applications() {
         companyId: user.registrationNo,
         status: "Submitted",
         applicationNumber: `REN-${Date.now().toString().slice(-8)}`,
-        originalApplicationId: selectedApp._id
+        originalApplicationId: selectedApp._id,
+        // Include the Halal certification history from the original application
+        hasAppliedBefore: selectedApp.hasAppliedBefore || "",
+        previousHalalAgency: selectedApp.previousHalalAgency || "",
+        hasBeenSupervisedBefore: selectedApp.hasBeenSupervisedBefore || "",
+        supervisingHalalAgency: selectedApp.supervisingHalalAgency || "",
+        // Include food safety programs from original application
+        foodSafetyPrograms: selectedApp.foodSafetyPrograms || "",
+        otherFoodSafetyProgram: selectedApp.otherFoodSafetyProgram || ""
       };
 
       const response = await axios.post(
@@ -268,8 +378,8 @@ function Applications() {
       );
 
       if (response.data && response.data._id) {
-        setSuccess("Renewal application submitted successfully!");
-        fetchApplications(); // Refresh the applications list
+        toast.success("Renewal application submitted successfully!");
+        fetchApplications();
         
         setTimeout(() => {
           handleCloseForm();
@@ -280,7 +390,7 @@ function Applications() {
     } catch (err) {
       console.error("Error submitting renewal:", err);
       const errorMessage = err.response?.data?.message || err.message || "Failed to submit renewal application";
-      setError(errorMessage);
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -316,7 +426,6 @@ function Applications() {
     }
   };
 
-  // Fix for clear button
   const handleClearFilters = () => {
     setSearchNumber("");
     setSearchDate("");
@@ -333,29 +442,50 @@ function Applications() {
               <button 
                 className="renew-btn" 
                 onClick={handleRenewApplication}
-                disabled={applications.filter(app => app.status === "Approved" || app.status === "Certified").length === 0}
+                disabled={applications.filter(app => app.status === "Approved" || app.status === "Certified").length === 0 || productsLoading}
+                title={applications.filter(app => app.status === "Approved" || app.status === "Certified").length === 0 ? "No eligible applications found for renewal" : ""}
               >
                 <i className="fas fa-sync-alt"></i> Renew
               </button>
-              <button className="new-btn" onClick={handleNewApplication}>
-                <i className="fas fa-plus"></i> New Application
-              </button>
+              
+              {/* New Application Button with Tooltip */}
+              <div className="tooltip-wrapper">
+                <button 
+                  className="new-btn" 
+                  onClick={handleNewApplication}
+                  disabled={productsLoading || approvedProducts.length === 0}
+                >
+                  <i className="fas fa-plus"></i> New Application
+                </button>
+                
+                {/* Tooltip for disabled state */}
+                {!productsLoading && approvedProducts.length === 0 && (
+                  <div className="tooltip">
+                    <div className="tooltip-content">
+                      <p>No approved products found.</p>
+                      <p>Please get your products approved first.</p>
+                      <button 
+                        className="tooltip-link"
+                        onClick={() => navigate("/products")}
+                      >
+                        Go to Products Page
+                      </button>
+                    </div>
+                  </div>
+                )}
+                
+                {/* Loading tooltip */}
+                {productsLoading && (
+                  <div className="tooltip">
+                    <div className="tooltip-content">
+                      <p>Loading products...</p>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 
-          {success && (
-            <div className="alert success">
-              <i className="fas fa-check-circle"></i> {success}
-            </div>
-          )}
-
-          {error && (
-            <div className="alert error">
-              <i className="fas fa-exclamation-circle"></i> {error}
-            </div>
-          )}
-
-          {/* Search & Filters */}
           <div className="search-box">
             <div className="field">
               <label>Application Number</label>
@@ -382,7 +512,6 @@ function Applications() {
             </button>
           </div>
 
-          {/* Applications Table */}
           <div className="table-wrapper">
             <div className="table-header">
               <h3>Applications ({filteredApplications.length})</h3>
@@ -497,14 +626,26 @@ function Applications() {
                     <option value="">Select Product</option>
                     {productsLoading ? (
                       <option value="" disabled>Loading products...</option>
-                    ) : products.length > 0 ? (
-                      products.map((prod) => (
-                        <option key={prod._id} value={prod.name }>{prod.name}</option>
+                    ) : approvedProducts.length > 0 ? (
+                      approvedProducts.map((prod) => (
+                        <option key={prod._id} value={prod.name}>{prod.name}</option>
                       ))
                     ) : (
-                      <option value="" disabled>No products found</option>
+                      <option value="" disabled>No approved products found. Please get your products approved first.</option>
                     )}
                   </select>
+                  {approvedProducts.length === 0 && !productsLoading && (
+                    <div className="error-message">
+                      <p>You need to have an approved product before submitting an application.</p>
+                      <button 
+                        type="button" 
+                        className="btn btn-link"
+                        onClick={() => navigate("/products")}
+                      >
+                        Go to Products Page
+                      </button>
+                    </div>
+                  )}
                 </div>
 
                 <div className="form-group">
@@ -517,6 +658,150 @@ function Applications() {
                     required
                     disabled={loading}
                   />
+                </div>
+
+                {/* New Halal Certification History Section */}
+                <div className="form-section">
+                  <h4>Halal Certification History</h4>
+                  
+                  {/* Question 1 */}
+                  <div className="form-group">
+                    <label>
+                      (1) Has the company ever applied for Halal certification previously? *
+                    </label>
+                    <div className="radio-group">
+                      <label className="radio-option">
+                        <input
+                          type="radio"
+                          name="hasAppliedBefore"
+                          value="yes"
+                          checked={formData.hasAppliedBefore === "yes"}
+                          onChange={() => handleRadioChange("hasAppliedBefore", "yes")}
+                          disabled={loading}
+                          required
+                        />
+                        <span>Yes</span>
+                      </label>
+                      <label className="radio-option">
+                        <input
+                          type="radio"
+                          name="hasAppliedBefore"
+                          value="no"
+                          checked={formData.hasAppliedBefore === "no"}
+                          onChange={() => handleRadioChange("hasAppliedBefore", "no")}
+                          disabled={loading}
+                          required
+                        />
+                        <span>No</span>
+                      </label>
+                    </div>
+                    
+                    {/* Conditional field for Question 1 */}
+                    {formData.hasAppliedBefore === "yes" && (
+                      <div className="conditional-field">
+                        <label>If yes, please state the Halal agency that was previously applied to *</label>
+                        <input
+                          type="text"
+                          name="previousHalalAgency"
+                          value={formData.previousHalalAgency}
+                          onChange={handleInputChange}
+                          placeholder="Enter Halal agency name"
+                          disabled={loading}
+                          required={formData.hasAppliedBefore === "yes"}
+                        />
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Question 2 */}
+                  <div className="form-group">
+                    <label>
+                      (2) Has the factory ever been supervised before, either on a yearly basis or for a specific batch production for another buyer? *
+                    </label>
+                    <div className="radio-group">
+                      <label className="radio-option">
+                        <input
+                          type="radio"
+                          name="hasBeenSupervisedBefore"
+                          value="yes"
+                          checked={formData.hasBeenSupervisedBefore === "yes"}
+                          onChange={() => handleRadioChange("hasBeenSupervisedBefore", "yes")}
+                          disabled={loading}
+                          required
+                        />
+                        <span>Yes</span>
+                      </label>
+                      <label className="radio-option">
+                        <input
+                          type="radio"
+                          name="hasBeenSupervisedBefore"
+                          value="no"
+                          checked={formData.hasBeenSupervisedBefore === "no"}
+                          onChange={() => handleRadioChange("hasBeenSupervisedBefore", "no")}
+                          disabled={loading}
+                          required
+                        />
+                        <span>No</span>
+                      </label>
+                    </div>
+                    
+                    {/* Conditional field for Question 2 */}
+                    {formData.hasBeenSupervisedBefore === "yes" && (
+                      <div className="conditional-field">
+                        <label>If yes, please state the Halal agency that was certifying *</label>
+                        <input
+                          type="text"
+                          name="supervisingHalalAgency"
+                          value={formData.supervisingHalalAgency}
+                          onChange={handleInputChange}
+                          placeholder="Enter Halal agency name"
+                          disabled={loading}
+                          required={formData.hasBeenSupervisedBefore === "yes"}
+                        />
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* New Food Safety Programs Section */}
+                <div className="form-section">
+                  <h4>Food Safety Programs</h4>
+                  
+                  <div className="form-group">
+                    <label>
+                      Please state all food safety programs implemented at the factory *
+                    </label>
+                    
+                    <div className="checkbox-group">
+                      {foodSafetyProgramOptions.map((program) => (
+                        <label key={program} className="checkbox-option">
+                          <input
+                            type="checkbox"
+                            checked={formData.foodSafetyPrograms.includes(program)}
+                            onChange={() => handleFoodSafetyProgramChange(program)}
+                            disabled={loading}
+                          />
+                          <span>{program}</span>
+                        </label>
+                      ))}
+                    </div>
+                    
+                    {/* Conditional field for "Other" */}
+                    {formData.foodSafetyPrograms.includes("Other") && (
+                      <div className="conditional-field">
+                        <label>Please specify other food safety program *</label>
+                        <input
+                          type="text"
+                          name="otherFoodSafetyProgram"
+                          value={formData.otherFoodSafetyProgram}
+                          onChange={handleInputChange}
+                          placeholder="Specify other food safety program"
+                          disabled={loading}
+                          required={formData.foodSafetyPrograms.includes("Other")}
+                        />
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 <div className="form-group">
@@ -543,7 +828,7 @@ function Applications() {
                   <button 
                     type="submit" 
                     className="btn btn-submit" 
-                    disabled={loading || !formData.category || !formData.product}
+                    disabled={loading || !formData.category || !formData.product || approvedProducts.length === 0 || !formData.hasAppliedBefore || !formData.hasBeenSupervisedBefore || formData.foodSafetyPrograms.length === 0}
                   >
                     {loading ? 'Submitting...' : 'Submit Application'}
                   </button>

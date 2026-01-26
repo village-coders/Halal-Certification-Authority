@@ -94,6 +94,9 @@ const Home = () => {
       marginBottom: '30px',
       opacity: 0.9
     },
+    logo: {
+      maxWidth: "100%",
+    },
     userGuide: {
       background: 'rgba(255, 255, 255, 0.15)',
       padding: '20px',
@@ -794,6 +797,8 @@ const Home = () => {
             flex-direction: column !important;
             max-width: 500px;
           }
+
+          
           
           .welcome-section {
             order: 2;
@@ -870,7 +875,7 @@ const Home = () => {
             <div style={styles.welcomeSectionBefore}></div>
             <div style={styles.welcomeContent}>
               <a target='blank' href="https://halalcert.vercel.app/">
-                <img width={350} src={logo} alt="HCA logo" />
+                <img style={styles.logo} src={logo} alt="HCA logo" />
               </a>
               <h1 style={styles.welcomeTitle}>Welcome to HCA Certification Portal</h1>
               <p style={styles.welcomeText}>
