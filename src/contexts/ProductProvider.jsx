@@ -21,7 +21,11 @@ const ProductProvider = ({ children }) => {
   useEffect(() => {
     const interval = setInterval(() => {
       const storedToken = localStorage.getItem("accessToken");
-      if (!storedToken) return;
+      if (!storedToken) {
+        toast.error("Session expired. Please log in again.");
+        navigate("/");
+        return;
+      }
 
       try {
         const token = JSON.parse(storedToken);
@@ -41,7 +45,7 @@ const ProductProvider = ({ children }) => {
     }, 60000); // check every 60 seconds
 
     return () => clearInterval(interval);
-  }, [navigate]);
+  }, []);
 
   useEffect(() => {
     fetchProducts();

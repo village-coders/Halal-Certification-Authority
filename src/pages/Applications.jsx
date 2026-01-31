@@ -22,6 +22,7 @@ function Applications() {
   const [formData, setFormData] = useState({
     category: "",
     product: "",
+    productId: "",
     description: "",
     requestedDate: new Date().toISOString().split("T")[0],
     // New fields for Halal certification history
@@ -159,6 +160,7 @@ function Applications() {
     setFormData({
       category: "",
       product: "",
+      productId: "",
       description: "",
       requestedDate: new Date().toISOString().split("T")[0],
       hasAppliedBefore: "",
@@ -275,6 +277,10 @@ function Applications() {
       toast.error("Selected product must be approved");
       return;
     }
+
+    const productId = approvedProducts.filter(p => p.name === formData.name)
+    console.log(productId);
+    
 
     try {
       setLoading(true);
