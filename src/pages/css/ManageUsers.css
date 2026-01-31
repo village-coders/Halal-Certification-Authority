@@ -646,3 +646,148 @@
     max-height: 85vh;
   }
 }
+
+
+/* Add these styles to your existing ManageUsers.css file */
+
+/* Search box styles */
+.search-box {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.search-box input {
+  padding-left: 40px;
+  padding-right: 40px;
+}
+
+.clear-search {
+  position: absolute;
+  right: 10px;
+  background: none;
+  border: none;
+  color: #999;
+  cursor: pointer;
+  padding: 5px;
+  font-size: 12px;
+}
+
+.clear-search:hover {
+  color: #333;
+}
+
+/* Search result indicator */
+.search-result {
+  font-size: 14px;
+  color: #666;
+  margin-left: 10px;
+  font-weight: normal;
+}
+
+/* Highlight matching text */
+.highlight-match {
+  color: #2196f3;
+  font-size: 12px;
+  font-weight: bold;
+  margin-left: 5px;
+}
+
+/* Export buttons */
+.export-options {
+  position: relative;
+}
+
+.export-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  min-width: 200px;
+  z-index: 100;
+  margin-top: 5px;
+}
+
+.export-option {
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border: none;
+  background: none;
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+  color: #333;
+}
+
+.export-option:hover {
+  background: #f5f5f5;
+}
+
+.export-option i {
+  width: 20px;
+  text-align: center;
+}
+
+.export-option .fa-file-excel {
+  color: #217346;
+}
+
+.export-option .fa-file-csv {
+  color: #ff9800;
+}
+
+/* Loading state for export */
+.action-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Empty state with clear search button */
+.empty-state {
+  text-align: center;
+  padding: 40px;
+}
+
+.clear-search-btn {
+  margin-top: 15px;
+  padding: 8px 16px;
+  background: #2196f3;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.clear-search-btn:hover {
+  background: #0b7dda;
+}
+
+/* Table row hover with search highlight */
+.users-table tbody tr:hover {
+  background: #f9f9f9;
+}
+
+.users-table tbody tr:hover td {
+  background: transparent;
+}
+
+/* Quick actions grid improvements */
+.actions-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 20px;
+}
+
+.action-card {
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.action-card:hover {
+  transform: translateY(-2px);
+}
