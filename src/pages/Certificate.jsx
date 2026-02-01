@@ -423,7 +423,7 @@ function Certificate() {
                   </div>
                   <div className="info-item">
                     <span className="info-label">Product:</span>
-                    <span className="info-value">{selectedCertificate.product || "N/A"}</span>
+                    <span className="info-value">{selectedCertificate.product?.name || "N/A"}</span>
                   </div>
                   <div className="info-item">
                     <span className="info-label">Issue Date:</span>
@@ -469,7 +469,7 @@ function Certificate() {
                   }}>
                     <h3 style={{ color: '#111827', marginBottom: '10px' }}>CERTIFICATE OF COMPLIANCE</h3>
                     <p style={{ color: '#6b7280', marginBottom: '20px' }}>
-                      This certifies that {selectedCertificate.product || "the product"} complies with {selectedCertificate.standard || "the standard"}
+                      This certifies that {selectedCertificate.product?.name || "the product"} complies with {selectedCertificate.standard || "the standard"}
                     </p>
                     <div style={{ 
                       borderTop: '1px solid #e5e7eb', 
