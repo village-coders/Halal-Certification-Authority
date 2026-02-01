@@ -4,7 +4,7 @@ import logo from '../assets/hcaLogo.webp';
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 
-const Sidebar = ({activeD, activeApp, activeP, activeCert, activeUse}) => {
+const Sidebar = ({activeD, activeApp, activeP, activeCert, activeUse, activeMess, activePro}) => {
   const [openMenu, setOpenMenu] = useState("");
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 900);
@@ -113,7 +113,7 @@ const Sidebar = ({activeD, activeApp, activeP, activeCert, activeUse}) => {
               </button>
             </li> */}
             <li>
-              <button onClick={()=> {if (isMobile)  {toggleSidebar(); setIsCollapsed(true)} }} className="dropdown-btn" title="Messages">
+              <button onClick={()=> {if (isMobile)  {toggleSidebar(); setIsCollapsed(true)} navigate('/message')}} className={`dropdown-btn ${openMenu === "message" ? "active" : ""} ${activeMess}`} title="Messages">
                 <i className="fas fa-envelope"></i>
                 {!isCollapsed && (
                   <>
@@ -124,13 +124,13 @@ const Sidebar = ({activeD, activeApp, activeP, activeCert, activeUse}) => {
               </button>            
             </li>
             <li>
-              <button onClick={() =>{ if (isMobile) {toggleSidebar(); setIsCollapsed(true);}  navigate('/profile')}} className={`dropdown-btn ${openMenu === "products" ? "active" : ""} ${activeUse}`} title="Manage Users">
+              <button onClick={() =>{ if (isMobile) {toggleSidebar(); setIsCollapsed(true);}  navigate('/profile')}} className={`dropdown-btn ${openMenu === "profile" ? "active" : ""} ${activePro}`} title="Manage Users">
                 <i className="fas fa-user-circle"></i>
                 {!isCollapsed && <span>Profile</span>}
               </button>
             </li>
             <li>
-              <button onClick={() =>{ if (isMobile) {toggleSidebar(); setIsCollapsed(true);}  navigate('/manage-users')}} className={`dropdown-btn ${openMenu === "products" ? "active" : ""} ${activeUse}`} title="Manage Users">
+              <button onClick={() =>{ if (isMobile) {toggleSidebar(); setIsCollapsed(true);}  navigate('/manage-users')}} className={`dropdown-btn ${openMenu === "manage-users" ? "active" : ""} ${activeUse}`} title="Manage Users">
                 <i className="fas fa-users"></i>
                 {!isCollapsed && <span>Manage Users</span>}
               </button>

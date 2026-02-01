@@ -179,7 +179,7 @@ function Profile() {
 
   return (
     <div className="dash">
-      <Sidebar activeProfile="active" />
+      <Sidebar activePro="active" />
       <main className="content">
         <div className="profile-container">
           <div className="profile-header">

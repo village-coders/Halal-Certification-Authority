@@ -28,7 +28,10 @@ const Product = () => {
   const [errors, setErrors] = useState({});
   const { products, isLoading, fetchProducts, deleteProduct } = useProducts();
   const baseUrl = import.meta.env.VITE_BASE_URL;
-
+  useEffect(() => {
+    fetchProducts();
+  }, []);
+  console.log(products)
   // Filter products based on status
   const requestedProducts = products.filter(product => product.status === "pending" || product.status === "requested");
   const approvedProducts = products.filter(product => product.status === "approved");
@@ -154,9 +157,7 @@ const Product = () => {
     setShowProductDetails(true);
   };
 
-  useEffect(() => {
-    fetchProducts();
-  }, []);
+
 
   return (
     <div className="dash">
