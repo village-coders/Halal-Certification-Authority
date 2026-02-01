@@ -118,7 +118,7 @@ function Applications() {
       );
       
       if (response.data && Array.isArray(response.data)) {
-        setApplications(response.data);
+        setApplications(response.data);        
       } else {
         console.error("Unexpected response format:", response.data);
         toast.error("Failed to load applications. Invalid data format.");
@@ -273,13 +273,22 @@ function Applications() {
 
     // Check if selected product is approved
     const selectedProduct = approvedProducts.find(p => p.name === formData.product);
+    
     if (!selectedProduct) {
       toast.error("Selected product must be approved");
       return;
+    }else{
+      console.log(selectedProduct);
+      
+      setFormData(prev => ({
+        ...prev, productId: selectedProduct._id
+      }))
     }
 
-    const productId = approvedProducts.filter(p => p.name === formData.name)
-    console.log(productId);
+    if(!formData.productId){
+      toast.error("select your product again")
+      return
+    }
     
 
     try {

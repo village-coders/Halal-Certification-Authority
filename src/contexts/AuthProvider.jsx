@@ -61,8 +61,6 @@ const AuthProvider = ({ children }) => {
           Authorization: `Bearer ${token}`,
         },
       });
-
-      // console.log(res.data.user);
       
 
       setUser(res.data.user); // ✅ now your user is available everywhere
@@ -80,7 +78,6 @@ const AuthProvider = ({ children }) => {
     try {
       const res = await axios.post(`${baseUrl}/auth/login`, formData);
       const { message, accessToken, status, user } = res.data;
-      console.log(res.data);
       
       if (status === "success") {
         toast.success(message);
@@ -94,7 +91,6 @@ const AuthProvider = ({ children }) => {
         }
       }
     } catch (error) {
-      console.log(error);
       toast.error(error.response?.data?.message || "Login failed");
     } finally {
       setSigningIn(false);

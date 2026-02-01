@@ -69,6 +69,7 @@ function Certificate() {
         );
         if (response.data && Array.isArray(response.data)) {
           setCertificates(response.data);
+          
         } else {
           setCertificates([]);
         }
@@ -329,7 +330,7 @@ function Certificate() {
                             {isExpiringSoon && ` (${daysRemaining}d)`}
                           </span>
                         </td>
-                        <td>{cert.product || "N/A"}</td>
+                        <td>{cert.product.name || "N/A"}</td>
                         <td>{formatDate(cert.expiryDate)}</td>
                         <td>
                           <div className="action-buttons">
