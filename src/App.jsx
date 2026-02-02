@@ -19,6 +19,8 @@ import AuthPage from "./pages/sdlfdlf";
 import NotFound from "./components/NotFound";
 import Profile from "./pages/Profile";
 import Message from "./pages/Message";
+import ProtectedRoutes from "./components/ProtectedRoutes";
+
 
 const AppContent = () => {
   // const location = useLocation();
@@ -61,24 +63,22 @@ const AppContent = () => {
         <ProductProvider>
           <Routes>
             <Route path="/"  element={<Home />}/>
-            <Route path="/signup"  element={<RegisterForm />}/>
-            <Route path="/admin-signup"  element={<AdminSignup />}/>
-            <Route path="/admin-signin"  element={<AdminLogin />}/>
-            <Route path="/admin"  element={<Admin />}/>
-            <Route path="/products"  element={<Product />}/>
-            <Route path="/applications"  element={<Applications />}/>
-            <Route path="/certificates"  element={<Certificate />}/>
-            <Route path="/dashboard"  element={<Dashboard />}/>
-            <Route path="/manage-users"  element={<ManageUsers />}/>
-            <Route path="/verify/:token"  element={<VerifyAccount />}/>
-            <Route path="/message"  element={<Message />}/>
-            <Route path="/profile" element={<Profile />} />
+            {/* <Route path="/signup"  element={<RegisterForm />}/> */}
+            {/* <Route path="/admin-signup"  element={<AdminSignup />}/> */}
+            {/* <Route path="/admin-signin"  element={<AdminLogin />}/> */}
+            {/* <Route path="/admin"  element={<Admin />}/> */}
+    
 
-            {/* <Route element={<ProtectedRoutes requiredRole="seller" />}>
-              
+            <Route element={<ProtectedRoutes/>}>
+              <Route path="/products"  element={<Product />}/>
+              <Route path="/applications"  element={<Applications />}/>
+              <Route path="/certificates"  element={<Certificate />}/>
               <Route path="/dashboard"  element={<Dashboard />}/>
-            
-            </Route> */}
+              <Route path="/manage-users"  element={<ManageUsers />}/>
+              <Route path="/verify/:token"  element={<VerifyAccount />}/>
+              <Route path="/message"  element={<Message />}/>
+              <Route path="/profile" element={<Profile />} />
+            </Route>
 
             <Route path="*" element={<NotFound />} />
           </Routes>

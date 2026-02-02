@@ -122,6 +122,30 @@ const AuthProvider = ({ children }) => {
     }
   };
 
+  const isAuthenticated = () => {
+    const storedToken = localStorage.getItem("accessToken");
+    if (!storedToken) return false;
+
+    try {
+      const token = JSON.parse(storedToken);
+      const payload = JSON.parse(atob(token.split(".")[1]));
+      const currentTime = Math.floor(Date.now() / 1000);
+
+      if (payload.exp && payload.exp < currentTime) {
+        localStorage.removeItem("accessToken");
+        toast.error("Session expired. Please log in again.");
+        navigate("/");
+        return false;
+      }
+
+      return true;
+    } catch (error) {
+      console.error("Invalid token", error);
+      localStorage.removeItem("accessToken");
+      navigate("/");
+      return false;
+    }
+  };
 
   // ✅ Verify account
   const verifyAccount = async (token) => {
@@ -156,6 +180,7 @@ const AuthProvider = ({ children }) => {
     signup,
     resetPassword,
     userLoading,
+    isAuthenticated
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
