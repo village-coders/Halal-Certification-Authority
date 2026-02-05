@@ -20,6 +20,7 @@ import NotFound from "./components/NotFound";
 import Profile from "./pages/Profile";
 import Message from "./pages/Message";
 import ProtectedRoutes from "./components/ProtectedRoutes";
+import { SocketProvider } from "./contexts/SocketContext";
 
 
 const AppContent = () => {
@@ -58,7 +59,7 @@ const AppContent = () => {
     return (
       <>
         {/* {!shouldHideHeader &&  <Header />} */}
-
+        <SocketProvider>
         <AuthProvider>
         <ProductProvider>
           <Routes>
@@ -93,7 +94,7 @@ const AppContent = () => {
           {/* <Footer /> */}
         </ProductProvider>
         </AuthProvider>
-
+        </SocketProvider>
         
       </>
     );
