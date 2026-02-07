@@ -877,9 +877,9 @@ const Home = () => {
               <a target='blank' href="https://halalcert.vercel.app/">
                 <img style={styles.logo} src={logo} alt="HCA logo" />
               </a>
-              <h1 style={styles.welcomeTitle}>Welcome to HCA Certification Portal</h1>
+              <h1 style={styles.welcomeTitle}>Welcome to HDI Certification Portal</h1>
               <p style={styles.welcomeText}>
-                Register, apply, submit, track the progress of application and download your certificate through the HCA certification portal.
+                Register, apply, submit, track the progress of application and download your certificate through the HDI certification portal.
               </p>
               
               <div style={styles.userGuide}>
