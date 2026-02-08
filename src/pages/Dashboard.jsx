@@ -26,6 +26,8 @@ function Dashboard() {
 
   const { user } = useAuth();
 
+  console.log(certificates)
+
   const quickActions = [
     { title: "NEW APPLICATION", icon: "fa-plus-circle", color: "#4caf50", link: "applications" },
     { title: "RENEWAL APPLICATION", icon: "fa-sync-alt", color: "#2196f3", link: "applications" },
@@ -373,7 +375,7 @@ function Dashboard() {
                     <table>
                       <thead>
                         <tr>
-                          <th>Site Name</th>
+                          <th>Product Name</th>
                           <th>Certificate Ref No</th>
                           <th>Certificate Type</th>
                           <th>Status</th>
@@ -383,16 +385,16 @@ function Dashboard() {
                       <tbody>
                         {certificates.map((cert, index) => (
                           <tr key={index}>
-                            <td>{cert.siteName}</td>
-                            <td>{cert.certRef}</td>
-                            <td>{cert.certType}</td>
+                            <td>{cert?.siteName.name}</td>
+                            <td>{cert?.certRef}</td>
+                            <td>{cert?.certType}</td>
                             <td>
-                              <span className={`status-badge ${cert.status.toLowerCase().replace(' ', '-')}`}>
-                                {cert.status}
+                              <span className={`status-badge ${cert?.status.toLowerCase().replace(' ', '-')}`}>
+                                {cert?.status}
                               </span>
                             </td>
                             <td>
-                              <Link to={`/certificates?view=${cert.id}`} className="action-menu-btn" title="View Details">
+                              <Link to={`/certificates?view=${cert?.id}`} className="action-menu-btn" title="View Details">
                                 <i className="fas fa-eye"></i>
                               </Link>
                             </td>

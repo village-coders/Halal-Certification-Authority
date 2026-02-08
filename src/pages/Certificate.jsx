@@ -330,7 +330,7 @@ function Certificate() {
                             {isExpiringSoon && ` (${daysRemaining}d)`}
                           </span>
                         </td>
-                        <td>{cert.product.name || "N/A"}</td>
+                        <td>{cert?.product?.name || "N/A"}</td>
                         <td>{formatDate(cert.expiryDate)}</td>
                         <td>
                           <div className="action-buttons">
