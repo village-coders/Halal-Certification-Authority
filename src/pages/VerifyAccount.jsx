@@ -28,8 +28,8 @@ const VerifyAccount = () => {
         
         <h1 className="verify-account-title">
           {verifyingAccount ? 'Verifying Account' : 
-           verificationData?.status === "success" ? 'Account Verified!' : 
-           'Verification Failed'}
+            verificationData?.status === "success" ? 'Account Verified!' : 
+            'Verification Failed'}
         </h1>
         
         <div className="verify-account-message">

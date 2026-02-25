@@ -16,22 +16,23 @@ function Dashboard() {
     applications: 0
   });
   const [inProgressApps, setInProgressApps] = useState([]);
+  const [applications, setApplications] = useState([]);
   const [certificates, setCertificates] = useState([]);
   const [loading, setLoading] = useState({
     stats: true,
     applications: true,
+    allApplications: true,
     certificates: true
   });
   const [error, setError] = useState("");
 
   const { user } = useAuth();
 
-  console.log(certificates)
+  // console.log(certificates)
 
   const quickActions = [
     { title: "NEW APPLICATION", icon: "fa-plus-circle", color: "#4caf50", link: "applications" },
-    { title: "RENEWAL APPLICATION", icon: "fa-sync-alt", color: "#2196f3", link: "applications" },
-    { title: "REQUEST PRODUCT", icon: "fa-cubes", color: "#9c27b0", link: "products" }
+    ...(applications.length !== 0 ? [{ title: "REQUEST PRODUCT", icon: "fa-shopping-cart", color: "#ff5722" }, { title: "RENEWAL APPLICATION", icon: "fa-sync-alt", color: "#2196f3", link: "applications" },] : [])
   ];
 
   useEffect(() => {
@@ -54,6 +55,7 @@ function Dashboard() {
       
       // Fetch in-progress applications
       await fetchInProgressApplications(token);
+      await fetchApplications(token);
       
       // Fetch certificates
       await fetchCertificates(token);
@@ -142,6 +144,41 @@ function Dashboard() {
       setInProgressApps([]);
     } finally {
       setLoading(prev => ({ ...prev, applications: false }));
+    }
+  };
+
+  const fetchApplications = async (token) => {
+    try {
+      const response = await axios.get(
+        `${API_BASE_URL}/applications`,
+        {
+          headers: { Authorization: `Bearer ${token}` }
+        }
+      );
+      
+      if (response.data && Array.isArray(response.data)) {
+        // Format applications for display
+        const formattedApps = response.data.slice(0, 5).map(app => ({
+          id: app._id,
+          date: app.createdAt ? new Date(app.createdAt).toLocaleDateString('en-GB', {
+            day: '2-digit',
+            month: 'short',
+            year: 'numeric'
+          }).replace(/ /g, '-') : 'N/A',
+          number: app.applicationNumber || 'N/A',
+          category: app.category || 'N/A',
+          site: app.product || 'N/A'
+        }));
+
+        console.log(formattedApps)
+        
+        setApplications(formattedApps);
+      }
+    } catch (err) {
+      console.error("Error fetching applications:", err);
+      setApplications([]);
+    } finally {
+      setLoading(prev => ({ ...prev, allApplications: false }));
     }
   };
 

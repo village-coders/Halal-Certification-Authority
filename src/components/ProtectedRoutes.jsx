@@ -10,7 +10,6 @@ const ProtectedRoutes = () => {
     const isAuth = isAuthenticated() // true || false
     const navigate = useNavigate()
 
-    console.log(isAuth)
 
     useEffect(()=>{
         if(!isAuth){

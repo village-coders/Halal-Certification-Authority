@@ -172,6 +172,14 @@
   color: white;
 }
 
+
+.action-btn:disabled {
+  background: gray !important;
+  cursor: not-allowed;
+  text-decoration: none;
+  color: white;
+}
+
 /* Stats Overview */
 .stats-overview {
   display: grid;

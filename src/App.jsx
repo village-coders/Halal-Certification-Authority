@@ -64,6 +64,7 @@ const AppContent = () => {
         <ProductProvider>
           <Routes>
             <Route path="/"  element={<Home />}/>
+            <Route path="/verify/:token"  element={<VerifyAccount />}/>
             {/* <Route path="/signup"  element={<RegisterForm />}/> */}
             {/* <Route path="/admin-signup"  element={<AdminSignup />}/> */}
             {/* <Route path="/admin-signin"  element={<AdminLogin />}/> */}
@@ -76,7 +77,6 @@ const AppContent = () => {
               <Route path="/certificates"  element={<Certificate />}/>
               <Route path="/dashboard"  element={<Dashboard />}/>
               <Route path="/manage-users"  element={<ManageUsers />}/>
-              <Route path="/verify/:token"  element={<VerifyAccount />}/>
               <Route path="/message"  element={<Message />}/>
               <Route path="/profile" element={<Profile />} />
             </Route>
