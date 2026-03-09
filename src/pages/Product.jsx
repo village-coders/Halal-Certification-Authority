@@ -28,7 +28,6 @@ const Product = () => {
     fetchProducts();
     fetchApplications();
   }, []);
-  console.log(formData.applicationId)
   // Filter products based on status
   const requestedProducts = products.filter(product => product.status === "pending" || product.status === "requested");
   const approvedProducts = products.filter(product => product.status === "approved");

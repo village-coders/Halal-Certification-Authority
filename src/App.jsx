@@ -14,6 +14,7 @@ import { Toaster } from "sonner";
 import Audit from "./pages/Audit";
 import Message from "./pages/Message";
 import { SocketProvider } from "./contexts/SocketContext";
+import ManageUsers from "./pages/ManageUsers";
 
 function App() {
   return (
@@ -36,6 +37,7 @@ function App() {
               <Route path="/invoices" element={<Invoice />} />
               <Route path="/message" element={<Message />} />
               <Route path="/audits" element={<Audit />} />
+              <Route path="/manage-users" element={<ManageUsers />} />
             </Route>
 
             <Route path="*" element={<Navigate to="/" />} />
