@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import './css/DashboardHeader.css'
 import { useAuth } from "../hooks/useAuth";
+import { useNavigate } from "react-router-dom";
 
 const DashboardHeader = ({title}) => {
   const [openMenu, setOpenMenu] = useState(false);
@@ -8,6 +9,8 @@ const DashboardHeader = ({title}) => {
   const toggleMenu = () => setOpenMenu((prev) => !prev);
   const menuRef = useRef(null);
   const {user, userLoading, logout} = useAuth();
+
+  const navigate = useNavigate();
   
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -45,17 +48,17 @@ const DashboardHeader = ({title}) => {
               <div className="user-info">
                 <h3>{userLoading ?  "loading.." : user.companyName}</h3>
                 <span className="status">Online</span>
-                <button onClick={logout} className="logout-btn">Logout</button>
+                <button onClick={() => {logout(); toggleMenu();}} className="logout-btn">Logout</button>
               </div>
               <hr />
               <div className="user-options">
                 <p>PROFILE</p>
-                <button className="profile-menu">Company Profile</button>
-                <button className="profile-menu">Change Organization Name</button>
-                <button className="profile-menu">Contact Details</button>
+                <button onClick={() => {navigate('/profile'); toggleMenu();}} className="profile-menu">Company Profile</button>
+                <button onClick={() => {navigate('/profile'); toggleMenu();}} className="profile-menu">Change Organization Name</button>
+                <button onClick={() => {navigate('/profile'); toggleMenu();}} className="profile-menu">Contact Details</button>
               </div>
               <hr />
-              <button className="messages-btn">Messages</button>
+              <button onClick={() => {navigate('/message'); toggleMenu();}} className="messages-btn">Messages</button>
             </div>
           )}
         </div>

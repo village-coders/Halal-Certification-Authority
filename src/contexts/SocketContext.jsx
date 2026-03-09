@@ -10,7 +10,7 @@ export const SocketProvider = ({ children }) => {
   const [socket, setSocket] = useState(null);
   const [isConnected, setIsConnected] = useState(false);
   const [connectionStatus, setConnectionStatus] = useState('disconnected');
-
+  const baseUrl = import.meta.env.VITE_BASE_URL_SOCKET;
   useEffect(() => {
     const initializeSocket = () => {
       const token = JSON.parse(localStorage.getItem('accessToken'))
@@ -23,7 +23,7 @@ export const SocketProvider = ({ children }) => {
 
       console.log('Initializing Socket.IO connection...');
 
-      const socketInstance = io("http://localhost:333", {
+      const socketInstance = io(baseUrl, {
         auth: {
           token: token
         },

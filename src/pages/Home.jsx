@@ -18,6 +18,7 @@ const Home = () => {
     registerPassword: '',
     confirmPassword: ''
   });
+  const [showPass, setShowPass] = useState(false)
   const [isLoading, setIsLoading] = useState(false);
   const [showEmailModal, setShowEmailModal] = useState(false);
   const [modalAction, setModalAction] = useState('');
@@ -215,6 +216,18 @@ const Home = () => {
       fontSize: '1rem',
       transition: 'all 0.3s ease',
       fontFamily: "'Poppins', sans-serif"
+    },
+    passToggle: {
+      position: 'absolute',
+      top: '69%',
+      right: '10px',
+      transform: 'translateY(-50%)',
+      cursor: 'pointer',
+      color: '#6c757d',
+      zIndex: 1 ,
+      background: "none",
+      border: "none",
+      fontSize : "1.3rem"
     },
     formInputFocus: {
       borderColor: '#1a5f7a',
@@ -972,7 +985,7 @@ const Home = () => {
               <div style={styles.formGroup}>
                 <label htmlFor="loginPassword" style={styles.formLabel} className="required">Your Password</label>
                 <input
-                  type="password"
+                  type={showPass ? "text" : "password"}
                   id="loginPassword"
                   value={formData.loginPassword}
                   onChange={handleInputChange}
@@ -981,6 +994,9 @@ const Home = () => {
                   onFocus={(e) => Object.assign(e.target.style, styles.formInputFocus)}
                   onBlur={(e) => Object.assign(e.target.style, styles.formInput)}
                 />
+                <div style={styles.passToggle}>
+                  {showPass ? <i onClick={()=> setShowPass(!showPass)} className="fa-regular fa-eye"></i> : <i onClick={()=> setShowPass(!showPass)} className="fa-regular fa-eye-slash"></i>}
+                </div>
               </div>
               
               <div style={styles.checkboxGroup}>
@@ -995,7 +1011,7 @@ const Home = () => {
               </div>
               
               <button 
-                type="submit" 
+                type="submit"
                 style={{ 
                   ...styles.btn, 
                   ...styles.btnPrimary,

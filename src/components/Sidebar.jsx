@@ -3,8 +3,9 @@ import "./css/Sidebar.css";
 import logo from '../assets/hcaLogo.webp';
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
+import { MdOutlineDashboard, MdOutlineAssignment, MdOutlineBadge, MdOutlineShoppingBag, MdOutlinePerson, MdOutlineMessage, MdOutlineLogout, MdOutlineReceipt, MdOutlineEventNote } from "react-icons/md";
 
-const Sidebar = ({activeD, activeApp, activeP, activeCert, activeUse, activeMess, activePro}) => {
+const Sidebar = ({activeD, activeApp, activeP, activeCert, activeUse, activeMess, activePro, activeI, activeAu}) => {
   const [openMenu, setOpenMenu] = useState("");
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 900);
@@ -67,7 +68,7 @@ const Sidebar = ({activeD, activeApp, activeP, activeCert, activeUse, activeMess
           <ul>
             <li>
               <button onClick={() =>{ if (isMobile) {toggleSidebar(); setIsCollapsed(true);} navigate('/dashboard')}} className={`dropdown-btn ${activeD}`} title="Dashboard">
-                <i className="fas fa-home"></i>
+                <MdOutlineDashboard />
                 {!isCollapsed && <span>Dashboard</span>}
               </button>
             </li>
@@ -75,7 +76,7 @@ const Sidebar = ({activeD, activeApp, activeP, activeCert, activeUse, activeMess
             <li className="has-submenu">
               <button
                 onClick={() =>{ if (isMobile) {toggleSidebar(); setIsCollapsed(true);} navigate('/applications')}} className={`dropdown-btn ${openMenu === "applications" ? "active" : ""} ${activeApp}`} title="Applications">
-                <i className="fas fa-file-alt"></i>
+                <MdOutlineAssignment />
                 {!isCollapsed &&  <span>Applications</span>}
               </button>
               {/* {!isCollapsed && openMenu === "applications" && (
@@ -89,7 +90,7 @@ const Sidebar = ({activeD, activeApp, activeP, activeCert, activeUse, activeMess
 
             <li className="has-submenu">
               <button onClick={() =>{ if (isMobile) {toggleSidebar(); setIsCollapsed(true);} navigate('/certificates')}} className={`dropdown-btn ${openMenu === "certificate" ? "active" : ""} ${activeCert}`} title="Certificate">
-                <i className="fas fa-certificate"></i>
+                <MdOutlineBadge />
                 {!isCollapsed && <span>Certificate</span>}
               </button>
               {/* {!isCollapsed && openMenu === "certificate" && (
@@ -102,7 +103,7 @@ const Sidebar = ({activeD, activeApp, activeP, activeCert, activeUse, activeMess
 
             <li>
               <button onClick={() =>{ if (isMobile) {toggleSidebar(); setIsCollapsed(true);} navigate('/products')}} className={`dropdown-btn ${openMenu === "products" ? "active" : ""} ${activeP}`} title="Products">
-                <i className="fas fa-cube"></i>
+                <MdOutlineShoppingBag />
                 {!isCollapsed && <span>Products</span>}
               </button>
             </li>
@@ -114,7 +115,7 @@ const Sidebar = ({activeD, activeApp, activeP, activeCert, activeUse, activeMess
             </li> */}
             <li>
               <button onClick={()=> {if (isMobile)  {toggleSidebar(); setIsCollapsed(true)} navigate('/message')}} className={`dropdown-btn ${openMenu === "message" ? "active" : ""} ${activeMess}`} title="Messages">
-                <i className="fas fa-envelope"></i>
+                <MdOutlineMessage />
                 {!isCollapsed && (
                   <>
                     <span>Messages</span>
@@ -124,14 +125,26 @@ const Sidebar = ({activeD, activeApp, activeP, activeCert, activeUse, activeMess
               </button>            
             </li>
             <li>
+              <button onClick={() =>{ if (isMobile) {toggleSidebar(); setIsCollapsed(true);}  navigate('/invoices')}} className={`dropdown-btn ${openMenu === "invoices" ? "active" : ""} ${activeI}`} title="Invoice">
+                <MdOutlineReceipt />
+                {!isCollapsed && <span>Invoices</span>}
+              </button>
+            </li>
+            <li>
+              <button onClick={() =>{ if (isMobile) {toggleSidebar(); setIsCollapsed(true);}  navigate('/audits')}} className={`dropdown-btn ${openMenu === "audits" ? "active" : ""} ${activeAu}`} title="Audit">
+                <MdOutlineEventNote />
+                {!isCollapsed && <span>Audits</span>}
+              </button>
+            </li>
+            <li>
               <button onClick={() =>{ if (isMobile) {toggleSidebar(); setIsCollapsed(true);}  navigate('/profile')}} className={`dropdown-btn ${openMenu === "profile" ? "active" : ""} ${activePro}`} title="Manage Users">
-                <i className="fas fa-user-circle"></i>
+                <MdOutlinePerson />
                 {!isCollapsed && <span>Profile</span>}
               </button>
             </li>
             <li>
               <button onClick={() =>{ if (isMobile) {toggleSidebar(); setIsCollapsed(true);}  navigate('/manage-users')}} className={`dropdown-btn ${openMenu === "manage-users" ? "active" : ""} ${activeUse}`} title="Manage Users">
-                <i className="fas fa-users"></i>
+                <MdOutlinePerson />
                 {!isCollapsed && <span>Manage Users</span>}
               </button>
             </li>
@@ -152,7 +165,7 @@ const Sidebar = ({activeD, activeApp, activeP, activeCert, activeUse, activeMess
                 className="logout-btn dropdown-btn"
                 title="Logout"
               >
-                <i className="fas fa-sign-out-alt"></i>
+                <MdOutlineLogout />
                 {!isCollapsed && <span>Logout</span>}
               </button>
             {/* )} */}

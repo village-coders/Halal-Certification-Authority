@@ -32,16 +32,21 @@ function Dashboard() {
 
   const quickActions = [
     { title: "NEW APPLICATION", icon: "fa-plus-circle", color: "#4caf50", link: "applications" },
-    ...(applications.length !== 0 ? [{ title: "REQUEST PRODUCT", icon: "fa-shopping-cart", color: "#ff5722" }, { title: "RENEWAL APPLICATION", icon: "fa-sync-alt", color: "#2196f3", link: "applications" },] : [])
+    ...(applications.length !== 0 ? [{ title: "REQUEST PRODUCT", icon: "fa-shopping-cart", color: "#ff5722", link: "products" }] : []),
+    ...(applications.some(item =>
+      ["expired", "renewal"].includes(item.status)
+    )
+    ? [
+        { title: "RENEWAL APPLICATION", icon: "fa-sync-alt", color: "#2196f3", link: "applications" },
+      ]
+    : []
+  ),
   ];
 
   useEffect(() => {
     fetchDashboardData();
   }, []);
 
-  // Check token expiration
-
-  
 
   const fetchDashboardData = async () => {
     try {

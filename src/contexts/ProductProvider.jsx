@@ -18,34 +18,34 @@ const ProductProvider = ({ children }) => {
   const token = JSON.parse(localStorage.getItem("accessToken"));
 
   // 🔐 Token expiration checker
-  useEffect(() => {
-    const interval = setInterval(() => {
-      const storedToken = localStorage.getItem("accessToken");
-      if (!storedToken) {
-        toast.error("Session expired. Please log in again.");
-        navigate("/");
-        return;
-      }
+  // useEffect(() => {
+  //   const interval = setInterval(() => {
+  //     const storedToken = localStorage.getItem("accessToken");
+  //     if (!storedToken) {
+  //       toast.error("Session expired. Please log in again.");
+  //       navigate("/");
+  //       return;
+  //     }
 
-      try {
-        const token = JSON.parse(storedToken);
-        const payload = JSON.parse(atob(token.split(".")[1]));
-        const currentTime = Math.floor(Date.now() / 1000);
+  //     try {
+  //       const token = JSON.parse(storedToken);
+  //       const payload = JSON.parse(atob(token.split(".")[1]));
+  //       const currentTime = Math.floor(Date.now() / 1000);
 
-        if (payload.exp && payload.exp < currentTime) {
-          localStorage.removeItem("accessToken");
-          toast.error("Session expired. Please log in again.");
-          navigate("/");
-        }
-      } catch (err) {
-        console.error("Token parsing error", err);
-        localStorage.removeItem("accessToken");
-        navigate("/");
-      }
-    }, 60000); // check every 60 seconds
+  //       if (payload.exp && payload.exp < currentTime) {
+  //         localStorage.removeItem("accessToken");
+  //         toast.error("Session expired. Please log in again.");
+  //         navigate("/");
+  //       }
+  //     } catch (err) {
+  //       console.error("Token parsing error", err);
+  //       localStorage.removeItem("accessToken");
+  //       navigate("/");
+  //     }
+  //   }, 60000); // check every 60 seconds
 
-    return () => clearInterval(interval);
-  }, []);
+  //   return () => clearInterval(interval);
+  // }, []);
 
   useEffect(() => {
     fetchProducts();
