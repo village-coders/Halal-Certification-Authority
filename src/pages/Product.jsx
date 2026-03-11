@@ -417,7 +417,7 @@ const Product = () => {
                     onChange={handleChange}
                     className={errors.applicationId ? 'error' : ''}
                   >
-                    <option value="">Select Market Type</option>
+                    {applications.length > 0 ?  <option value="">Select Application</option> : <option value="">No Application Found</option>}
 
                     {applications.map(app => (
                       <option key={app._id} value={app._id}>
