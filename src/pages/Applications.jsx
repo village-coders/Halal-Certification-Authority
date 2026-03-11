@@ -1356,7 +1356,7 @@ function Applications() {
                       </select>
                     </div>
 
-                    <div className="form-group">
+                    {/* <div className="form-group">
                       <label>Product *</label>
                       <select
                         name="product"
@@ -1376,7 +1376,7 @@ function Applications() {
                           <option value="" disabled>No products found</option>
                         )}
                       </select>
-                    </div>
+                    </div> */}
 
                     <div className="form-group">
                       <label>Requested Date *</label>
