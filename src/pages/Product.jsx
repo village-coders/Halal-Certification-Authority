@@ -154,239 +154,254 @@ const Product = () => {
   return (
     <div className="dash">
       <Sidebar activeP="active" />
-      <main className="content">
-        <div className="product-container">
-          <div className="product-header">
+      <main className="content cert">
+        <div className="manage-applications">
+          <div className="header">
             <h2>Products</h2>
-            <button className="add-product-btn" onClick={toggleProductForm}>
-              Request Product
-            </button>
+            <div className="header-actions">
+              <button className="new-btn" onClick={toggleProductForm}>
+                <i className="fas fa-plus-circle"></i> Request Product
+              </button>
+            </div>
           </div>
 
-          {/* Tab Navigation */}
-          <div className="product-tabs">
+          {/* Tab Navigation as Search Box */}
+          <div className="search-box" style={{ display: 'flex', gap: '10px' }}>
             <button 
-              className={`tab-btn ${activeTab === 'all' ? 'active' : ''}`}
+              className="search-btn"
               onClick={() => setActiveTab('all')}
+              style={{ background: activeTab === 'all' ? 'var(--primary-dark)' : 'var(--primary)' }}
             >
               All Products ({products.length})
             </button>
             <button 
-              className={`tab-btn ${activeTab === 'requested' ? 'active' : ''}`}
+              className="search-btn"
               onClick={() => setActiveTab('requested')}
+              style={{ background: activeTab === 'requested' ? 'var(--primary-dark)' : 'var(--primary)' }}
             >
               Requested ({requestedProducts.length})
             </button>
             <button 
-              className={`tab-btn ${activeTab === 'approved' ? 'active' : ''}`}
+              className="search-btn"
               onClick={() => setActiveTab('approved')}
+              style={{ background: activeTab === 'approved' ? 'var(--primary-dark)' : 'var(--primary)' }}
             >
               Approved ({approvedProducts.length})
             </button>
           </div>
 
-          <div className="product-content">
-            <h3 className="product-count">
-              {activeTab === 'all' && `All Products (${products.length})`}
-              {activeTab === 'requested' && `Requested Products (${requestedProducts.length})`}
-              {activeTab === 'approved' && `Approved Products (${approvedProducts.length})`}
-            </h3>
-
-            <div className="product-table-container">
-              {isLoading ? (
-                <div className="loading-state">
-                  <p>Loading products...</p>
-                </div>
-              ) : getFilteredProducts().length === 0 ? (
-                <div className="empty-state">
-                  <p>
-                    {activeTab === 'all' && "No products found. Add your first product!"}
-                    {activeTab === 'requested' && "No requested products found."}
-                    {activeTab === 'approved' && "No approved products found."}
-                  </p>
-                </div>
-              ) : (
-                <>
-                  {/* Show all products when 'all' tab is active */}
-                  {activeTab === 'all' ? (
-                    <table className="product-table">
-                      <thead>
-                        <tr>
-                          <th>#</th>
-                          <th>Name</th>
-                          <th>Application Number</th>
-                          <th>Note</th>
-                          <th>Actions</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {products.map((p, index) => (
-                          <tr key={p._id}>
-                            <td className="index-cell">{index + 1}</td>
-                            <td className="name-cell">{p.name}</td>
-                            <td>{p.applicationId.applicationNumber}</td>
-                            <td>{p.note}</td>
-                            <td className="actions-cell">
-                              <div className="action-buttons">
-                                <button 
-                                  className="view-btn"
-                                  onClick={() => viewProductDetails(p)}
-                                  title="View product details"
-                                >
-                                  <MdOutlineRemoveRedEye />
-                                </button>
-                                <button 
-                                  className={`delete-btn ${p.status === 'approved' ? 'disabled' : ''}`}
-                                  onClick={() => deleteProductFromList(p._id, p.status)}
-                                  title={p.status === 'approved' ? 'Approved products cannot be deleted' : 'Delete product'}
-                                  disabled={p.status === 'approved'}
-                                >
-                                  <MdOutlineDeleteForever />
-                                </button>
-                              </div>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  ) : (
-                    // Show separate tables for requested and approved
-                    <div className="products-section">
-                      {/* Requested Products Table */}
-                      {activeTab === 'requested' && requestedProducts.length > 0 && (
-                        <div className="table-section">
-                          <table className="product-table">
-                            <thead>
-                              <tr>
-                                <th>#</th>
-                                <th>Name</th>
-                                <th>Market Type</th>
-                                <th>Brand</th>
-                                <th>Pork</th>
-                                <th>Alcohol</th>
-                                <th>Markets</th>
-                                <th>Actions</th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {requestedProducts.map((p, index) => (
-                                <tr key={p._id}>
-                                  <td className="index-cell">{index + 1}</td>
-                                  <td className="name-cell">{p.name}</td>
-                                  <td>{p.marketType}</td>
-                                  <td>{p.brandOwnership}</td>
-                                  <td>
-                                    <span className={`status-badge ${p.porkDerivative ? 'yes' : 'no'}`}>
-                                      {p.porkDerivative ? "Yes" : "No"}
-                                    </span>
-                                  </td>
-                                  <td>
-                                    <span className={`status-badge ${p.alcohol ? 'yes' : 'no'}`}>
-                                      {p.alcohol ? "Yes" : "No"}
-                                    </span>
-                                  </td>
-                                  <td className="markets-cell">
-                                    {p.markets?.slice(0, 2).join(", ")}
-                                    {p.markets?.length > 2 && "..."}
-                                  </td>
-                                  <td className="actions-cell">
-                                    <div className="action-buttons">
-                                      <button 
-                                        className="view-btn"
-                                        onClick={() => viewProductDetails(p)}
-                                        title="View product details"
-                                      >
-                                        <MdOutlineRemoveRedEye />
-                                      </button>
-                                      <button 
-                                        className="delete-btn"
-                                        onClick={() => deleteProductFromList(p._id, p.status)}
-                                        title="Delete product"
-                                      >
-                                        <MdOutlineDeleteForever />
-                                      </button>
-                                    </div>
-                                  </td>
-                                </tr>
-                              ))}
-                            </tbody>
-                          </table>
-                        </div>
-                      )}
-
-                      {/* Approved Products Table */}
-                      {activeTab === 'approved' && approvedProducts.length > 0 && (
-                        <div className="table-section">
-                          <table className="product-table">
-                            <thead>
-                              <tr>
-                                <th>#</th>
-                                <th>Name</th>
-                                <th>Market Type</th>
-                                <th>Brand</th>
-                                <th>Pork</th>
-                                <th>Alcohol</th>
-                                <th>Markets</th>
-                                <th>Actions</th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {approvedProducts.map((p, index) => (
-                                <tr key={p._id}>
-                                  <td className="index-cell">{index + 1}</td>
-                                  <td className="name-cell">{p.name}</td>
-                                  <td>{p.marketType}</td>
-                                  <td>{p.brandOwnership}</td>
-                                  <td>
-                                    <span className={`status-badge ${p.porkDerivative ? 'yes' : 'no'}`}>
-                                      {p.porkDerivative ? "Yes" : "No"}
-                                    </span>
-                                  </td>
-                                  <td>
-                                    <span className={`status-badge ${p.alcohol ? 'yes' : 'no'}`}>
-                                      {p.alcohol ? "Yes" : "No"}
-                                    </span>
-                                  </td>
-                                  <td className="markets-cell">
-                                    {p.markets?.slice(0, 2).join(", ")}
-                                    {p.markets?.length > 2 && "..."}
-                                  </td>
-                                  <td className="actions-cell">
-                                    <div className="action-buttons">
-                                      <button 
-                                        className="view-btn"
-                                        onClick={() => viewProductDetails(p)}
-                                        title="View product details"
-                                      >
-                                        <MdOutlineRemoveRedEye />
-                                      </button>
-                                      <button 
-                                        className="delete-btn disabled"
-                                        title="Approved products cannot be deleted"
-                                        disabled
-                                      >
-                                        <MdOutlineDeleteForever />
-                                      </button>
-                                    </div>
-                                  </td>
-                                </tr>
-                              ))}
-                            </tbody>
-                          </table>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </>
-              )}
+          <div className="table-wrapper">
+            <div className="table-header">
+              <h3>
+                {activeTab === 'all' && `All Products (${products.length})`}
+                {activeTab === 'requested' && `Requested Products (${requestedProducts.length})`}
+                {activeTab === 'approved' && `Approved Products (${approvedProducts.length})`}
+              </h3>
+              <div className="table-actions">
+                <button 
+                  className="action-btn" 
+                  onClick={fetchProducts}
+                  disabled={isLoading}
+                >
+                  <i className={`fas fa-sync-alt ${isLoading ? 'fa-spin' : ''}`}></i>
+                </button>
+              </div>
             </div>
+
+            {isLoading ? (
+              <div className="loading">
+                <i className="fas fa-spinner fa-spin"></i> Loading products...
+              </div>
+            ) : getFilteredProducts().length === 0 ? (
+              <div className="no-data-message" style={{ textAlign: 'center', padding: '40px' }}>
+                <i className="fas fa-box" style={{ fontSize: '48px', color: '#6b7280', marginBottom: '16px' }}></i>
+                <h3>No Products Found</h3>
+                <p>
+                  {activeTab === 'all' && "No products found. Add your first product!"}
+                  {activeTab === 'requested' && "No requested products found."}
+                  {activeTab === 'approved' && "No approved products found."}
+                </p>
+              </div>
+            ) : (
+              <>
+                {/* Show all products when 'all' tab is active */}
+                {activeTab === 'all' ? (
+                  <table className="applications-table">
+                    <thead>
+                      <tr>
+                        <th>#</th>
+                        <th>Name</th>
+                        <th>Application Number</th>
+                        <th>Note</th>
+                        <th>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {products.map((p, index) => (
+                        <tr key={p._id}>
+                          <td>{index + 1}</td>
+                          <td style={{ fontWeight: 500 }}>{p.name}</td>
+                          <td><span className="app-number">{p?.applicationId?.applicationNumber}</span></td>
+                          <td>{p.note}</td>
+                          <td>
+                            <div className="action-buttons">
+                              <button 
+                                className="view-btn"
+                                onClick={() => viewProductDetails(p)}
+                                title="View product details"
+                              >
+                                <i className="fas fa-eye"></i>
+                              </button>
+                              <button 
+                                className="view-btn"
+                                style={{ color: p.status === 'approved' ? 'var(--gray)' : 'var(--danger)', borderColor: p.status === 'approved' ? 'var(--gray-border)' : 'var(--danger)' }}
+                                onClick={() => deleteProductFromList(p._id, p.status)}
+                                title={p.status === 'approved' ? 'Approved products cannot be deleted' : 'Delete product'}
+                                disabled={p.status === 'approved'}
+                              >
+                                <i className="fas fa-trash-alt"></i>
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                ) : (
+                  // Show separate tables for requested and approved
+                  <>
+                    {/* Requested Products Table */}
+                    {activeTab === 'requested' && requestedProducts.length > 0 && (
+                      <table className="applications-table">
+                        <thead>
+                          <tr>
+                            <th>#</th>
+                            <th>Name</th>
+                            <th>Market Type</th>
+                            <th>Brand</th>
+                            <th>Pork</th>
+                            <th>Alcohol</th>
+                            <th>Markets</th>
+                            <th>Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {requestedProducts.map((p, index) => (
+                            <tr key={p._id}>
+                              <td>{index + 1}</td>
+                              <td style={{ fontWeight: 500 }}>{p.name}</td>
+                              <td>{p.marketType}</td>
+                              <td>{p.brandOwnership}</td>
+                              <td>
+                                <span className={`status-badge`} style={{ backgroundColor: p.porkDerivative ? '#fee2e2' : '#d1fae5', color: p.porkDerivative ? '#991b1b' : '#065f46' }}>
+                                  {p.porkDerivative ? "Yes" : "No"}
+                                </span>
+                              </td>
+                              <td>
+                                <span className={`status-badge`} style={{ backgroundColor: p.alcohol ? '#fee2e2' : '#d1fae5', color: p.alcohol ? '#991b1b' : '#065f46' }}>
+                                  {p.alcohol ? "Yes" : "No"}
+                                </span>
+                              </td>
+                              <td>
+                                {p.markets?.slice(0, 2).join(", ")}
+                                {p.markets?.length > 2 && "..."}
+                              </td>
+                              <td>
+                                <div className="action-buttons">
+                                  <button 
+                                    className="view-btn"
+                                    onClick={() => viewProductDetails(p)}
+                                    title="View product details"
+                                  >
+                                    <i className="fas fa-eye"></i>
+                                  </button>
+                                  <button 
+                                    className="view-btn"
+                                    style={{ color: 'var(--danger)', borderColor: 'var(--danger)' }}
+                                    onClick={() => deleteProductFromList(p._id, p.status)}
+                                    title="Delete product"
+                                  >
+                                    <i className="fas fa-trash-alt"></i>
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    )}
+
+                    {/* Approved Products Table */}
+                    {activeTab === 'approved' && approvedProducts.length > 0 && (
+                      <table className="applications-table">
+                        <thead>
+                          <tr>
+                            <th>#</th>
+                            <th>Name</th>
+                            <th>Market Type</th>
+                            <th>Brand</th>
+                            <th>Pork</th>
+                            <th>Alcohol</th>
+                            <th>Markets</th>
+                            <th>Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {approvedProducts.map((p, index) => (
+                            <tr key={p._id}>
+                              <td>{index + 1}</td>
+                              <td style={{ fontWeight: 500 }}>{p.name}</td>
+                              <td>{p.marketType}</td>
+                              <td>{p.brandOwnership}</td>
+                              <td>
+                                <span className={`status-badge`} style={{ backgroundColor: p.porkDerivative ? '#fee2e2' : '#d1fae5', color: p.porkDerivative ? '#991b1b' : '#065f46' }}>
+                                  {p.porkDerivative ? "Yes" : "No"}
+                                </span>
+                              </td>
+                              <td>
+                                <span className={`status-badge`} style={{ backgroundColor: p.alcohol ? '#fee2e2' : '#d1fae5', color: p.alcohol ? '#991b1b' : '#065f46' }}>
+                                  {p.alcohol ? "Yes" : "No"}
+                                </span>
+                              </td>
+                              <td>
+                                {p.markets?.slice(0, 2).join(", ")}
+                                {p.markets?.length > 2 && "..."}
+                              </td>
+                              <td>
+                                <div className="action-buttons">
+                                  <button 
+                                    className="view-btn"
+                                    onClick={() => viewProductDetails(p)}
+                                    title="View product details"
+                                  >
+                                    <i className="fas fa-eye"></i>
+                                  </button>
+                                  <button 
+                                    className="view-btn"
+                                    style={{ color: 'var(--gray)', borderColor: 'var(--gray-border)' }}
+                                    title="Approved products cannot be deleted"
+                                    disabled
+                                  >
+                                    <i className="fas fa-trash-alt"></i>
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    )}
+                  </>
+                )}
+              </>
+            )}
           </div>
         </div>
       </main>
 
       {/* Add Product Modal */}
       {showProductForm && (
-        <div className="modal-overlay" onClick={toggleProductForm}>
+        <div className="modal modal-large" onClick={toggleProductForm}>
           <div className="modal-content" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
               <h2>Request New Product</h2>
@@ -465,7 +480,7 @@ const Product = () => {
 
       {/* Product Details Modal */}
       {showProductDetails && selectedProduct && (
-        <div className="modal-overlay" onClick={() => setShowProductDetails(false)}>
+        <div className="modal modal-large" onClick={() => setShowProductDetails(false)}>
           <div className="modal-content product-details-modal" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
               <h2>Product Details</h2>

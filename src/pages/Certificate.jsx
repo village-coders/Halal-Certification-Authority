@@ -200,13 +200,13 @@ function Certificate() {
               >
                 <i className="fas fa-file-export"></i> Export
               </button>
-              <button 
+              {/* <button 
                 className="new-btn" 
                 onClick={() => alert('Generate certificate feature coming soon')}
                 disabled={loading}
               >
                 <i className="fas fa-file-certificate"></i> Generate
-              </button>
+              </button> */}
             </div>
           </div>
 
@@ -378,7 +378,7 @@ function Certificate() {
 
         {/* Certificate Detail Modal */}
         {showCertificateModal && selectedCertificate && (
-          <div className="modal">
+          <div className="modal modal-large">
             <div className="modal-content">
               <div className="modal-header">
                 <h3>

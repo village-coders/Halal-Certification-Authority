@@ -11,7 +11,7 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 1000;
+  z-index: 2000;
   backdrop-filter: blur(2px);
 }
 
@@ -487,9 +487,10 @@
 .recent-messages-section {
   background: white;
   border-radius: 12px;
-  padding: 25px;
+  padding: 15px;
   margin-top: 30px;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+  height: 100%;
 }
 
 .recent-messages-section .section-header {
@@ -523,9 +524,9 @@
   transform: translateY(-1px);
 }
 
-.recent-messages-list {
+/* .recent-messages-list {
   min-height: 200px;
-}
+} */
 
 .loading-messages,
 .empty-messages {

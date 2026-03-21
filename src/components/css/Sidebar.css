@@ -308,8 +308,8 @@ nav a:hover,
 
 /* Footer */
 .sidebar-footer {
-  margin-top: auto;
-  padding: 16px;
+  /* margin-top: 10px; */
+  padding: 10px;
   border-top: 1px solid #edf2f7;
   display: flex;
   align-items: center;

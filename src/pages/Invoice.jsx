@@ -278,7 +278,7 @@ const Invoice = () => {
 
       {/* Request Modal */}
       {showInvoiceForm && (
-        <div className="modal-overlay" onClick={toggleInvoiceForm}>
+        <div className="modal modal-large" onClick={toggleInvoiceForm}>
           <div className="modal-content" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
               <h2>Request New Invoice</h2>
@@ -309,7 +309,7 @@ const Invoice = () => {
 
       {/* Details Modal */}
       {showInvoiceDetails && selectedInvoice && (
-        <div className="modal-overlay" onClick={() => setShowInvoiceDetails(false)}>
+        <div className="modal modal-large" onClick={() => setShowInvoiceDetails(false)}>
           <div className="modal-content invoice-details-modal" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
               <h2>Invoice #{selectedInvoice.invoiceNumber}</h2>
@@ -364,7 +364,7 @@ const Invoice = () => {
 
       {/* Upload Modal */}
       {showUploadReceipt && selectedInvoice && (
-        <div className="modal-overlay" onClick={() => setShowUploadReceipt(false)}>
+        <div className="modal modal-large" onClick={() => setShowUploadReceipt(false)}>
           <div className="modal-content upload-modal" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
               <h2>Upload Proof of Payment</h2>

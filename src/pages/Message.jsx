@@ -792,7 +792,7 @@ function Message() {
                 </div>
               ) : (
                 <div className="messages-preview">
-                  {[...messages].reverse().slice(0, 3).map((message) => (
+                  {[...messages].reverse().slice(0, 1).map((message) => (
                     <div 
                       key={message._id}
                       className="message-preview-item"
