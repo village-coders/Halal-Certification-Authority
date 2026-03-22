@@ -496,7 +496,7 @@ const Product = () => {
                     <span className="detail-value">{selectedProduct.name}</span>
                   </div>
                   <div className="detail-item">
-                    <span className="detail-label">Product Name:</span>
+                    <span className="detail-label">Application Number:</span>
                     <span className="detail-value">{selectedProduct.applicationId.applicationNumber}</span>
                   </div>
                   <div className="detail-item">
