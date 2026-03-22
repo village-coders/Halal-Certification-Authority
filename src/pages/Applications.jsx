@@ -1224,6 +1224,7 @@ function Applications() {
                 type="date"
                 value={searchDate}
                 onChange={(e) => setSearchDate(e.target.value)}
+                disabled
               />
             </div>
             <button 
@@ -1386,7 +1387,7 @@ function Applications() {
                         value={formData.requestedDate}
                         onChange={handleInputChange}
                         required
-                        disabled={loading}
+                        disabled
                       />
                     </div>
                   </div>
@@ -2310,7 +2311,7 @@ function Applications() {
                         name="authorizedBy.dateAuthorized"
                         value={formData.authorizedBy.dateAuthorized}
                         onChange={handleInputChange}
-                        disabled={loading}
+                        disabled
                         required
                       />
                     </div>
@@ -2432,7 +2433,7 @@ function Applications() {
                         value={formData.requestedDate}
                         onChange={handleInputChange}
                         required
-                        disabled={editLoading}
+                        disabled
                       />
                     </div>
                   </div>
@@ -3356,7 +3357,7 @@ function Applications() {
                         name="authorizedBy.dateAuthorized"
                         value={formData.authorizedBy.dateAuthorized}
                         onChange={handleInputChange}
-                        disabled={editLoading}
+                        disabled
                         required
                       />
                     </div>
@@ -3461,7 +3462,7 @@ function Applications() {
                     value={renewalData.renewalDate}
                     onChange={handleRenewalInputChange}
                     required
-                    disabled={loading}
+                    disabled
                   />
                 </div>
 
