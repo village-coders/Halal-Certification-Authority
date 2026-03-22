@@ -93,7 +93,7 @@
   justify-content: space-between;
   align-items: center;
   padding: 0 16px;
-  margin-bottom: 30px;
+  margin-bottom: 20px;
 }
 
 .sidebar.mobile .sidebar-header {
@@ -360,12 +360,12 @@ nav a:hover,
 }
 
 .logout-btn {
-  color: #718096;
-  padding: 8px;
-  border-radius: 6px;
-  transition: all 0.2s;
-  display: flex;    
-}
+    color: #718096;
+    padding: 8px;
+    border-radius: 6px;
+    transition: all 0.2s;
+    display: flex;    
+  }
 
 .logout-btn:hover {
   color: #e53e3e;
@@ -445,5 +445,11 @@ nav a:hover,
     align-items: flex-end;
     justify-self: start;
     margin-top: 360px;
+  }
+  .sidebar-footer .logout-btn {
+    margin-top: 160px;
+    margin-left: 20px;
+    padding: 6px 40px !important;
+    height: 100% !important;
   }
 }

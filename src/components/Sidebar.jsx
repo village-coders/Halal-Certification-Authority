@@ -4,7 +4,7 @@ import logo from '../assets/hcaLogo.webp';
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 import { MdOutlineDashboard, MdOutlineAssignment, MdOutlineBadge, MdOutlineShoppingBag, MdOutlinePerson, MdOutlineMessage, MdOutlineLogout, MdOutlineReceipt, MdOutlineEventNote } from "react-icons/md";
-
+import { TbUsersGroup } from "react-icons/tb";
 const Sidebar = ({activeD, activeApp, activeP, activeCert, activeUse, activeMess, activePro, activeI, activeAu}) => {
   const [openMenu, setOpenMenu] = useState("");
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -144,7 +144,7 @@ const Sidebar = ({activeD, activeApp, activeP, activeCert, activeUse, activeMess
             </li>
             <li>
               <button onClick={() =>{ if (isMobile) {toggleSidebar(); setIsCollapsed(true);}  navigate('/manage-users')}} className={`dropdown-btn ${openMenu === "manage-users" ? "active" : ""} ${activeUse}`} title="Manage Users">
-                <MdOutlinePerson />
+                <TbUsersGroup />
                 {!isCollapsed && <span>Manage Users</span>}
               </button>
             </li>

@@ -30,10 +30,10 @@ const DashboardHeader = ({title}) => {
     <div className="dashboard-header">
       <h1>{title}</h1>
       <div className="header-actions">
-        <button className="notification-btn">
+        {/* <button className="notification-btn">
           <i className="fas fa-bell"></i>
           <span className="notification-badge">3</span>
-        </button>
+        </button> */}
 
         {/* User menu button */}
         <div className="user-menu-container" ref={menuRef}>
