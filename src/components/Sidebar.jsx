@@ -2,14 +2,18 @@ import { useState, useEffect } from "react";
 import "./css/Sidebar.css";
 import logo from '../assets/hcaLogo.webp';
 import { Link, useNavigate } from "react-router-dom";
-import { useAuth } from "../hooks/useAuth";
 import { MdOutlineDashboard, MdOutlineAssignment, MdOutlineBadge, MdOutlineShoppingBag, MdOutlinePerson, MdOutlineMessage, MdOutlineLogout, MdOutlineReceipt, MdOutlineEventNote } from "react-icons/md";
 import { TbUsersGroup } from "react-icons/tb";
-const Sidebar = ({activeD, activeApp, activeP, activeCert, activeUse, activeMess, activePro, activeI, activeAu}) => {
+import axios from 'axios';
+import { useAuth } from "../hooks/useAuth";
+
+const Sidebar = ({activeD, activeApp, activeCert, activeP, activeMess, activeI, activeAu, activePro, activeUse})=> {
   const [openMenu, setOpenMenu] = useState("");
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 900);
+  const [unreadMsgCount, setUnreadMsgCount] = useState(0);
   const navigate = useNavigate();
+  const baseUrl = import.meta.env.VITE_BASE_URL;
 
   const {logout} = useAuth();
 
@@ -32,6 +36,29 @@ const Sidebar = ({activeD, activeApp, activeP, activeCert, activeUse, activeMess
       setIsCollapsed(true);
     }
   }, [isMobile]);
+
+  useEffect(() => {
+    const fetchUnreadMsgCount = async () => {
+      try {
+        const tokenString = localStorage.getItem("accessToken");
+        if (!tokenString) return;
+        const token = JSON.parse(tokenString);
+
+        const res = await axios.get(`${baseUrl}/messages/unread/count`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (res.data.status === 'success') {
+          setUnreadMsgCount(res.data.count || 0);
+        }
+      } catch (error) {
+        console.error("Failed to fetch unread messages count", error);
+      }
+    };
+
+    fetchUnreadMsgCount();
+    const interval = setInterval(fetchUnreadMsgCount, 60000); // Check every minute
+    return () => clearInterval(interval);
+  }, [baseUrl]);
 
 
   const toggleMenu = (menu) => {
@@ -119,7 +146,7 @@ const Sidebar = ({activeD, activeApp, activeP, activeCert, activeUse, activeMess
                 {!isCollapsed && (
                   <>
                     <span>Messages</span>
-                    <span className="badge">3</span>
+                    {unreadMsgCount > 0 && <span className="badge">{unreadMsgCount}</span>}
                   </>
                 )}
               </button>            
