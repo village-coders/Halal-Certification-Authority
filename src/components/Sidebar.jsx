@@ -115,6 +115,20 @@ const Sidebar = ({activeD, activeApp, activeCert, activeP, activeMess, activeI, 
               )} */}
             </li>
 
+            <li>
+              <button onClick={() =>{ if (isMobile) {toggleSidebar(); setIsCollapsed(true);}  navigate('/submit-documents')}} className={`dropdown-btn`} title="Submit Relevant Document">
+                <MdOutlineAssignment />
+                {!isCollapsed && <span>Submit Relevant Document</span>}
+              </button>
+            </li>
+
+            <li>
+              <button onClick={() =>{ if (isMobile) {toggleSidebar(); setIsCollapsed(true);}  navigate('/invoices')}} className={`dropdown-btn ${openMenu === "invoices" ? "active" : ""} ${activeI}`} title="Invoice">
+                <MdOutlineReceipt />
+                {!isCollapsed && <span>Invoices</span>}
+              </button>
+            </li>
+
             <li className="has-submenu">
               <button onClick={() =>{ if (isMobile) {toggleSidebar(); setIsCollapsed(true);} navigate('/certificates')}} className={`dropdown-btn ${openMenu === "certificate" ? "active" : ""} ${activeCert}`} title="Certificate">
                 <MdOutlineBadge />
@@ -150,12 +164,6 @@ const Sidebar = ({activeD, activeApp, activeCert, activeP, activeMess, activeI, 
                   </>
                 )}
               </button>            
-            </li>
-            <li>
-              <button onClick={() =>{ if (isMobile) {toggleSidebar(); setIsCollapsed(true);}  navigate('/invoices')}} className={`dropdown-btn ${openMenu === "invoices" ? "active" : ""} ${activeI}`} title="Invoice">
-                <MdOutlineReceipt />
-                {!isCollapsed && <span>Invoices</span>}
-              </button>
             </li>
             <li>
               <button onClick={() =>{ if (isMobile) {toggleSidebar(); setIsCollapsed(true);}  navigate('/audits')}} className={`dropdown-btn ${openMenu === "audits" ? "active" : ""} ${activeAu}`} title="Audit">

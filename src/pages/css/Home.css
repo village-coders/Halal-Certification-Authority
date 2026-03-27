@@ -29,7 +29,7 @@
 }
 
 .welcome h1 {
-  color: rgb(0,136,58);
+  color: var(--primary-color);
   margin-bottom: 15px;
 }
 
@@ -42,7 +42,7 @@
 }
 
 .create-account{
-  background-color: rgb(0,136,58);
+  background-color: var(--primary-color);
   padding: 10px 14px;
   color: white;
   font-size: 20px;
@@ -52,7 +52,7 @@
   transition: background-color 0.3s ease-in-out;
 }
 .create-account:hover{
-  background-color: rgb(4, 183, 81);
+  background-color: var(--primary-color);
 }
 
 

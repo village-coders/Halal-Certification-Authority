@@ -1,14 +1,8 @@
 import React, { useState, useEffect, useCallback } from "react";
 import Sidebar from "../components/Sidebar";
-import "./css/Invoice.css";
+import "./css/Certificate.css";
 import axios from "axios";
 import { toast } from "sonner";
-import { 
-  MdOutlineRemoveRedEye, 
-  MdOutlineCloudUpload, 
-  MdOutlineDownload,
-  MdClose
-} from "react-icons/md";
 
 const API_BASE_URL = import.meta.env.VITE_BASE_URL;
 
@@ -16,20 +10,23 @@ const Invoice = () => {
   // --- State Management ---
   const [invoices, setInvoices] = useState([]);
   const [applications, setApplications] = useState([]);
-  const [showInvoiceForm, setShowInvoiceForm] = useState(false);
   const [showInvoiceDetails, setShowInvoiceDetails] = useState(false);
   const [showUploadReceipt, setShowUploadReceipt] = useState(false);
   const [selectedInvoice, setSelectedInvoice] = useState(null);
+  
+  // Search & Filters
+  const [searchNumber, setSearchNumber] = useState("");
   const [activeTab, setActiveTab] = useState("all");
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+  
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchNumber, activeTab]);
+  
   const [isLoading, setIsLoading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadFile, setUploadFile] = useState(null);
-  
-  const [formData, setFormData] = useState({
-    applicationId: "",
-    description: "",
-    notes: "",
-  });
 
   // --- Helpers ---
   const getAuthHeader = () => {
@@ -53,8 +50,18 @@ const Invoice = () => {
     });
   };
 
+  const getStatusColor = (status) => {
+    const colors = {
+      "Paid": "#10b981",
+      "Issued": "#f59e0b",
+      "Overdue": "#ef4444",
+      "Requested": "#6366f1",
+      "Waiting for admin approval": "#8b5cf6"
+    };
+    return colors[status] || "#6b7280";
+  };
+
   const resetForm = () => {
-    setFormData({ applicationId: "", description: "", notes: "" });
     setUploadFile(null);
     setUploadProgress(0);
   };
@@ -96,25 +103,39 @@ const Invoice = () => {
 
   // --- Filter Logic ---
   const getFilteredInvoices = () => {
+    let filtered = invoices;
+    
+    // Status Filter
     switch (activeTab) {
       case "pending":
-        return invoices.filter(inv => ["Requested", "Issued"].includes(inv.status));
+        filtered = filtered.filter(inv => ["Requested", "Issued", "Waiting for admin approval"].includes(inv.status));
+        break;
       case "paid":
-        return invoices.filter(inv => inv.status === "Paid");
+        filtered = filtered.filter(inv => inv.status === "Paid");
+        break;
       case "overdue":
-        // Example logic: Issued and date has passed
-        return invoices.filter(inv => inv.status === "Issued" && new Date(inv.dueDate) < new Date());
+        filtered = filtered.filter(inv => inv.status === "Issued" && new Date(inv.dueDate) < new Date());
+        break;
       default:
-        return invoices;
+        break;
     }
+    
+    // Number Filter
+    if (searchNumber) {
+      filtered = filtered.filter(inv => 
+        inv.invoiceNumber?.toLowerCase().includes(searchNumber.toLowerCase())
+      );
+    }
+    
+    return filtered;
+  };
+
+  const handleClearFilters = () => {
+    setSearchNumber("");
+    setActiveTab("all");
   };
 
   // --- Event Handlers ---
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-  };
-
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file && file.size > 5 * 1024 * 1024) { // 5MB Limit
@@ -124,26 +145,6 @@ const Invoice = () => {
     setUploadFile(file);
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      const response = await axios.post(`${API_BASE_URL}/invoices/request`, {
-          applicationId: formData.applicationId,
-          description: formData.description,
-          notes: formData.notes
-      }, { headers: getAuthHeader() });
-
-      if (response.data) {
-        toast.success("Invoice requested successfully");
-        setShowInvoiceForm(false);
-        resetForm();
-        fetchInvoices();
-      }
-    } catch (error) {
-      toast.error(error.response?.data?.message || "Failed to request invoice");
-    }
-  };
-
   const handleUploadReceipt = async () => {
     if (!uploadFile) {
       toast.error("Please select a receipt file");
@@ -151,6 +152,7 @@ const Invoice = () => {
     }
 
     try {
+      setIsLoading(true);
       const data = new FormData();
       data.append("proof", uploadFile);
 
@@ -173,17 +175,14 @@ const Invoice = () => {
       }
     } catch (error) {
       toast.error(error.response?.data?.message || "Failed to upload receipt");
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const handleDownloadInvoice = async (invoice) => {
     toast.info("Download functionality coming soon");
     // Implementation for PDF download
-  };
-
-  const toggleInvoiceForm = () => {
-    setShowInvoiceForm(!showInvoiceForm);
-    if (showInvoiceForm) resetForm();
   };
 
   const openUploadModal = (invoice) => {
@@ -197,207 +196,423 @@ const Invoice = () => {
   };
 
   const filteredData = getFilteredInvoices();
+  const totalPages = Math.ceil(filteredData.length / itemsPerPage);
+  const paginatedData = filteredData.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   return (
     <div className="dash">
       <Sidebar activeI="active" />
-      <main className="content">
-        <div className="invoice-container">
-          <div className="invoice-header">
+      <main className="content cert">
+        <div className="manage-applications">
+          <div className="header">
             <h2>Invoices</h2>
-            <button className="request-invoice-btn" onClick={toggleInvoiceForm}>
-              Request Invoice
+            <div className="header-actions">
+              <button 
+                className="renew-btn" 
+                onClick={() => alert('Export feature coming soon')}
+                disabled={isLoading}
+              >
+                <i className="fas fa-file-export"></i> Export
+              </button>
+            </div>
+          </div>
+
+          {/* Search & Filters */}
+          <div className="search-box">
+            <div className="field">
+              <label>Invoice Number</label>
+              <input
+                type="text"
+                placeholder="Search..."
+                value={searchNumber}
+                onChange={(e) => setSearchNumber(e.target.value)}
+                disabled={isLoading}
+              />
+            </div>
+            <div className="field">
+              <label>Status</label>
+              <select 
+                value={activeTab}
+                onChange={(e) => setActiveTab(e.target.value)}
+                disabled={isLoading}
+                style={{ 
+                  width: '100%', 
+                  padding: '12px 16px', 
+                  border: '1px solid #e5e7eb', 
+                  borderRadius: '8px', 
+                  fontSize: '14px', 
+                  color: '#374151', 
+                  background: 'white', 
+                  outline: 'none' 
+                }}
+              >
+                <option value="all">All Invoices</option>
+                <option value="pending">Pending Filter</option>
+                <option value="paid">Paid Only</option>
+                <option value="overdue">Overdue Only</option>
+              </select>
+            </div>
+            <button 
+              className="search-btn"
+              onClick={handleClearFilters}
+              disabled={isLoading}
+            >
+              <i className="fas fa-times"></i> Clear
             </button>
           </div>
 
-          {/* Tab Navigation */}
-          <div className="invoice-tabs">
-            {['all', 'pending', 'paid', 'overdue'].map((tab) => (
-              <button 
-                key={tab}
-                className={`tab-btn ${activeTab === tab ? 'active' : ''}`}
-                onClick={() => setActiveTab(tab)}
-              >
-                {tab.charAt(0).toUpperCase() + tab.slice(1)}
-              </button>
-            ))}
-          </div>
-
-          <div className="invoice-content">
-            <div className="invoice-table-container">
-              {isLoading ? (
-                <div className="loading-state"><p>Loading invoices...</p></div>
-              ) : filteredData.length === 0 ? (
-                <div className="empty-state"><p>No invoices found for this category.</p></div>
-              ) : (
-                <table className="invoice-table">
-                  <thead>
-                    <tr>
-                      <th>#</th>
-                      <th>Invoice #</th>
-                      <th>Description</th>
-                      <th>Amount</th>
-                      <th>Created At</th>
-                      <th>Status</th>
-                      <th>Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredData.map((invoice, index) => (
+          {/* Invoices Table */}
+          <div className="table-wrapper">
+            <div className="table-header">
+              <h3>Invoices ({filteredData.length})</h3>
+              <div className="table-actions">
+                <button 
+                  className="action-btn" 
+                  onClick={fetchInvoices}
+                  disabled={isLoading}
+                >
+                  <i className={`fas fa-sync-alt ${isLoading ? 'fa-spin' : ''}`}></i>
+                </button>
+              </div>
+            </div>
+            
+            {isLoading ? (
+              <div className="loading">
+                <i className="fas fa-spinner fa-spin"></i> Loading invoices...
+              </div>
+            ) : invoices.length === 0 ? (
+              <div className="no-data-message">
+                <i className="fas fa-file-invoice" style={{ fontSize: '48px', color: '#6b7280', marginBottom: '16px' }}></i>
+                <h3>No Invoices Found</h3>
+                <p>You don't have any invoices yet. Generated invoices will appear here.</p>
+              </div>
+            ) : (
+              <table className="applications-table">
+                <thead>
+                  <tr>
+                    <th>Invoice #</th>
+                    <th>Description</th>
+                    <th>Created At</th>
+                    <th>Amount</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody style={{overflowY: "auto"}}>
+                  {paginatedData.map((invoice) => {
+                    return (
                       <tr key={invoice._id}>
-                        <td>{index + 1}</td>
-                        <td className="fw-bold">{invoice.invoiceNumber}</td>
-                        <td>{invoice.description || '-'}</td>
-                        <td className="amount-cell">{formatCurrency(invoice.amount)}</td>
+                        <td>
+                          <span className="app-number">{invoice.invoiceNumber || "N/A"}</span>
+                        </td>
+                        <td>{invoice.description || "N/A"}</td>
                         <td>{formatDate(invoice.createdAt)}</td>
                         <td>
-                          <span className={`status-badge ${invoice.status.toLowerCase()}`}>
-                            {invoice.status}
+                          <span 
+                            className="status-badge"
+                            style={{ 
+                              backgroundColor: '#e0f2fe',
+                              color: '#0369a1',
+                              border: '1px solid #bae6fd',
+                              fontSize: "12px",
+                              fontFamily: 'monospace',
+                              fontWeight: 600,
+                              textWrap: "nowrap"
+                            }}
+                          >
+                            {formatCurrency(invoice.amount)}
+                          </span>
+                        </td>
+                        <td>
+                          <span 
+                            className="status-badge"
+                            style={{ 
+                              backgroundColor: getStatusColor(invoice.status) + '20',
+                              color: getStatusColor(invoice.status),
+                              border: `1px solid ${getStatusColor(invoice.status)}`,
+                              fontSize: "12px",
+                              textWrap: "nowrap"
+                            }}
+                          >
+                            {invoice.status || "Unknown"}
                           </span>
                         </td>
                         <td>
                           <div className="action-buttons">
-                            <button onClick={() => openDetailsModal(invoice)} className="view-btn" title="View"><MdOutlineRemoveRedEye /></button>
-                            {invoice.status !== 'Paid' && invoice.status !== 'Requested' && (
-                              <button className="paid-btn" onClick={() => openUploadModal(invoice)} title="Upload Receipt"><MdOutlineCloudUpload /></button>
+                            <button 
+                              className="view-btn" 
+                              title="View Details"
+                              onClick={() => openDetailsModal(invoice)}
+                            >
+                              <i className="fas fa-eye"></i>
+                            </button>
+                            <button 
+                              className="view-btn" 
+                              title="Download PDF"
+                              onClick={() => handleDownloadInvoice(invoice)}
+                            >
+                              <i className="fas fa-download"></i>
+                            </button>
+                            {invoice.status === 'Issued' && (
+                              <button 
+                                className="view-btn" 
+                                title="Upload Receipt"
+                                onClick={() => openUploadModal(invoice)}
+                              >
+                                <i className="fas fa-upload" style={{ color: 'var(--primary-color)' }}></i>
+                              </button>
                             )}
-                            <button onClick={() => handleDownloadInvoice(invoice)} className="download-btn" title="Download"><MdOutlineDownload /></button>
                           </div>
                         </td>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              )}
-            </div>
-          </div>
-        </div>
-      </main>
-
-      {/* --- Modals --- */}
-
-      {/* Request Modal */}
-      {showInvoiceForm && (
-        <div className="modal modal-large" onClick={toggleInvoiceForm}>
-          <div className="modal-content" onClick={e => e.stopPropagation()}>
-            <div className="modal-header">
-              <h2>Request New Invoice</h2>
-              <button className="close-modal" onClick={toggleInvoiceForm}><MdClose /></button>
-            </div>
-            <form className="invoice-form" onSubmit={handleSubmit}>
-              <div className="form-group">
-                <label>Select Application *</label>
-                <select name="applicationId" value={formData.applicationId} onChange={handleChange} required>
-                  <option value="">Choose an application</option>
-                  {applications.map(app => (
-                    <option key={app._id} value={app._id}>{app.applicationNumber} - {app.category}</option>
-                  ))}
-                </select>
-              </div>
-              <div className="form-group">
-                <label>Description</label>
-                <textarea name="description" value={formData.description} onChange={handleChange} rows="3" placeholder="e.g. Processing Fee"></textarea>
-              </div>
-              <div className="form-actions">
-                <button type="button" className="cancel-btn" onClick={toggleInvoiceForm}>Cancel</button>
-                <button type="submit" className="submit-btn" disabled={!formData.applicationId}>Submit Request</button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* Details Modal */}
-      {showInvoiceDetails && selectedInvoice && (
-        <div className="modal modal-large" onClick={() => setShowInvoiceDetails(false)}>
-          <div className="modal-content invoice-details-modal" onClick={e => e.stopPropagation()}>
-            <div className="modal-header">
-              <h2>Invoice #{selectedInvoice.invoiceNumber}</h2>
-              <button className="close-modal" onClick={() => setShowInvoiceDetails(false)}><MdClose /></button>
-            </div>
-            <div className="invoice-details-content">
-              <div className="details-grid">
-                <div className="detail-item">
-                  <span className="detail-label">Status</span>
-                  <span className={`status-badge ${selectedInvoice.status.toLowerCase()}`}>{selectedInvoice.status}</span>
-                </div>
-                <div className="detail-item">
-                  <span className="detail-label">Amount</span>
-                  <span className="detail-value amount">{formatCurrency(selectedInvoice.amount)}</span>
-                </div>
-                <div className="detail-item">
-                  <span className="detail-label">Created Date</span>
-                  <span className="detail-value">{formatDate(selectedInvoice.createdAt)}</span>
-                </div>
-                {selectedInvoice.paidAt && (
-                   <div className="detail-item">
-                    <span className="detail-label">Paid Date</span>
-                    <span className="detail-value">{formatDate(selectedInvoice.paidAt)}</span>
-                  </div>
-                )}
-                <div className="detail-item full-width">
-                  <span className="detail-label">Description</span>
-                  <span className="detail-value">{selectedInvoice.description || 'N/A'}</span>
-                </div>
-              </div>
-              
-              {selectedInvoice.proofOfPayment && (
-                <div className="receipt-section">
-                   <h4>Proof of Payment</h4>
-                   <div className="receipt-info">
-                      <span className="receipt-filename">Transaction Proof Uploaded</span>
-                      <button className="download-receipt-btn" onClick={() => window.open(selectedInvoice.proofOfPayment, '_blank')}>
-                         <MdOutlineDownload /> View Receipt
-                      </button>
-                   </div>
-                </div>
-              )}
-
-              <div className="modal-actions">
-                 <button className="close-details-btn" onClick={() => setShowInvoiceDetails(false)}>Close</button>
-                 <button className="submit-btn" onClick={() => handleDownloadInvoice(selectedInvoice)}>Download PDF</button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Upload Modal */}
-      {showUploadReceipt && selectedInvoice && (
-        <div className="modal modal-large" onClick={() => setShowUploadReceipt(false)}>
-          <div className="modal-content upload-modal" onClick={e => e.stopPropagation()}>
-            <div className="modal-header">
-              <h2>Upload Proof of Payment</h2>
-              <button className="close-modal" onClick={() => setShowUploadReceipt(false)}><MdClose /></button>
-            </div>
-            <div className="upload-content">
-              <div className="upload-info">
-                <p>Invoice <strong>#{selectedInvoice.invoiceNumber}</strong></p>
-                <p>Amount: <strong>{formatCurrency(selectedInvoice.amount)}</strong></p>
-              </div>
-              <div className="upload-area">
-                <input type="file" id="receipt-upload" className="file-input" accept=".jpg,.jpeg,.png,.pdf" onChange={handleFileChange} />
-                <label htmlFor="receipt-upload" className="file-label">
-                  <MdOutlineCloudUpload className="upload-icon" />
-                  <span className="upload-text">{uploadFile ? uploadFile.name : "Click to select file"}</span>
-                  <span className="upload-hint">PDF, JPG, PNG (Max 5MB)</span>
-                </label>
-              </div>
-              {uploadProgress > 0 && (
-                <div className="progress-bar">
-                  <div className="progress-fill" style={{ width: `${uploadProgress}%` }}>{uploadProgress}%</div>
-                </div>
-              )}
-              <div className="modal-actions">
-                <button className="cancel-btn" onClick={() => setShowUploadReceipt(false)}>Cancel</button>
-                <button className="submit-btn" onClick={handleUploadReceipt} disabled={!uploadFile || isLoading}>
-                  {isLoading ? "Uploading..." : "Confirm Payment"}
+                    );
+                  })}
+                  {filteredData.length === 0 && invoices.length > 0 && (
+                    <tr>
+                      <td colSpan="6" className="no-data" style={{ textAlign: "center", padding: "24px" }}>
+                        No matching invoices found based on your filters.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            )}
+            
+            {totalPages > 1 && (
+              <div className="pagination" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '20px', gap: '15px', borderTop: '1px solid #e5e7eb' }}>
+                <button 
+                  onClick={() => setCurrentPage(p => p - 1)} 
+                  disabled={currentPage === 1}
+                  style={{ padding: '8px 16px', borderRadius: '6px', border: '1px solid #d1d5db', background: currentPage === 1 ? '#f9fafb' : 'white', cursor: currentPage === 1 ? 'not-allowed' : 'pointer', color: '#374151' }}
+                >
+                  Prev
+                </button>
+                <span style={{ fontSize: '14px', color: '#4b5563' }}>Page {currentPage} of {totalPages}</span>
+                <button 
+                  onClick={() => setCurrentPage(p => p + 1)} 
+                  disabled={currentPage === totalPages}
+                  style={{ padding: '8px 16px', borderRadius: '6px', border: '1px solid #d1d5db', background: currentPage === totalPages ? '#f9fafb' : 'white', cursor: currentPage === totalPages ? 'not-allowed' : 'pointer', color: '#374151' }}
+                >
+                  Next
                 </button>
               </div>
-            </div>
+            )}
           </div>
         </div>
-      )}
+
+        {/* Invoice Detail Modal Clone */}
+        {showInvoiceDetails && selectedInvoice && (
+          <div className="modal modal-large">
+            <div className="modal-content">
+              <div className="modal-header">
+                <h3>
+                  <i className="fas fa-file-invoice"></i> Invoice Details
+                </h3>
+                <button 
+                  className="close-btn" 
+                  onClick={() => setShowInvoiceDetails(false)}
+                >
+                  <i className="fas fa-times"></i>
+                </button>
+              </div>
+              
+              <div style={{ padding: '24px' }}>
+                <div className="info-grid" style={{ marginBottom: '24px' }}>
+                  <div className="info-item">
+                    <span className="info-label">Invoice Number:</span>
+                    <span className="info-value">{selectedInvoice.invoiceNumber || "N/A"}</span>
+                  </div>
+                  <div className="info-item">
+                    <span className="info-label">Created Date:</span>
+                    <span className="info-value">{formatDate(selectedInvoice.createdAt)}</span>
+                  </div>
+                  <div className="info-item">
+                    <span className="info-label">Paid Date:</span>
+                    <span className="info-value">{selectedInvoice.paidAt ? formatDate(selectedInvoice.paidAt) : "N/A"}</span>
+                  </div>
+                  <div className="info-item">
+                    <span className="info-label">Status:</span>
+                    <span className="info-value">
+                      <span 
+                        className="status-badge"
+                        style={{ 
+                          backgroundColor: getStatusColor(selectedInvoice.status) + '20',
+                          color: getStatusColor(selectedInvoice.status),
+                          border: `1px solid ${getStatusColor(selectedInvoice.status)}`
+                        }}
+                      >
+                        {selectedInvoice.status || "Unknown"}
+                      </span>
+                    </span>
+                  </div>
+                  <div className="info-item">
+                    <span className="info-label">Amount:</span>
+                    <span className="info-value" style={{ fontWeight: 600, color: 'var(--primary-shade)', fontSize: '18px' }}>
+                      {formatCurrency(selectedInvoice.amount)}
+                    </span>
+                  </div>
+                  <div className="info-item" style={{ gridColumn: '1 / -1' }}>
+                    <span className="info-label">Description:</span>
+                    <span className="info-value">{selectedInvoice.description || "N/A"}</span>
+                  </div>
+                </div>
+
+                {/* Proof of Payment / Invoice Summary (Preview Mock) */}
+                <div className="certificate-preview" style={{ 
+                  border: '2px solid #e5e7eb',
+                  borderRadius: '8px',
+                  padding: '20px',
+                  marginBottom: '24px',
+                  background: '#f9fafb'
+                }}>
+                  <div style={{ textAlign: 'center', marginBottom: '20px' }}>
+                    <h4 style={{ color: '#111827', marginBottom: '10px' }}>Proof of Payment & Receipt</h4>
+                    <p style={{ color: '#6b7280', fontSize: '14px' }}>
+                      Attached payment records and details for this invoice
+                    </p>
+                  </div>
+                  <div style={{
+                    border: '1px solid #d1d5db',
+                    borderRadius: '4px',
+                    padding: '30px',
+                    background: 'white',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    textAlign: 'center'
+                  }}>
+                    {selectedInvoice.proofOfPayment ? (
+                      <>
+                        <i className="fas fa-file-invoice-dollar" style={{ fontSize: '48px', color: '#10b981', marginBottom: '16px' }}></i>
+                        <h3 style={{ color: '#111827', marginBottom: '10px' }}>Proof of Payment Submitted</h3>
+                        <p style={{ color: '#6b7280', marginBottom: '20px' }}>
+                          A receipt document has been uploaded for verification.
+                        </p>
+                        <button 
+                          className="renew-btn" 
+                          onClick={() => window.open(selectedInvoice.proofOfPayment, '_blank')}
+                          style={{
+                            background: 'white', border: '1px solid #d1d5db', color: '#374151', padding: '8px 16px', borderRadius: '6px', cursor: 'pointer'
+                          }}
+                        >
+                          <i className="fas fa-external-link-alt"></i> View Receipt
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <i className="fas fa-file-invoice" style={{ fontSize: '48px', color: '#9ca3af', marginBottom: '16px' }}></i>
+                        <h3 style={{ color: '#111827', marginBottom: '10px' }}>Awaiting Payment</h3>
+                        <p style={{ color: '#6b7280' }}>
+                          No proof of payment has been uploaded for this invoice yet.
+                        </p>
+                      </>
+                    )}
+                  </div>
+                </div>
+
+                <div className="form-actions">
+                  <button 
+                    type="button" 
+                    className="btn btn-cancel" 
+                    onClick={() => setShowInvoiceDetails(false)}
+                  >
+                    Close
+                  </button>
+                  <button 
+                    type="button" 
+                    className="btn btn-submit"
+                    onClick={() => handleDownloadInvoice(selectedInvoice)}
+                  >
+                     <i className="fas fa-file-pdf"></i> Download PDF
+                  </button>
+                  {selectedInvoice.status === 'Issued' && (
+                    <button 
+                      type="button" 
+                      className="btn renew-btn"
+                      onClick={() => {
+                        setShowInvoiceDetails(false);
+                        openUploadModal(selectedInvoice);
+                      }}
+                      style={{ background: 'var(--primary-color)', color: 'white' }}
+                    >
+                      <i className="fas fa-upload"></i> Upload Receipt
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Upload Modal Clone */}
+        {showUploadReceipt && selectedInvoice && (
+          <div className="modal modal-large">
+            <div className="modal-content">
+              <div className="modal-header">
+                <h3>
+                  <i className="fas fa-upload"></i> Upload Proof of Payment
+                </h3>
+                <button 
+                  className="close-btn" 
+                  onClick={() => setShowUploadReceipt(false)}
+                  disabled={isLoading}
+                >
+                  <i className="fas fa-times"></i>
+                </button>
+              </div>
+              
+              <div style={{ padding: '24px' }}>
+                <div className="renewal-notice" style={{ marginBottom: '24px' }}>
+                  <i className="fas fa-receipt"></i>
+                  <p>
+                    <strong>Invoice #{selectedInvoice.invoiceNumber}</strong><br/>
+                    Amount Due: {formatCurrency(selectedInvoice.amount)}
+                  </p>
+                </div>
+                
+                <div style={{ marginBottom: '24px' }}>
+                  <input type="file" id="receipt-upload" style={{ display: 'none' }} accept=".jpg,.jpeg,.png,.pdf" onChange={handleFileChange} disabled={isLoading} />
+                  <label htmlFor="receipt-upload" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '40px', border: '2px dashed #d1d5db', borderRadius: '8px', cursor: 'pointer', background: '#f9fafb', transition: 'all 0.2s' }}>
+                    <i className="fas fa-cloud-upload-alt" style={{ fontSize: '48px', color: 'var(--primary-color)', marginBottom: '16px' }}></i>
+                    <span style={{ color: '#111827', fontSize: '16px', fontWeight: 500, marginBottom: '8px' }}>{uploadFile ? uploadFile.name : "Click to select file"}</span>
+                    <span style={{ color: '#6b7280', fontSize: '14px' }}>PDF, JPG, PNG (Max 5MB)</span>
+                  </label>
+                </div>
+                
+                {uploadProgress > 0 && (
+                  <div style={{ width: '100%', height: '8px', background: '#e5e7eb', borderRadius: '4px', overflow: 'hidden', marginBottom: '24px' }}>
+                    <div style={{ height: '100%', background: 'var(--primary-color)', width: `${uploadProgress}%`, transition: 'width 0.3s' }}></div>
+                  </div>
+                )}
+                
+                <div className="form-actions">
+                  <button 
+                    type="button" 
+                    className="btn btn-cancel" 
+                    onClick={() => setShowUploadReceipt(false)}
+                    disabled={isLoading}
+                  >
+                    Cancel
+                  </button>
+                  <button 
+                    type="button" 
+                    className="btn btn-submit"
+                    onClick={handleUploadReceipt}
+                    disabled={!uploadFile || isLoading}
+                  >
+                    {isLoading ? (
+                      <><i className="fas fa-spinner fa-spin"></i> Uploading...</>
+                    ) : (
+                      <><i className="fas fa-check-circle"></i> Confirm Payment</>
+                    )}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </main>
     </div>
   );
 };

@@ -34,7 +34,7 @@
 }
 
 .add-product-btn {
-  background: rgb(3, 90, 41);
+  background: var(--primary-shade);
   color: white;
   border: none;
   border-radius: 8px;
@@ -49,7 +49,7 @@
 }
 
 .add-product-btn:hover {
-  background: rgb(0,136,58);
+  background: var(--primary-color);
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(52, 152, 219, 0.2);
 }
@@ -81,9 +81,9 @@
 }
 
 .tab-btn.active {
-  background: rgb(3, 90, 41);
+  background: var(--primary-shade);
   color: white;
-  border-color: rgb(3, 90, 41);
+  border-color: var(--primary-shade);
 }
 
 .product-content {
@@ -345,7 +345,7 @@
 }
 
 .close-details-btn {
-  background: rgb(3, 90, 41);
+  background: var(--primary-shade);
   color: white;
   border: none;
   padding: 0.75rem 1.5rem;
@@ -357,7 +357,7 @@
 }
 
 .close-details-btn:hover {
-  background: rgb(0,136,58);
+  background: var(--primary-color);
   transform: translateY(-1px);
 }
 
@@ -452,7 +452,7 @@
 .product-form input:focus,
 .product-form select:focus {
   outline: none;
-  border-color: rgb(3, 90, 41);
+  border-color: var(--primary-shade);
   box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.1);
 }
 
@@ -486,7 +486,7 @@
 .radio-option input[type="radio"] {
   width: 18px;
   height: 18px;
-  accent-color: rgb(3, 90, 41);
+  accent-color: var(--primary-shade);
 }
 
 .radio-label {
@@ -512,7 +512,7 @@
 .checkbox-option input[type="checkbox"] {
   width: 18px;
   height: 18px;
-  accent-color: rgb(3, 90, 41);
+  accent-color: var(--primary-shade);
 }
 
 .checkbox-label {
@@ -548,7 +548,7 @@
 }
 
 .submit-btn {
-  background: rgb(3, 90, 41);
+  background: var(--primary-shade);
   color: white;
   border: none;
   padding: 0.75rem 1.5rem;
@@ -560,7 +560,7 @@
 }
 
 .submit-btn:hover {
-  background: rgb(0,136,58);
+  background: var(--primary-color);
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(52, 152, 219, 0.2);
 }

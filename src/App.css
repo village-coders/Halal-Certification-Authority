@@ -8,7 +8,7 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  background: linear-gradient(135deg, #e6f7ff, #f0f9eb);
+  background: var(--primary-light);
 }
 
 .portal-container {
@@ -24,7 +24,7 @@
 .welcome-section {
   flex: 1;
   padding: 40px;
-  background: linear-gradient(135deg, #1a5f7a, #159895);
+  background: var(--primary-color);
   color: white;
   display: flex;
   flex-direction: column;
@@ -33,12 +33,18 @@
 
 .create-account-btn {
   margin-top: 20px;
-  background: #ffc107;
+  background: white;
+  color: var(--primary-color);
   border: none;
   padding: 12px;
   font-weight: 600;
   border-radius: 30px;
   cursor: pointer;
+  transition: all 0.2s;
+}
+
+.create-account-btn:hover {
+  background: #f8f9fa;
 }
 
 .auth-section {
@@ -62,8 +68,8 @@
 }
 
 .auth-tab.active {
-  border-color: #1a5f7a;
-  color: #1a5f7a;
+  border-color: var(--primary-color);
+  color: var(--primary-color);
 }
 
 .auth-form {
@@ -84,12 +90,17 @@
 .btn-primary {
   width: 100%;
   padding: 14px;
-  background: linear-gradient(135deg, #1a5f7a, #159895);
+  background: var(--primary-color);
   color: white;
   border: none;
   border-radius: 6px;
   font-weight: 600;
   cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-primary:hover {
+  background: var(--primary-shade);
 }
 
 @keyframes fadeIn {
@@ -97,6 +108,7 @@
     opacity: 0;
     transform: translateY(10px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -119,7 +131,7 @@
   align-items: center;
   justify-content: center;
   min-height: 100vh;
-  background: linear-gradient(135deg, #667eea 0%, #10b981 100%);
+  background: var(--primary-light);
   padding: 20px;
 }
 
@@ -139,6 +151,7 @@
     opacity: 0;
     transform: translateY(30px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -155,20 +168,22 @@
   0% {
     transform: scale(1);
   }
+
   50% {
     transform: scale(1.05);
   }
+
   100% {
     transform: scale(1);
   }
 }
 
 .verify-account-icon .fa-spinner {
-  color: #3b82f6;
+  color: var(--primary-color);
 }
 
 .verify-account-icon .fa-check-circle {
-  color: #10b981;
+  color: var(--primary-color);
 }
 
 .verify-account-icon .fa-exclamation-circle {
@@ -204,14 +219,19 @@
   width: 40px;
   height: 40px;
   border: 4px solid #f3f4f6;
-  border-top: 4px solid #3b82f6;
+  border-top: 4px solid var(--primary-color);
   border-radius: 50%;
   animation: spin 1s linear infinite;
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 .message-text {
@@ -256,28 +276,28 @@
 }
 
 .verify-account-container .login-btn {
-  background: #3b82f6;
+  background: var(--primary-color);
   color: white;
-  border: 2px solid #3b82f6;
+  border: 2px solid var(--primary-color);
 }
 
 .verify-account-container .login-btn:hover {
-  background: #2563eb;
+  background: var(--primary-shade);
   transform: translateY(-2px);
-  box-shadow: 0 5px 15px rgba(59, 130, 246, 0.4);
+  box-shadow: 0 5px 15px rgba(0, 133, 59, 0.4);
 }
 
 .verify-account-container .home-btn {
   background: white;
-  color: #3b82f6;
-  border: 2px solid #3b82f6;
+  color: var(--primary-color);
+  border: 2px solid var(--primary-color);
 }
 
 .verify-account-container .home-btn:hover {
-  background: #3b82f6;
+  background: var(--primary-color);
   color: white;
   transform: translateY(-2px);
-  box-shadow: 0 5px 15px rgba(59, 130, 246, 0.4);
+  box-shadow: 0 5px 15px rgba(0, 133, 59, 0.4);
 }
 
 .verify-account-container .support-btn {
@@ -300,7 +320,7 @@
 }
 
 .verify-account-footer a {
-  color: #3b82f6;
+  color: var(--primary-color);
   text-decoration: none;
   font-weight: 600;
 }

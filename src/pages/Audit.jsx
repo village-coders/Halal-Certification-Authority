@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Sidebar from "../components/Sidebar";
 import axios from "axios";
 import { toast } from "sonner";
-import { MdCheck, MdClose, MdInfoOutline } from "react-icons/md";
+import { MdCheck, MdClose, MdInfoOutline, MdEmail, MdPhone, MdFileDownload } from "react-icons/md";
 import "./css/Audit.css";
 
 const API_BASE_URL = import.meta.env.VITE_BASE_URL;
@@ -92,10 +92,28 @@ const Audit = () => {
                                         <div className="audit-meta">
                                             <span><strong>Date:</strong> {new Date(audit.scheduledDate).toLocaleDateString()}</span>
                                             <span><strong>Time:</strong> {audit.scheduledTime}</span>
-                                            <span><strong>Staff:</strong> {audit.staffName}</span>
+                                            <span><strong>Lead Auditor:</strong> {audit.staffName}</span>
+                                            {audit.auditorEmail && (
+                                                <span className="auditor-contact">
+                                                    <MdEmail /> {audit.auditorEmail}
+                                                </span>
+                                            )}
+                                            {audit.auditorPhone && (
+                                                <span className="auditor-contact">
+                                                    <MdPhone /> {audit.auditorPhone}
+                                                </span>
+                                            )}
                                             <span className={`status-tag ${audit.status.toLowerCase().replace(' ', '-')}`}>{audit.status}</span>
                                         </div>
                                     </div>
+
+                                    {audit.auditReport && (
+                                        <div className="report-section">
+                                            <a href={audit.auditReport} target="_blank" rel="noopener noreferrer" className="download-report-btn">
+                                                <MdFileDownload /> Download Audit Report
+                                            </a>
+                                        </div>
+                                    )}
 
                                     {audit.status === 'Scheduled' && (
                                         <div className="audit-actions">

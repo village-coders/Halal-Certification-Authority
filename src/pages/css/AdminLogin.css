@@ -1,7 +1,7 @@
 /* AdminLogin.css */
 :root {
-  --primary-color: rgb(0, 136, 58);
-  --primary-shade: rgb(3, 90, 41);
+  --primary-color: var(--primary-color);
+  --primary-shade: var(--primary-shade);
   --border-color: #e0e0e0;
   --card-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   --table-header-bg: #f0f4f9;

@@ -159,7 +159,7 @@ function Applications() {
   };
 
   const handleRenewApplication = () => {
-    if (applications.filter(app => app.status === "Approved" || app.status === "Certified").length === 0) {
+    if (applications.filter(app => app.status === "Accepted" || app.status === "Certified").length === 0) {
       toast.error("No eligible applications found for renewal");
       return;
     }
@@ -1191,8 +1191,8 @@ function Applications() {
               <button 
                 className="renew-btn" 
                 onClick={handleRenewApplication}
-                disabled={applications.filter(app => app.status === "Approved" || app.status === "Certified").length === 0 || productsLoading}
-                title={applications.filter(app => app.status === "Approved" || app.status === "Certified").length === 0 ? "No eligible applications found for renewal" : ""}
+                disabled={applications.filter(app => app.status === "Accepted" || app.status === "Certified").length === 0 || productsLoading}
+                title={applications.filter(app => app.status === "Accepted" || app.status === "Certified").length === 0 ? "No eligible applications found for renewal" : ""}
               >
                 <i className="fas fa-sync-alt"></i> Renew
               </button>
@@ -1224,7 +1224,7 @@ function Applications() {
                 type="date"
                 value={searchDate}
                 onChange={(e) => setSearchDate(e.target.value)}
-                disabled
+                
               />
             </div>
             <button 
@@ -3441,14 +3441,14 @@ function Applications() {
                   >
                     <option value="">Choose application</option>
                     {applications
-                      .filter(app => app.status === "Approved" || app.status === "Certified")
+                      .filter(app => app.status === "Accepted" || app.status === "Certified")
                       .map((app) => (
                         <option key={app._id} value={app._id}>
                           {app.applicationNumber} - {app.product}
                         </option>
                       ))
                     }
-                    {applications.filter(app => app.status === "Approved" || app.status === "Certified").length === 0 && (
+                    {applications.filter(app => app.status === "Accepted" || app.status === "Certified").length === 0 && (
                       <option value="" disabled>No eligible applications found</option>
                     )}
                   </select>

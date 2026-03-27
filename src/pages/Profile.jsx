@@ -181,30 +181,33 @@ function Profile() {
     <div className="dash">
       <Sidebar activePro="active" />
       <main className="content">
-        <div className="profile-container">
-          <div className="profile-header">
+        <div className="manage-applications">
+          <div className="header">
             <h2>Company Profile</h2>
-            <div className="profile-actions">
+            <div className="header-actions">
               {!isEditing ? (
                 <button 
-                  className="btn-edit"
+                  className="btn-edit action-btn"
                   onClick={handleEdit}
+                  style={{ background: 'white', border: '1px solid #d1d5db', borderRadius: '8px', padding: '8px 12px', cursor: 'pointer', color: '#374151' }}
                 >
                   <i className="fas fa-edit"></i> Edit Profile
                 </button>
               ) : (
-                <div className="edit-actions">
+                <div className="edit-actions" style={{ display: 'flex', gap: '8px' }}>
                   <button 
-                    className="btn-cancel"
+                    className="btn-cancel action-btn"
                     onClick={handleCancel}
                     disabled={saving}
+                    style={{ background: 'white', border: '1px solid #d1d5db', borderRadius: '8px', padding: '8px 12px', cursor: 'pointer', color: '#374151' }}
                   >
                     Cancel
                   </button>
                   <button 
-                    className="btn-save"
+                    className="btn-save action-btn"
                     onClick={handleSubmit}
                     disabled={saving}
+                    style={{ background: 'var(--primary-color)', border: 'none', color: 'white', borderRadius: '8px', padding: '8px 16px', cursor: 'pointer' }}
                   >
                     {saving ? 'Saving...' : 'Save Changes'}
                   </button>
@@ -213,7 +216,7 @@ function Profile() {
             </div>
           </div>
 
-          <div className="profile-content">
+          <div className="profile-content" style={{ padding: '24px' }}>
             <form onSubmit={handleSubmit}>
               {/* Company Information Section */}
               <div className="profile-section">

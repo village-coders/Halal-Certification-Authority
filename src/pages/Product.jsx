@@ -15,11 +15,21 @@ const Product = () => {
   const [showProductDetails, setShowProductDetails] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [activeTab, setActiveTab] = useState("all"); // 'all', 'requested', 'approved'
+  const [searchName, setSearchName] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+  
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchName, activeTab]);
+
   const [formData, setFormData] = useState({
-    name: "",
+    products: [{ name: "", document1: null, document2: null, document3: null }],
     applicationId: "",
-    note: "",
+    note: ""
   });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isDeletingId, setIsDeletingId] = useState(null);
 
   const [errors, setErrors] = useState({});
   const { products, isLoading, fetchProducts, deleteProduct, setIsLoading } = useProducts();
@@ -64,11 +74,17 @@ const Product = () => {
   
   // Get products for current tab
   const getFilteredProducts = () => {
-    switch(activeTab) {
-      case "requested": return requestedProducts;
-      case "approved": return approvedProducts;
-      default: return products;
+    let filtered = products;
+    if (activeTab === 'requested') {
+      filtered = requestedProducts;
+    } else if (activeTab === 'approved') {
+      filtered = approvedProducts;
     }
+    
+    if (searchName) {
+      filtered = filtered.filter(p => p.name?.toLowerCase().includes(searchName.toLowerCase()));
+    }
+    return filtered;
   };
 
   const toggleProductForm = () => setShowProductForm(prev => !prev);
@@ -81,30 +97,66 @@ const Product = () => {
     }
   };
 
+  const handleProductChange = (index, value) => {
+    const newProducts = [...formData.products];
+    newProducts[index].name = value;
+    setFormData(prev => ({ ...prev, products: newProducts }));
+  };
 
-  const validateForm = () => {
-    const newErrors = {};
-    
-    if (!formData.name.trim()) newErrors.name = "Product name is required";
-    if (!formData.applicationId) newErrors.applicationId = "Application ID is required";
-    
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+  const addProductField = () => {
+    setFormData(prev => ({ 
+      ...prev, 
+      products: [...prev.products, { name: "", document1: null, document2: null, document3: null }] 
+    }));
+  };
+
+  const removeProductField = (index) => {
+    const newProducts = formData.products.filter((_, i) => i !== index);
+    setFormData(prev => ({ ...prev, products: newProducts }));
+  };
+
+  const handleProductFileChange = (index, documentKey, e) => {
+    if (e.target.files && e.target.files[0]) {
+      const newProducts = [...formData.products];
+      newProducts[index][documentKey] = e.target.files[0];
+      setFormData(prev => ({ ...prev, products: newProducts }));
+    }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    
-    if (!validateForm()) {
-      toast.error("Please fill all required fields");
+    if (!formData.applicationId) {
+      toast.error("Please select an application");
       return;
     }
 
+    const emptyProducts = formData.products.filter(p => !p.name.trim());
+    if (emptyProducts.length > 0) {
+      toast.error("Please fill in all product names");
+      return;
+    }
+
+    setIsSubmitting(true);
     try {
       const token = JSON.parse(localStorage.getItem("accessToken"));
-      const res = await axios.post(`${baseUrl}/products`, formData, {
-        headers: { Authorization: `Bearer ${token}` }
+      const uploadData = new FormData();
+      
+      uploadData.append("products", JSON.stringify(formData.products.map(p => ({ name: p.name }))));
+      uploadData.append("applicationId", formData.applicationId);
+      uploadData.append("note", formData.note);
+      
+      formData.products.forEach((p, index) => {
+        if (p.document1) uploadData.append(`document1_${index}`, p.document1);
+        if (p.document2) uploadData.append(`document2_${index}`, p.document2);
+        if (p.document3) uploadData.append(`document3_${index}`, p.document3);
+      });
+
+      const res = await axios.post(`${baseUrl}/products`, uploadData, {
+        headers: { 
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "multipart/form-data" 
+        }
       });
 
       if (res.data.status === "success") {
@@ -114,15 +166,18 @@ const Product = () => {
         fetchProducts();
       }
     } catch (error) {
-      toast.error(error.response?.data?.message || "Failed to add product");
+      toast.error(error.response?.data?.message || "Failed to add products");
       console.error(error);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   const resetForm = () => {
     setFormData({
-      name: "",
+      products: [{ name: "", document1: null, document2: null, document3: null }],
       applicationId: "",
+      note: ""
     });
     setErrors({});
   };
@@ -135,12 +190,15 @@ const Product = () => {
     
     if (!window.confirm("Are you sure you want to delete this product?")) return;
     
+    setIsDeletingId(id);
     try {
       await deleteProduct(id);
       fetchProducts();
       toast.success("Product deleted successfully");
     } catch (error) {
       toast.error("Failed to delete product");
+    } finally {
+      setIsDeletingId(null);
     }
   };
 
@@ -165,236 +223,275 @@ const Product = () => {
             </div>
           </div>
 
-          {/* Tab Navigation as Search Box */}
-          <div className="search-box" style={{ display: 'flex', gap: '10px' }}>
+          {/* Tabs & Search Filter Combined into search-box */}
+          <div className="search-box">
+            <div className="field">
+              <label>Product Name</label>
+              <input
+                type="text"
+                placeholder="Search products..."
+                value={searchName}
+                onChange={(e) => setSearchName(e.target.value)}
+                disabled={isLoading}
+              />
+            </div>
+            <div className="field">
+              <label>Status Filters</label>
+              <select 
+                value={activeTab}
+                onChange={(e) => setActiveTab(e.target.value)}
+                disabled={isLoading}
+                style={{ 
+                  width: '100%', 
+                  padding: '12px 16px', 
+                  border: '1px solid #e5e7eb', 
+                  borderRadius: '8px', 
+                  fontSize: '14px', 
+                  color: '#374151', 
+                  background: 'white', 
+                  outline: 'none' 
+                }}
+              >
+                <option value="all">All Products</option>
+                <option value="requested">Requested Only</option>
+                <option value="approved">Approved Only</option>
+              </select>
+            </div>
             <button 
               className="search-btn"
-              onClick={() => setActiveTab('all')}
-              style={{ background: activeTab === 'all' ? 'var(--primary-dark)' : 'var(--primary)' }}
+              onClick={() => { setSearchName(""); setActiveTab("all"); setCurrentPage(1); }}
+              disabled={isLoading}
             >
-              All Products ({products.length})
-            </button>
-            <button 
-              className="search-btn"
-              onClick={() => setActiveTab('requested')}
-              style={{ background: activeTab === 'requested' ? 'var(--primary-dark)' : 'var(--primary)' }}
-            >
-              Requested ({requestedProducts.length})
-            </button>
-            <button 
-              className="search-btn"
-              onClick={() => setActiveTab('approved')}
-              style={{ background: activeTab === 'approved' ? 'var(--primary-dark)' : 'var(--primary)' }}
-            >
-              Approved ({approvedProducts.length})
+              <i className="fas fa-times"></i> Clear
             </button>
           </div>
 
           <div className="table-wrapper">
-            <div className="table-header">
-              <h3>
-                {activeTab === 'all' && `All Products (${products.length})`}
-                {activeTab === 'requested' && `Requested Products (${requestedProducts.length})`}
-                {activeTab === 'approved' && `Approved Products (${approvedProducts.length})`}
-              </h3>
-              <div className="table-actions">
-                <button 
-                  className="action-btn" 
-                  onClick={fetchProducts}
-                  disabled={isLoading}
-                >
-                  <i className={`fas fa-sync-alt ${isLoading ? 'fa-spin' : ''}`}></i>
-                </button>
-              </div>
-            </div>
+            {(() => {
+              const filteredData = getFilteredProducts();
+              const totalPages = Math.ceil(filteredData.length / itemsPerPage) || 1;
+              const paginatedData = filteredData.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+              
+              return (
+                <>
+                  <div className="table-header">
+                    <h3>
+                      {activeTab === 'all' && `All Products (${filteredData.length})`}
+                      {activeTab === 'requested' && `Requested Products (${filteredData.length})`}
+                      {activeTab === 'approved' && `Approved Products (${filteredData.length})`}
+                    </h3>
+                    <div className="table-actions">
+                      <button 
+                        className="action-btn" 
+                        onClick={fetchProducts}
+                        disabled={isLoading}
+                      >
+                        <i className={`fas fa-sync-alt ${isLoading ? 'fa-spin' : ''}`}></i>
+                      </button>
+                    </div>
+                  </div>
 
-            {isLoading ? (
-              <div className="loading">
-                <i className="fas fa-spinner fa-spin"></i> Loading products...
-              </div>
-            ) : getFilteredProducts().length === 0 ? (
-              <div className="no-data-message" style={{ textAlign: 'center', padding: '40px' }}>
-                <i className="fas fa-box" style={{ fontSize: '48px', color: '#6b7280', marginBottom: '16px' }}></i>
-                <h3>No Products Found</h3>
-                <p>
-                  {activeTab === 'all' && "No products found. Add your first product!"}
-                  {activeTab === 'requested' && "No requested products found."}
-                  {activeTab === 'approved' && "No approved products found."}
-                </p>
-              </div>
-            ) : (
-              <>
-                {/* Show all products when 'all' tab is active */}
-                {activeTab === 'all' ? (
-                  <table className="applications-table">
-                    <thead>
-                      <tr>
-                        <th>#</th>
-                        <th>Name</th>
-                        <th>Application Number</th>
-                        <th>Note</th>
-                        <th>Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {products.map((p, index) => (
-                        <tr key={p._id}>
-                          <td>{index + 1}</td>
-                          <td style={{ fontWeight: 500 }}>{p.name}</td>
-                          <td><span className="app-number">{p?.applicationId?.applicationNumber}</span></td>
-                          <td>{p.note}</td>
-                          <td>
-                            <div className="action-buttons">
-                              <button 
-                                className="view-btn"
-                                onClick={() => viewProductDetails(p)}
-                                title="View product details"
-                              >
-                                <i className="fas fa-eye"></i>
-                              </button>
-                              <button 
-                                className="view-btn"
-                                style={{ color: p.status === 'approved' ? 'var(--gray)' : 'var(--danger)', borderColor: p.status === 'approved' ? 'var(--gray-border)' : 'var(--danger)' }}
-                                onClick={() => deleteProductFromList(p._id, p.status)}
-                                title={p.status === 'approved' ? 'Approved products cannot be deleted' : 'Delete product'}
-                                disabled={p.status === 'approved'}
-                              >
-                                <i className="fas fa-trash-alt"></i>
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                ) : (
-                  // Show separate tables for requested and approved
-                  <>
-                    {/* Requested Products Table */}
-                    {activeTab === 'requested' && requestedProducts.length > 0 && (
-                      <table className="applications-table">
-                        <thead>
-                          <tr>
-                            <th>#</th>
-                            <th>Name</th>
-                            <th>Market Type</th>
-                            <th>Brand</th>
-                            <th>Pork</th>
-                            <th>Alcohol</th>
-                            <th>Markets</th>
-                            <th>Actions</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {requestedProducts.map((p, index) => (
-                            <tr key={p._id}>
-                              <td>{index + 1}</td>
-                              <td style={{ fontWeight: 500 }}>{p.name}</td>
-                              <td>{p.marketType}</td>
-                              <td>{p.brandOwnership}</td>
-                              <td>
-                                <span className={`status-badge`} style={{ backgroundColor: p.porkDerivative ? '#fee2e2' : '#d1fae5', color: p.porkDerivative ? '#991b1b' : '#065f46' }}>
-                                  {p.porkDerivative ? "Yes" : "No"}
-                                </span>
-                              </td>
-                              <td>
-                                <span className={`status-badge`} style={{ backgroundColor: p.alcohol ? '#fee2e2' : '#d1fae5', color: p.alcohol ? '#991b1b' : '#065f46' }}>
-                                  {p.alcohol ? "Yes" : "No"}
-                                </span>
-                              </td>
-                              <td>
-                                {p.markets?.slice(0, 2).join(", ")}
-                                {p.markets?.length > 2 && "..."}
-                              </td>
-                              <td>
-                                <div className="action-buttons">
-                                  <button 
-                                    className="view-btn"
-                                    onClick={() => viewProductDetails(p)}
-                                    title="View product details"
-                                  >
-                                    <i className="fas fa-eye"></i>
-                                  </button>
-                                  <button 
-                                    className="view-btn"
-                                    style={{ color: 'var(--danger)', borderColor: 'var(--danger)' }}
-                                    onClick={() => deleteProductFromList(p._id, p.status)}
-                                    title="Delete product"
-                                  >
-                                    <i className="fas fa-trash-alt"></i>
-                                  </button>
-                                </div>
-                              </td>
+                  {isLoading ? (
+                    <div className="loading">
+                      <i className="fas fa-spinner fa-spin"></i> Loading products...
+                    </div>
+                  ) : filteredData.length === 0 ? (
+                    <div className="no-data-message" style={{ textAlign: 'center', padding: '40px' }}>
+                      <i className="fas fa-box" style={{ fontSize: '48px', color: '#6b7280', marginBottom: '16px' }}></i>
+                      <h3>No Products Found</h3>
+                      <p>
+                        {searchName ? "No products matched your search." :
+                         activeTab === 'all' ? "No products found. Add your first product!" :
+                         activeTab === 'requested' ? "No requested products found." : "No approved products found."}
+                      </p>
+                    </div>
+                  ) : (
+                    <>
+                      {activeTab === 'all' ? (
+                        <table className="applications-table">
+                          <thead>
+                            <tr>
+                              <th>#</th>
+                              <th>Name</th>
+                              <th>Application Number</th>
+                              <th>Note</th>
+                              <th>Actions</th>
                             </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    )}
+                          </thead>
+                          <tbody>
+                            {paginatedData.map((p, index) => (
+                              <tr key={p._id}>
+                                <td>{((currentPage - 1) * itemsPerPage) + index + 1}</td>
+                                <td style={{ fontWeight: 500 }}>{p.name}</td>
+                                <td><span className="app-number">{p?.applicationId?.applicationNumber}</span></td>
+                                <td>{p.note}</td>
+                                <td>
+                                  <div className="action-buttons">
+                                    <button 
+                                      className="view-btn"
+                                      onClick={() => viewProductDetails(p)}
+                                      title="View product details"
+                                    >
+                                      <i className="fas fa-eye"></i>
+                                    </button>
+                                    <button 
+                                      className="view-btn"
+                                      style={{ color: p.status === 'approved' ? 'var(--gray)' : 'var(--danger)', borderColor: p.status === 'approved' ? 'var(--gray-border)' : 'var(--danger)', opacity: p.status === 'approved' || isDeletingId === p._id ? 0.5 : 1 }}
+                                      onClick={() => deleteProductFromList(p._id, p.status)}
+                                      title={p.status === 'approved' ? 'Approved products cannot be deleted' : 'Delete product'}
+                                      disabled={p.status === 'approved' || isDeletingId === p._id}
+                                    >
+                                      {isDeletingId === p._id ? <i className="fas fa-spinner fa-spin"></i> : <i className="fas fa-trash-alt"></i>}
+                                    </button>
+                                  </div>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      ) : activeTab === 'requested' ? (
+                        <table className="applications-table">
+                          <thead>
+                            <tr>
+                              <th>#</th>
+                              <th>Name</th>
+                              <th>Market Type</th>
+                              <th>Brand</th>
+                              <th>Pork</th>
+                              <th>Alcohol</th>
+                              <th>Markets</th>
+                              <th>Actions</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {paginatedData.map((p, index) => (
+                              <tr key={p._id}>
+                                <td>{((currentPage - 1) * itemsPerPage) + index + 1}</td>
+                                <td style={{ fontWeight: 500 }}>{p.name}</td>
+                                <td>{p.marketType}</td>
+                                <td>{p.brandOwnership}</td>
+                                <td>
+                                  <span className={`status-badge`} style={{ backgroundColor: p.porkDerivative ? '#fee2e2' : '#d1fae5', color: p.porkDerivative ? '#991b1b' : '#065f46' }}>
+                                    {p.porkDerivative ? "Yes" : "No"}
+                                  </span>
+                                </td>
+                                <td>
+                                  <span className={`status-badge`} style={{ backgroundColor: p.alcohol ? '#fee2e2' : '#d1fae5', color: p.alcohol ? '#991b1b' : '#065f46' }}>
+                                    {p.alcohol ? "Yes" : "No"}
+                                  </span>
+                                </td>
+                                <td>
+                                  {p.markets?.slice(0, 2).join(", ")}
+                                  {p.markets?.length > 2 && "..."}
+                                </td>
+                                <td>
+                                  <div className="action-buttons">
+                                    <button 
+                                      className="view-btn"
+                                      onClick={() => viewProductDetails(p)}
+                                      title="View product details"
+                                    >
+                                      <i className="fas fa-eye"></i>
+                                    </button>
+                                    <button 
+                                      className="view-btn"
+                                      style={{ color: 'var(--danger)', borderColor: 'var(--danger)' }}
+                                      onClick={() => deleteProductFromList(p._id, p.status)}
+                                      title="Delete product"
+                                    >
+                                      <i className="fas fa-trash-alt"></i>
+                                    </button>
+                                  </div>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      ) : (
+                        <table className="applications-table">
+                          <thead>
+                            <tr>
+                              <th>#</th>
+                              <th>Name</th>
+                              <th>Market Type</th>
+                              <th>Brand</th>
+                              <th>Pork</th>
+                              <th>Alcohol</th>
+                              <th>Markets</th>
+                              <th>Actions</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {paginatedData.map((p, index) => (
+                              <tr key={p._id}>
+                                <td>{((currentPage - 1) * itemsPerPage) + index + 1}</td>
+                                <td style={{ fontWeight: 500 }}>{p.name}</td>
+                                <td>{p.marketType}</td>
+                                <td>{p.brandOwnership}</td>
+                                <td>
+                                  <span className={`status-badge`} style={{ backgroundColor: p.porkDerivative ? '#fee2e2' : '#d1fae5', color: p.porkDerivative ? '#991b1b' : '#065f46' }}>
+                                    {p.porkDerivative ? "Yes" : "No"}
+                                  </span>
+                                </td>
+                                <td>
+                                  <span className={`status-badge`} style={{ backgroundColor: p.alcohol ? '#fee2e2' : '#d1fae5', color: p.alcohol ? '#991b1b' : '#065f46' }}>
+                                    {p.alcohol ? "Yes" : "No"}
+                                  </span>
+                                </td>
+                                <td>
+                                  {p.markets?.slice(0, 2).join(", ")}
+                                  {p.markets?.length > 2 && "..."}
+                                </td>
+                                <td>
+                                  <div className="action-buttons">
+                                    <button 
+                                      className="view-btn"
+                                      onClick={() => viewProductDetails(p)}
+                                      title="View product details"
+                                    >
+                                      <i className="fas fa-eye"></i>
+                                    </button>
+                                    <button 
+                                      className="view-btn"
+                                      style={{ color: 'var(--gray)', borderColor: 'var(--gray-border)' }}
+                                      title="Approved products cannot be deleted"
+                                      disabled
+                                    >
+                                      <i className="fas fa-trash-alt"></i>
+                                    </button>
+                                  </div>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      )}
 
-                    {/* Approved Products Table */}
-                    {activeTab === 'approved' && approvedProducts.length > 0 && (
-                      <table className="applications-table">
-                        <thead>
-                          <tr>
-                            <th>#</th>
-                            <th>Name</th>
-                            <th>Market Type</th>
-                            <th>Brand</th>
-                            <th>Pork</th>
-                            <th>Alcohol</th>
-                            <th>Markets</th>
-                            <th>Actions</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {approvedProducts.map((p, index) => (
-                            <tr key={p._id}>
-                              <td>{index + 1}</td>
-                              <td style={{ fontWeight: 500 }}>{p.name}</td>
-                              <td>{p.marketType}</td>
-                              <td>{p.brandOwnership}</td>
-                              <td>
-                                <span className={`status-badge`} style={{ backgroundColor: p.porkDerivative ? '#fee2e2' : '#d1fae5', color: p.porkDerivative ? '#991b1b' : '#065f46' }}>
-                                  {p.porkDerivative ? "Yes" : "No"}
-                                </span>
-                              </td>
-                              <td>
-                                <span className={`status-badge`} style={{ backgroundColor: p.alcohol ? '#fee2e2' : '#d1fae5', color: p.alcohol ? '#991b1b' : '#065f46' }}>
-                                  {p.alcohol ? "Yes" : "No"}
-                                </span>
-                              </td>
-                              <td>
-                                {p.markets?.slice(0, 2).join(", ")}
-                                {p.markets?.length > 2 && "..."}
-                              </td>
-                              <td>
-                                <div className="action-buttons">
-                                  <button 
-                                    className="view-btn"
-                                    onClick={() => viewProductDetails(p)}
-                                    title="View product details"
-                                  >
-                                    <i className="fas fa-eye"></i>
-                                  </button>
-                                  <button 
-                                    className="view-btn"
-                                    style={{ color: 'var(--gray)', borderColor: 'var(--gray-border)' }}
-                                    title="Approved products cannot be deleted"
-                                    disabled
-                                  >
-                                    <i className="fas fa-trash-alt"></i>
-                                  </button>
-                                </div>
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    )}
-                  </>
-                )}
-              </>
-            )}
+                      {/* Pagination Controls */}
+                      {totalPages > 1 && (
+                        <div className="pagination" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '20px', gap: '15px', borderTop: '1px solid #e5e7eb' }}>
+                          <button 
+                            onClick={() => setCurrentPage(p => p - 1)} 
+                            disabled={currentPage === 1}
+                            style={{ padding: '8px 16px', borderRadius: '6px', border: '1px solid #d1d5db', background: currentPage === 1 ? '#f9fafb' : 'white', cursor: currentPage === 1 ? 'not-allowed' : 'pointer', color: '#374151' }}
+                          >
+                            Prev
+                          </button>
+                          <span style={{ fontSize: '14px', color: '#4b5563' }}>Page {currentPage} of {totalPages}</span>
+                          <button 
+                            onClick={() => setCurrentPage(p => p + 1)} 
+                            disabled={currentPage === totalPages}
+                            style={{ padding: '8px 16px', borderRadius: '6px', border: '1px solid #d1d5db', background: currentPage === totalPages ? '#f9fafb' : 'white', cursor: currentPage === totalPages ? 'not-allowed' : 'pointer', color: '#374151' }}
+                          >
+                            Next
+                          </button>
+                        </div>
+                      )}
+                    </>
+                  )}
+                </>
+              );
+            })()}
           </div>
         </div>
       </main>
@@ -411,16 +508,70 @@ const Product = () => {
             <form className="product-form" onSubmit={handleSubmit}>
               <div className="form-group">
                 <label>
-                  Product Name *
-                  <input 
-                    name="name" 
-                    value={formData.name} 
-                    onChange={handleChange}
-                    className={errors.name ? 'error' : ''}
-                    placeholder="Enter product name"
-                  />
+                  Product Names *
+                  <div style={{ marginTop: '10px' }}>
+                    {formData.products.map((p, index) => (
+                      <div key={index} style={{ marginBottom: '20px', padding: '15px', border: '1px solid #e5e7eb', borderRadius: '8px', background: '#f9fafb' }}>
+                        <div style={{ display: 'flex', gap: '10px', marginBottom: '15px' }}>
+                          <input 
+                            value={p.name} 
+                            onChange={(e) => handleProductChange(index, e.target.value)}
+                            placeholder={`Product ${index + 1} name`}
+                            required
+                            style={{ flex: 1, padding: '10px', borderRadius: '4px', border: '1px solid #ccc' }}
+                          />
+                          {formData.products.length > 1 && (
+                            <button 
+                              type="button" 
+                              onClick={() => removeProductField(index)} 
+                              style={{ padding: '0 15px', color: 'red', border: '1px solid red', borderRadius: '4px', background: 'white', cursor: 'pointer' }}
+                            >
+                              ✕ Remove
+                            </button>
+                          )}
+                        </div>
+                        
+                        {/* Documents for this product */}
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '10px' }}>
+                          <div>
+                            <label style={{ fontSize: '13px', color: '#666', fontWeight: 500 }}>Document 1</label>
+                            <input 
+                              type="file" 
+                              onChange={(e) => handleProductFileChange(index, "document1", e)} 
+                              accept=".pdf,.doc,.docx,.png,.jpg,.jpeg" 
+                              style={{ width: '100%', padding: '6px', border: '1px solid #ccc', borderRadius: '4px', marginTop: '4px', fontSize: '12px', background: 'white' }}
+                            />
+                          </div>
+                          <div>
+                            <label style={{ fontSize: '13px', color: '#666', fontWeight: 500 }}>Document 2 (Opt)</label>
+                            <input 
+                              type="file" 
+                              onChange={(e) => handleProductFileChange(index, "document2", e)} 
+                              accept=".pdf,.doc,.docx,.png,.jpg,.jpeg" 
+                              style={{ width: '100%', padding: '6px', border: '1px solid #ccc', borderRadius: '4px', marginTop: '4px', fontSize: '12px', background: 'white' }}
+                            />
+                          </div>
+                          <div>
+                            <label style={{ fontSize: '13px', color: '#666', fontWeight: 500 }}>Document 3 (Opt)</label>
+                            <input 
+                              type="file" 
+                              onChange={(e) => handleProductFileChange(index, "document3", e)} 
+                              accept=".pdf,.doc,.docx,.png,.jpg,.jpeg" 
+                              style={{ width: '100%', padding: '6px', border: '1px solid #ccc', borderRadius: '4px', marginTop: '4px', fontSize: '12px', background: 'white' }}
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <button 
+                    type="button" 
+                    onClick={addProductField} 
+                    style={{ background: 'none', color: '#00853b', border: 'none', cursor: 'pointer', marginTop: '5px', fontWeight: 'bold' }}
+                  >
+                    + Add Another Product
+                  </button>
                 </label>
-                {errors.name && <p className="error-message">{errors.name}</p>}
               </div>
 
               <div className="form-group-geo">
@@ -466,11 +617,13 @@ const Product = () => {
 
 
               <div className="form-actions">
-                <button type="button" className="cancel-btn" onClick={toggleProductForm}>
+                <button type="button" className="cancel-btn" onClick={toggleProductForm} disabled={isSubmitting}>
                   Cancel
                 </button>
-                <button type="submit" className="submit-btn">
-                  Add Product
+                <button type="submit" className="submit-btn" disabled={isSubmitting} style={{ opacity: isSubmitting ? 0.7 : 1 }}>
+                  {isSubmitting ? (
+                    <><i className="fas fa-spinner fa-spin"></i> Adding...</>
+                  ) : "Add Product"}
                 </button>
               </div>
             </form>
@@ -504,6 +657,30 @@ const Product = () => {
                     <span className="detail-value">{selectedProduct.note}</span>
                   </div>
                   
+                </div>
+              </div>
+
+              <div className="details-section">
+                <h3 className="details-title">Documents</h3>
+                <div className="details-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))' }}>
+                  {selectedProduct.document1 && (
+                    <div className="detail-item">
+                      <a href={selectedProduct.document1.fileUrl} target="_blank" rel="noopener noreferrer" style={{ color: '#00853b', textDecoration: 'underline' }}>View Document 1</a>
+                    </div>
+                  )}
+                  {selectedProduct.document2 && (
+                    <div className="detail-item">
+                      <a href={selectedProduct.document2.fileUrl} target="_blank" rel="noopener noreferrer" style={{ color: '#00853b', textDecoration: 'underline' }}>View Document 2</a>
+                    </div>
+                  )}
+                  {selectedProduct.document3 && (
+                    <div className="detail-item">
+                      <a href={selectedProduct.document3.fileUrl} target="_blank" rel="noopener noreferrer" style={{ color: '#00853b', textDecoration: 'underline' }}>View Document 3</a>
+                    </div>
+                  )}
+                  {(!selectedProduct.document1 && !selectedProduct.document2 && !selectedProduct.document3) && (
+                    <span className="detail-value text-gray-500">No documents attached</span>
+                  )}
                 </div>
               </div>
 
