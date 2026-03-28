@@ -16,6 +16,7 @@ import Message from "./pages/Message";
 import { SocketProvider } from "./contexts/SocketContext";
 import ManageUsers from "./pages/ManageUsers";
 import SubmitDocuments from "./pages/SubmitDocuments";
+import ResetPassword from "./pages/ResetPassword";
 
 function App() {
   return (
@@ -27,6 +28,7 @@ function App() {
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/verify/:token" element={<VerifyAccount />} />
+            <Route path="/reset-password/:token" element={<ResetPassword />} />
             
             {/* Protected Routes */}
             <Route element={<ProtectedRoutes />}>
