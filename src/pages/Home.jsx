@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import logo from '../assets/hcaLogo.webp'
 import { useAuth } from '../hooks/useAuth'; // Adjust the path to your useAuth hook
+import { FiEye, FiEyeOff } from 'react-icons/fi';
+import { Loader2 } from 'lucide-react';
 
 const Home = () => {
   // State management
@@ -131,14 +133,14 @@ const Home = () => {
     },
     authSection: {
       flex: 1,
-      padding: '40px',
+      padding: '20px 40px',
       display: 'flex',
       flexDirection: 'column',
       justifyContent: 'center'
     },
     authTabs: {
       display: 'flex',
-      marginBottom: '30px',
+      marginBottom: '10px',
       borderBottom: '2px solid #eee'
     },
     authTab: {
@@ -172,8 +174,9 @@ const Home = () => {
     },
     formTitle: {
       fontSize: '1.8rem',
-      marginBottom: '10px',
+      margin: '20px 0px',
       color: '#1a5f7a',
+      textAlign: 'center',
       fontWeight: 600
     },
     formSubtitle: {
@@ -181,7 +184,7 @@ const Home = () => {
       marginBottom: '30px'
     },
     formSection: {
-      marginBottom: '25px',
+      marginBottom: '5px',
       padding: '20px',
       background: '#f8f9fa',
       borderRadius: '8px'
@@ -211,7 +214,7 @@ const Home = () => {
     formInput: {
       width: '100%',
       padding: '14px 16px',
-      border: '2px solid #e2e8f0',
+      border: '2px solid #e2e8f0 !important',
       borderRadius: '8px',
       fontSize: '1rem',
       transition: 'all 0.3s ease',
@@ -297,19 +300,22 @@ const Home = () => {
     authLink: {
       color: '#1a5f7a',
       textDecoration: 'none',
-      transition: 'all 0.3s ease',
-      cursor: 'pointer'
+      transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+      cursor: 'pointer',
+      fontWeight: 500,
+      display: 'inline-block',
+      position: 'relative'
     },
     authLinkHover: {
       color: '#159895',
-      textDecoration: 'underline'
+      transform: 'translateY(-1px)'
     },
     // Registration Steps
     registrationSteps: {
       display: 'flex',
       justifyContent: 'center',
       alignItems: 'center',
-      marginBottom: '30px',
+      marginBottom: '5px',
       position: 'relative'
     },
     step: {
@@ -372,14 +378,16 @@ const Home = () => {
       left: 0,
       right: 0,
       bottom: 0,
-      background: 'rgba(0, 0, 0, 0.5)',
+      background: 'rgba(0, 0, 0, 0.4)',
+      backdropFilter: 'blur(8px)',
+      WebkitBackdropFilter: 'blur(8px)',
       display: 'flex',
       justifyContent: 'center',
       alignItems: 'center',
-      zIndex: 9998,
+      zIndex: 9999,
       opacity: 0,
       visibility: 'hidden',
-      transition: 'all 0.3s ease'
+      transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)'
     },
     modalOverlayActive: {
       opacity: 1,
@@ -387,16 +395,18 @@ const Home = () => {
     },
     modal: {
       background: 'white',
-      borderRadius: '8px',
-      width: '90%',
-      maxWidth: '450px',
-      padding: '25px',
-      boxShadow: '0 5px 15px rgba(0, 0, 0, 0.08)',
-      transform: 'translateY(-20px)',
-      transition: 'all 0.3s ease'
+      borderRadius: '24px',
+      width: '95%',
+      maxWidth: '480px',
+      padding: '40px',
+      boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+      transform: 'scale(0.9) translateY(20px)',
+      transition: 'all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)',
+      border: '1px solid rgba(255, 255, 255, 0.3)'
     },
     modalActive: {
-      transform: 'translateY(0)'
+      transform: 'scale(1) translateY(0)',
+      opacity: 1
     },
     modalHeader: {
       display: 'flex',
@@ -476,8 +486,8 @@ const Home = () => {
       try {
         if (modalAction === 'forgot-password') {
           // Call reset password API
-          await auth.resetPassword(email);
-          toast.success('Password reset instructions sent to your email.');
+          await auth.requestPasswordReset(email);
+          // Toast is handled in AuthProvider
         } else if (modalAction === 'resend-activation') {
           toast.info('Please sign in first, then verify your email from your account settings.');
         }
@@ -519,7 +529,7 @@ const Home = () => {
           <div style={styles.modalBody}>
             <p>Please enter your email address:</p>
             <form onSubmit={handleSubmit}>
-              <div style={styles.formGroup}>
+              <div className='form-group' style={styles.formGroup}>
                 <input
                   type="email"
                   value={email}
@@ -559,7 +569,11 @@ const Home = () => {
                     e.target.style.background = styles.modalBtnPrimary.background;
                   }}
                 >
-                  {loading ? 'Processing...' : 'Submit'}
+                  {loading ? (
+                    <>
+                      <Loader2 className="animate-spin" size={18} /> Processing...
+                    </>
+                  ) : 'Submit'}
                 </button>
               </div>
             </form>
@@ -649,8 +663,8 @@ const Home = () => {
 
   const handleForgotPasswordSubmit = async (email) => {
     try {
-      await auth.resetPassword(email);
-      toast.success('Password reset email sent. Please check your inbox.');
+      await auth.requestPasswordReset(email);
+      // Toast is handled in AuthProvider
     } catch (error) {
       toast.error(`Error sending password reset email: ${error.message}`);
     }
@@ -896,10 +910,10 @@ const Home = () => {
               </p>
               
               <div style={styles.userGuide}>
-                <h3 style={styles.userGuideTitle}>User's guide</h3>
+                <h3 style={styles.userGuideTitle}>User's Guide</h3>
                 <button
                   style={styles.createAccountBtn}
-                  onClick={() => {activeTab === "login" ? setActiveTab('register') : setActiveTab('login')}}
+                  onClick={() => navigate('/public-guide')}
                   onMouseEnter={(e) => {
                     e.target.style.transform = 'translateY(-3px)';
                     e.target.style.boxShadow = '0 6px 15px rgba(0, 0, 0, 0.2)';
@@ -909,13 +923,14 @@ const Home = () => {
                     e.target.style.boxShadow = '0 4px 10px rgba(0, 0, 0, 0.15)';
                   }}
                 >
-                  {activeTab === "login" ? "Click Here To Create Account" : "Click Here To Login" }
+                  <i className="fas fa-book" style={{ marginRight: '8px' }}></i>
+                  Read User Guide
                 </button>
               </div>
               
               <div style={styles.divider}></div>
               
-              <div className="login-info">
+              {/* <div className="login-info">
                 <h3>Login</h3>
                 <p>Enter Details to Login</p>
                 <ul>
@@ -923,7 +938,7 @@ const Home = () => {
                   <li>Your Password</li>
                   <li>Keep me login</li>
                 </ul>
-              </div>
+              </div> */}
               
               <div style={{ ...styles.authLinks, marginTop: '20px', justifyContent: 'center', alignItems: "Center", gap: '20px' }}>
                 <a href='https://theyoungpioneers.com/' style={{textAlign: "center", color: "#ffc107"}}>Developed by TheYoungPioneers</a>
@@ -994,8 +1009,8 @@ const Home = () => {
                   onFocus={(e) => Object.assign(e.target.style, styles.formInputFocus)}
                   onBlur={(e) => Object.assign(e.target.style, styles.formInput)}
                 />
-                <div style={styles.passToggle}>
-                  {showPass ? <i onClick={()=> setShowPass(!showPass)} className="fa-regular fa-eye"></i> : <i onClick={()=> setShowPass(!showPass)} className="fa-regular fa-eye-slash"></i>}
+                <div style={styles.passToggle} onClick={() => setShowPass(!showPass)}>
+                  {showPass ? <FiEyeOff /> : <FiEye />}
                 </div>
               </div>
               
@@ -1047,14 +1062,14 @@ const Home = () => {
                 >
                   Forgot password?
                 </a>
-                <a 
+                {/* <a 
                   style={styles.authLink}
                   onClick={() => handleResendActivation(formData.loginEmail)}
                   onMouseEnter={(e) => Object.assign(e.target.style, styles.authLinkHover)}
                   onMouseLeave={(e) => Object.assign(e.target.style, styles.authLink)}
                 >
                   Resend Activation Email?
-                </a>
+                </a> */}
               </div>
             </form>
             
@@ -1066,8 +1081,8 @@ const Home = () => {
               }} 
               id="register-form"
             >
-              <h2 style={styles.formTitle}>Register your account as Halal Certification Authority Applicant</h2>
-              <p style={styles.formSubtitle}>To enjoy our service</p>
+              <h2 style={styles.formTitle}>Register your account</h2>
+              {/* <p style={styles.formSubtitle}>To enjoy our service</p> */}
               
               {/* Registration Steps */}
               <RegistrationSteps />
@@ -1076,6 +1091,7 @@ const Home = () => {
               <form 
                 onSubmit={handleNextStep}
                 style={{ 
+                  width: "100%",
                   display: registrationStep === 1 ? 'block' : 'none',
                   animation: registrationStep === 1 ? 'slideIn 0.5s ease' : 'slideOut 0.3s ease'
                 }}

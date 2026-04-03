@@ -4,6 +4,7 @@ import { useAuth } from "../hooks/useAuth";
 import logo from '../assets/hcaLogo.webp'
 import { toast } from "sonner";
 import { FiEye, FiEyeOff } from "react-icons/fi";
+import { Loader2 } from "lucide-react";
 
 const ResetPassword = () => {
   const { token } = useParams();
@@ -43,99 +44,138 @@ const ResetPassword = () => {
     },
     container: {
       width: '100%',
-      maxWidth: '450px',
-      background: '#ffffff',
-      borderRadius: '12px',
-      boxShadow: '0 8px 30px rgba(0, 0, 0, 0.12)',
-      padding: '40px',
-      textAlign: 'center'
+      maxWidth: '480px',
+      background: 'rgba(255, 255, 255, 0.9)',
+      backdropFilter: 'blur(10px)',
+      WebkitBackdropFilter: 'blur(10px)',
+      borderRadius: '24px',
+      boxShadow: '0 20px 40px rgba(0, 0, 0, 0.1)',
+      padding: '50px',
+      textAlign: 'center',
+      border: '1px solid rgba(255, 255, 255, 0.5)',
+      animation: 'fadeIn 0.8s cubic-bezier(0.4, 0, 0.2, 1)'
     },
     logo: {
-      maxWidth: '180px',
-      margin: '0 auto 20px',
-      display: 'block'
+      maxWidth: '160px',
+      margin: '0 auto 24px',
+      display: 'block',
+      filter: 'drop-shadow(0 4px 6px rgba(0,0,0,0.05))'
     },
     title: {
-      fontSize: '1.8rem',
+      fontSize: '2.2rem',
       color: '#1a5f7a',
-      fontWeight: 700,
-      marginBottom: '10px'
+      fontWeight: 800,
+      marginBottom: '12px',
+      letterSpacing: '-0.5px'
     },
     subtitle: {
-      color: '#6c757d',
-      marginBottom: '30px'
+      color: '#64748b',
+      marginBottom: '40px',
+      fontSize: '1.05rem',
+      lineHeight: '1.5'
     },
     formGroup: {
-      marginBottom: '20px',
+      marginBottom: '28px',
       textAlign: 'left',
       position: 'relative'
     },
     label: {
       display: 'block',
-      marginBottom: '8px',
+      marginBottom: '10px',
       fontWeight: 600,
-      color: '#2d3e50'
+      color: '#334155',
+      fontSize: '0.95rem'
     },
     input: {
       width: '100%',
-      padding: '14px 16px',
+      padding: '16px 20px',
       border: '2px solid #e2e8f0',
-      borderRadius: '8px',
+      borderRadius: '14px',
       fontSize: '1rem',
       fontFamily: "'Poppins', sans-serif",
-      transition: 'border-color 0.3s ease'
+      transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+      background: '#fff',
+      outline: 'none'
+    },
+    inputFocus: {
+      borderColor: '#1a5f7a',
+      boxShadow: '0 0 0 4px rgba(26, 95, 122, 0.1)'
     },
     btn: {
       width: '100%',
-      padding: '14px',
+      padding: '18px',
       border: 'none',
-      borderRadius: '8px',
+      borderRadius: '14px',
       background: 'linear-gradient(135deg, #1a5f7a 0%, #159895 100%)',
       color: 'white',
-      fontSize: '1rem',
-      fontWeight: 600,
+      fontSize: '1.1rem',
+      fontWeight: 700,
       cursor: 'pointer',
-      marginTop: '10px',
-      transition: 'transform 0.2s ease',
+      marginTop: '15px',
+      transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+      boxShadow: '0 10px 15px -3px rgba(21, 152, 149, 0.3)',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: '10px',
       opacity: resettingPassword ? 0.7 : 1
     },
     backLink: {
-      marginTop: '20px',
-      display: 'block',
-      color: '#1a5f7a',
+      marginTop: '30px',
+      display: 'inline-block',
+      color: '#64748b',
       textDecoration: 'none',
-      fontWeight: 500
+      fontWeight: 500,
+      fontSize: '0.95rem',
+      transition: 'color 0.3s ease'
+    },
+    backLinkHover: {
+      color: '#1a5f7a'
     },
     eyeIcon: {
       position: 'absolute',
-      right: '15px',
-      top: '45px',
+      right: '20px',
+      top: '50px',
       cursor: 'pointer',
-      color: '#6c757d',
-      fontSize: '1.2rem'
+      color: '#94a3b8',
+      fontSize: '1.3rem',
+      transition: 'color 0.3s ease',
+      zIndex: 1
     }
   };
 
   return (
     <div style={styles.root}>
+      <style>
+        {`
+          @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+          }
+        `}
+      </style>
       <div style={styles.container}>
         <img src={logo} alt="HCA Logo" style={styles.logo} />
         <h2 style={styles.title}>Reset Password</h2>
-        <p style={styles.subtitle}>Enter your new password below.</p>
+        <p style={styles.subtitle}>Secure your account by choosing a strong new password.</p>
         
         <form onSubmit={handleSubmit}>
           <div style={styles.formGroup}>
             <label style={styles.label}>New Password</label>
-            <input
-              type={showPassword ? "text" : "password"}
-              style={styles.input}
-              placeholder="Enter new password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
-            <div style={styles.eyeIcon} onClick={() => setShowPassword(!showPassword)}>
-              {showPassword ? <FiEyeOff /> : <FiEye />}
+            <div style={{ position: 'relative' }}>
+              <input
+                type={showPassword ? "text" : "password"}
+                style={styles.input}
+                onFocus={(e) => Object.assign(e.target.style, styles.inputFocus)}
+                onBlur={(e) => Object.assign(e.target.style, styles.input)}
+                placeholder="Enter new password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+              <div style={styles.eyeIcon} onClick={() => setShowPassword(!showPassword)}>
+                {showPassword ? <FiEyeOff /> : <FiEye />}
+              </div>
             </div>
           </div>
           
@@ -144,6 +184,8 @@ const ResetPassword = () => {
             <input
               type="password"
               style={styles.input}
+              onFocus={(e) => Object.assign(e.target.style, styles.inputFocus)}
+              onBlur={(e) => Object.assign(e.target.style, styles.input)}
               placeholder="Confirm new password"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
@@ -155,12 +197,33 @@ const ResetPassword = () => {
             type="submit" 
             style={styles.btn}
             disabled={resettingPassword}
+            onMouseEnter={(e) => {
+              if (!resettingPassword) {
+                e.target.style.transform = 'translateY(-2px)';
+                e.target.style.boxShadow = '0 12px 20px -3px rgba(21, 152, 149, 0.4)';
+              }
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.transform = 'translateY(0)';
+              e.target.style.boxShadow = styles.btn.boxShadow;
+            }}
           >
-            {resettingPassword ? "Updating..." : "Reset Password"}
+            {resettingPassword ? (
+              <>
+                <Loader2 className="animate-spin" size={20} /> Resetting...
+              </>
+            ) : "Update Password"}
           </button>
         </form>
         
-        <Link to="/" style={styles.backLink}>Back to Home</Link>
+        <Link 
+          to="/" 
+          style={styles.backLink}
+          onMouseEnter={(e) => Object.assign(e.target.style, styles.backLinkHover)}
+          onMouseLeave={(e) => Object.assign(e.target.style, styles.backLink)}
+        >
+          ← Back to Login
+        </Link>
       </div>
     </div>
   );

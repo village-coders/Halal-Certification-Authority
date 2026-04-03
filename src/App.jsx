@@ -17,6 +17,8 @@ import { SocketProvider } from "./contexts/SocketContext";
 import ManageUsers from "./pages/ManageUsers";
 import SubmitDocuments from "./pages/SubmitDocuments";
 import ResetPassword from "./pages/ResetPassword";
+import UserGuide from "./pages/UserGuide";
+import PublicGuide from "./pages/PublicGuide";
 
 function App() {
   return (
@@ -27,6 +29,7 @@ function App() {
           <Toaster position="top-right" richColors />
           <Routes>
             <Route path="/" element={<Home />} />
+            <Route path="/public-guide" element={<PublicGuide />} />
             <Route path="/verify/:token" element={<VerifyAccount />} />
             <Route path="/reset-password/:token" element={<ResetPassword />} />
             
@@ -42,6 +45,7 @@ function App() {
               <Route path="/audits" element={<Audit />} />
               <Route path="/submit-documents" element={<SubmitDocuments />} />
               <Route path="/manage-users" element={<ManageUsers />} />
+              <Route path="/user-guide" element={<UserGuide />} />
             </Route>
 
             <Route path="*" element={<Navigate to="/" />} />

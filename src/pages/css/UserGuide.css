@@ -1,0 +1,72 @@
+.guide-content.white-card {
+    background: white;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+    margin-top: 20px;
+    color: #333;
+    line-height: 1.6;
+}
+
+.guide-content h1 {
+    font-size: 24px;
+    color: #2c3e50;
+    margin-bottom: 10px;
+    border-bottom: 2px solid #f1f3f5;
+    padding-bottom: 15px;
+}
+
+.guide-content h2 {
+    font-size: 18px;
+    color: #2c3e50;
+    margin-top: 25px;
+    margin-bottom: 12px;
+}
+
+.guide-content p {
+    margin-bottom: 15px;
+    color: #555;
+    font-size: 15px;
+}
+
+.guide-content .intro {
+    font-size: 16px;
+    color: #666;
+    margin-bottom: 30px;
+}
+
+.guide-content ul {
+    padding-left: 20px;
+    margin-bottom: 20px;
+}
+
+.guide-content li {
+    margin-bottom: 8px;
+    color: #555;
+}
+
+.guide-content li strong {
+    color: #2c3e50;
+}
+
+.guide-content hr {
+    border: 0;
+    height: 1px;
+    background: #eaeaea;
+    margin: 30px 0;
+}
+
+.guide-content .tip-alert {
+    background-color: #e8f4fd;
+    border-left: 4px solid #1890ff;
+    padding: 15px 20px;
+    border-radius: 4px;
+    margin-top: 40px;
+    color: #31708f;
+    font-size: 15px;
+}
+
+.guide-content .tip-alert strong {
+    color: #1890ff;
+    margin-right: 5px;
+}

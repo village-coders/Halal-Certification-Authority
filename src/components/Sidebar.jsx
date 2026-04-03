@@ -2,12 +2,12 @@ import { useState, useEffect } from "react";
 import "./css/Sidebar.css";
 import logo from '../assets/hcaLogo.webp';
 import { Link, useNavigate } from "react-router-dom";
-import { MdOutlineDashboard, MdOutlineAssignment, MdOutlineBadge, MdOutlineShoppingBag, MdOutlinePerson, MdOutlineMessage, MdOutlineLogout, MdOutlineReceipt, MdOutlineEventNote } from "react-icons/md";
+import { MdOutlineDashboard, MdOutlineAssignment, MdOutlineBadge, MdOutlineShoppingBag, MdOutlinePerson, MdOutlineMessage, MdOutlineLogout, MdOutlineReceipt, MdOutlineEventNote, MdOutlineHelp } from "react-icons/md";
 import { TbUsersGroup } from "react-icons/tb";
 import axios from 'axios';
 import { useAuth } from "../hooks/useAuth";
 
-const Sidebar = ({activeD, activeApp, activeCert, activeP, activeMess, activeI, activeAu, activePro, activeUse})=> {
+const Sidebar = ({activeD, activeApp, activeCert, activeP, activeMess, activeI, activeAu, activePro, activeUse, activeGuide})=> {
   const [openMenu, setOpenMenu] = useState("");
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 900);
@@ -178,11 +178,17 @@ const Sidebar = ({activeD, activeApp, activeCert, activeP, activeMess, activeI, 
               </button>
             </li>
             <li>
+              <button onClick={() =>{ if (isMobile) {toggleSidebar(); setIsCollapsed(true);}  navigate('/user-guide')}} className={`dropdown-btn ${activeGuide}`} title="User Guide">
+                <MdOutlineHelp />
+                {!isCollapsed && <span>User Guide</span>}
+              </button>
+            </li>
+            {/* <li>
               <button onClick={() =>{ if (isMobile) {toggleSidebar(); setIsCollapsed(true);}  navigate('/manage-users')}} className={`dropdown-btn ${openMenu === "manage-users" ? "active" : ""} ${activeUse}`} title="Manage Users">
                 <TbUsersGroup />
                 {!isCollapsed && <span>Manage Users</span>}
               </button>
-            </li>
+            </li> */}
             {/* <li>
               <button onClick={() =>{ if (isMobile) toggleSidebar();  navigate('/manage-site')}} className="dropdown-btn" title="Manage Sites">
                 <i className="fas fa-building"></i>

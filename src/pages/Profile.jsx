@@ -331,20 +331,24 @@ function Profile() {
                     <small className="field-note">Default: Company</small>
                   </div>
 
-                  <div className="form-group">
-                    <label>Department</label>
-                    <select
-                      name="department"
-                      value={formData.department}
-                      onChange={handleInputChange}
-                      disabled={!isEditing}
-                    >
-                      <option value="">Select Department</option>
-                      {departments.map((dept, i) => (
-                        <option key={i} value={dept}>{dept}</option>
-                      ))}
-                    </select>
-                  </div>
+                  {
+                    user.isUnderCompany && (
+                      <div className="form-group">
+                        <label>Department</label>
+                        <select
+                          name="department"                          
+                          value={formData.department}
+                          onChange={handleInputChange}
+                          disabled={!isEditing}
+                        >
+                          <option value="">Select Department</option>
+                          {departments.map((dept, i) => (
+                            <option key={i} value={dept}>{dept}</option>
+                          ))}
+                        </select>
+                      </div>
+                    )
+                  }
                 </div>
               </div>
 

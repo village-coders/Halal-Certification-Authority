@@ -31,10 +31,10 @@ function Dashboard() {
   // console.log(certificates)
 
   const quickActions = [
-    { title: "NEW APPLICATION", icon: "fa-plus-circle", color: "#4caf50", link: "applications" },
+    ...(applications.length === 0 ? [{ title: "NEW APPLICATION", icon: "fa-plus-circle", color: "#4caf50", link: "applications" }] : []),
     ...(applications.length !== 0 ? [{ title: "REQUEST PRODUCT", icon: "fa-shopping-cart", color: "#ff5722", link: "products" }] : []),
-    ...(applications.some(item =>
-      ["expired", "renewal"].includes(item.status)
+    ...(certificates.some(item =>
+      item.status && ["expired", "expiring soon"].includes(item.status.toLowerCase().trim())
     )
     ? [
         { title: "RENEWAL APPLICATION", icon: "fa-sync-alt", color: "#2196f3", link: "applications" },

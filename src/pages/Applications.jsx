@@ -102,10 +102,6 @@ function Applications() {
 
   const applicationCategories = [
     "Initial Certification",
-    "Annual Certification",
-    "Surveillance Audit",
-    "Recertification",
-    "Extension of Scope",
     "Renewal Application"
   ];
 
@@ -152,6 +148,11 @@ function Applications() {
   }, []);
 
   const handleNewApplication = () => {
+    if (applications.length > 0) {
+      toast.error("You already have an existing application.");
+      return;
+    }
+    setFormData(prev => ({ ...prev, category: "Initial Certification" }));
     setShowApplicationForm(true);
     setShowRenewalForm(false);
     setShowViewModal(false);
@@ -159,7 +160,7 @@ function Applications() {
   };
 
   const handleRenewApplication = () => {
-    if (applications.filter(app => app.status === "Accepted" || app.status === "Certified").length === 0) {
+    if (applications.filter(app => ["Accepted", "Certified", "Expired", "Renewal", "Renewal Application", "renewal", "expired"].includes(app.status)).length === 0) {
       toast.error("No eligible applications found for renewal");
       return;
     }
@@ -214,6 +215,18 @@ function Applications() {
   useEffect(() => {
     fetchApplications();
     fetchProducts();
+    
+    // Process query params
+    const searchParams = new URLSearchParams(window.location.search);
+    const action = searchParams.get('action');
+    if (action === 'new') {
+      setTimeout(() => {
+        setFormData(prev => ({ ...prev, category: "Initial Certification" }));
+        setShowApplicationForm(true);
+      }, 500);
+    } else if (action === 'renew') {
+      setTimeout(() => setShowRenewalForm(true), 500);
+    }
   }, []);
 
   // View Application Details
@@ -1348,7 +1361,7 @@ function Applications() {
                         value={formData.category}
                         onChange={handleInputChange}
                         required
-                        disabled={loading}
+                        disabled
                       >
                         <option value="">Select Category</option>
                         {applicationCategories.map((cat, i) => (
@@ -2394,7 +2407,7 @@ function Applications() {
                         value={formData.category}
                         onChange={handleInputChange}
                         required
-                        disabled={editLoading}
+                        disabled
                       >
                         <option value="">Select Category</option>
                         {applicationCategories.map((cat, i) => (
@@ -3416,7 +3429,7 @@ function Applications() {
 
         {/* Renewal Application Modal */}
         {showRenewalForm && (
-          <div className="modal">
+          <div className="modal modal-large">
             <div className="modal-content">
               <div className="modal-header">
                 <h3>Renew Application</h3>
@@ -3431,6 +3444,14 @@ function Applications() {
               
               <form onSubmit={handleRenewalSubmit}>
                 <div className="form-group">
+                  <label>Category *</label>
+                  <input
+                    type="text"
+                    value="Renewal Application"
+                    disabled
+                  />
+                </div>
+                <div className="form-group">
                   <label>Select Application *</label>
                   <select
                     name="existingApplication"
@@ -3441,14 +3462,14 @@ function Applications() {
                   >
                     <option value="">Choose application</option>
                     {applications
-                      .filter(app => app.status === "Accepted" || app.status === "Certified")
+                      .filter(app => ["Accepted", "Certified", "Expired", "Renewal", "Renewal Application", "renewal", "expired"].includes(app.status))
                       .map((app) => (
                         <option key={app._id} value={app._id}>
                           {app.applicationNumber} - {app.product}
                         </option>
                       ))
                     }
-                    {applications.filter(app => app.status === "Accepted" || app.status === "Certified").length === 0 && (
+                    {applications.filter(app => ["Accepted", "Certified", "Expired", "Renewal", "Renewal Application", "renewal", "expired"].includes(app.status)).length === 0 && (
                       <option value="" disabled>No eligible applications found</option>
                     )}
                   </select>
