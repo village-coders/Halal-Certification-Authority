@@ -3,7 +3,7 @@
 
 
 .profile-content {
-  padding: 32px;
+  padding: 22px;
 }
 
 .profile-content .profile-section {
@@ -161,7 +161,7 @@
   }
 
   .profile-content {
-    padding: 20px;
+    padding: 0px !important;
   }
 
   .profile-content .profile-section .form-grid {

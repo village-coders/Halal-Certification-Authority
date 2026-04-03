@@ -102,7 +102,7 @@ const Sidebar = ({activeD, activeApp, activeCert, activeP, activeMess, activeI, 
 
             <li className="has-submenu">
               <button
-                onClick={() =>{ if (isMobile) {toggleSidebar(); setIsCollapsed(true);} navigate('/applications')}} className={`dropdown-btn ${openMenu === "applications" ? "active" : ""} ${activeApp}`} title="Applications">
+                onClick={() =>{ if (isMobile) {toggleSidebar(); setIsCollapsed(true);} navigate('/applications')}} className={`dropdown-btn ${openMenu === "applications" ? "active" : ""} ${activeApp}`} title="Applications" id="tour-sidebar-applications">
                 <MdOutlineAssignment />
                 {!isCollapsed &&  <span>Applications</span>}
               </button>
@@ -116,21 +116,21 @@ const Sidebar = ({activeD, activeApp, activeCert, activeP, activeMess, activeI, 
             </li>
 
             <li>
-              <button onClick={() =>{ if (isMobile) {toggleSidebar(); setIsCollapsed(true);}  navigate('/submit-documents')}} className={`dropdown-btn`} title="Submit Relevant Document">
+              <button onClick={() =>{ if (isMobile) {toggleSidebar(); setIsCollapsed(true);}  navigate('/submit-documents')}} className={`dropdown-btn`} title="Submit Relevant Document" id="tour-sidebar-submit-documents">
                 <MdOutlineAssignment />
                 {!isCollapsed && <span>Submit Relevant Document</span>}
               </button>
             </li>
 
             <li>
-              <button onClick={() =>{ if (isMobile) {toggleSidebar(); setIsCollapsed(true);}  navigate('/invoices')}} className={`dropdown-btn ${openMenu === "invoices" ? "active" : ""} ${activeI}`} title="Invoice">
+              <button onClick={() =>{ if (isMobile) {toggleSidebar(); setIsCollapsed(true);}  navigate('/invoices')}} className={`dropdown-btn ${openMenu === "invoices" ? "active" : ""} ${activeI}`} title="Invoice" id="tour-sidebar-invoices">
                 <MdOutlineReceipt />
                 {!isCollapsed && <span>Invoices</span>}
               </button>
             </li>
 
             <li className="has-submenu">
-              <button onClick={() =>{ if (isMobile) {toggleSidebar(); setIsCollapsed(true);} navigate('/certificates')}} className={`dropdown-btn ${openMenu === "certificate" ? "active" : ""} ${activeCert}`} title="Certificate">
+              <button onClick={() =>{ if (isMobile) {toggleSidebar(); setIsCollapsed(true);} navigate('/certificates')}} className={`dropdown-btn ${openMenu === "certificate" ? "active" : ""} ${activeCert}`} title="Certificate" id="tour-sidebar-certificates">
                 <MdOutlineBadge />
                 {!isCollapsed && <span>Certificate</span>}
               </button>
@@ -143,7 +143,7 @@ const Sidebar = ({activeD, activeApp, activeCert, activeP, activeMess, activeI, 
             </li>
 
             <li>
-              <button onClick={() =>{ if (isMobile) {toggleSidebar(); setIsCollapsed(true);} navigate('/products')}} className={`dropdown-btn ${openMenu === "products" ? "active" : ""} ${activeP}`} title="Products">
+              <button onClick={() =>{ if (isMobile) {toggleSidebar(); setIsCollapsed(true);} navigate('/products')}} className={`dropdown-btn ${openMenu === "products" ? "active" : ""} ${activeP}`} title="Products" id="tour-sidebar-products">
                 <MdOutlineShoppingBag />
                 {!isCollapsed && <span>Products</span>}
               </button>
@@ -166,13 +166,13 @@ const Sidebar = ({activeD, activeApp, activeCert, activeP, activeMess, activeI, 
               </button>            
             </li>
             <li>
-              <button onClick={() =>{ if (isMobile) {toggleSidebar(); setIsCollapsed(true);}  navigate('/audits')}} className={`dropdown-btn ${openMenu === "audits" ? "active" : ""} ${activeAu}`} title="Audit">
+              <button onClick={() =>{ if (isMobile) {toggleSidebar(); setIsCollapsed(true);}  navigate('/audits')}} className={`dropdown-btn ${openMenu === "audits" ? "active" : ""} ${activeAu}`} title="Audit" id="tour-sidebar-audits">
                 <MdOutlineEventNote />
                 {!isCollapsed && <span>Audits</span>}
               </button>
             </li>
             <li>
-              <button onClick={() =>{ if (isMobile) {toggleSidebar(); setIsCollapsed(true);}  navigate('/profile')}} className={`dropdown-btn ${openMenu === "profile" ? "active" : ""} ${activePro}`} title="Manage Users">
+              <button onClick={() =>{ if (isMobile) {toggleSidebar(); setIsCollapsed(true);}  navigate('/profile')}} className={`dropdown-btn ${openMenu === "profile" ? "active" : ""} ${activePro}`} title="Manage Users" id="tour-sidebar-profile">
                 <MdOutlinePerson />
                 {!isCollapsed && <span>Profile</span>}
               </button>

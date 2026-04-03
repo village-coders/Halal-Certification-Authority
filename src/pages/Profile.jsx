@@ -182,7 +182,7 @@ function Profile() {
       <Sidebar activePro="active" />
       <main className="content">
         <div className="manage-applications">
-          <div className="header">
+          <div style={{padding: "0px 45px"}} className="header">
             <h2>Company Profile</h2>
             <div className="header-actions">
               {!isEditing ? (
@@ -216,7 +216,7 @@ function Profile() {
             </div>
           </div>
 
-          <div className="profile-content" style={{ padding: '24px' }}>
+          <div className="profile-content">
             <form onSubmit={handleSubmit}>
               {/* Company Information Section */}
               <div className="profile-section">

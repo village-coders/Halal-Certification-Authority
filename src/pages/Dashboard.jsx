@@ -3,6 +3,7 @@ import "./css/Dashboard.css";
 import Sidebar from "../components/Sidebar";
 import DashboardHeader from "../components/DashboardHeader";
 import { Link } from "react-router-dom";
+import TourBot from "../components/TourBot";
 import { useAuth } from "../hooks/useAuth";
 import axios from "axios";
 
@@ -25,6 +26,7 @@ function Dashboard() {
     certificates: true
   });
   const [error, setError] = useState("");
+  const [runTour, setRunTour] = useState(false);
 
   const { user } = useAuth();
 
@@ -45,6 +47,9 @@ function Dashboard() {
 
   useEffect(() => {
     fetchDashboardData();
+    if (!localStorage.getItem('hcaTourCompleted')) {
+      setRunTour(true);
+    }
   }, []);
 
 
@@ -265,10 +270,12 @@ function Dashboard() {
   ];
 
   return (
-    <div className="dash">       
+    <>
+      <TourBot run={runTour} setRun={setRunTour} />
+      <div className="dash">       
       <Sidebar activeD='active' /> 
       <main className="content">
-        <div className="dashboard-container">
+        <div className="dashboard-container tour-dashboard-overview">
           <DashboardHeader title='Dashboard' /> 
 
           {error && (
@@ -279,8 +286,15 @@ function Dashboard() {
 
           {/* Quick Actions */}
           <div className="quick-actions">
-            <h2>Quick Actions</h2>  
-            <div className="actions-grid">
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <h2>Quick Actions</h2>
+              <button 
+                onClick={() => setRunTour(true)} 
+                style={{ fontSize: '13px', background: 'none', border: 'none', color: '#00853b', cursor: 'pointer', textDecoration: 'underline' }}>
+                Restart Tour
+              </button>
+            </div>
+            <div id="tour-new-application-btn" className="actions-grid">
               {quickActions.map((action, index) => (
                 <div key={index} className="action-card" style={{ borderLeft: `4px solid ${action.color}` }}>
                   <div className="action-icon">
@@ -464,6 +478,7 @@ function Dashboard() {
         </div>
       </main>
     </div>
+    </>
   );
 }
 

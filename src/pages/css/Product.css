@@ -585,7 +585,7 @@
 /* Responsive Design */
 @media (max-width: 768px) {
   .content {
-    padding: 1rem;
+    padding: 1rem .2rem;
   }
   
   .product-container {

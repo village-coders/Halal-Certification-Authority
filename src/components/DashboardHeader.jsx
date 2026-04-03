@@ -3,7 +3,7 @@ import './css/DashboardHeader.css'
 import { useAuth } from "../hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 import axios from 'axios';
-import { BellDot, X } from 'lucide-react';
+import { Bell, X } from 'lucide-react';
 
 const DashboardHeader = ({title}) => {
   const [openMenu, setOpenMenu] = useState(false);
@@ -110,9 +110,9 @@ const DashboardHeader = ({title}) => {
       <h1>{title}</h1>
       <div className="header-actions">
         
-        <div className="notification-container" ref={dropdownRef}>
+        <div id="tour-dashboard-notification" className="notification-container" ref={dropdownRef}>
           <button className="notification-btn cursor-pointer" onClick={handleBellClick}>
-            <BellDot />
+            <Bell />
             {unreadCount > 0 && (
               <span className="notification-badge-custom">{unreadCount}</span>
             )}
@@ -165,7 +165,7 @@ const DashboardHeader = ({title}) => {
           {openMenu && (
             <div className="user-dropdown">
               <div className="user-info">
-                <h3>{userLoading ?  "loading.." : user.companyName}</h3>
+                <h3>{userLoading ?  "loading.." : user?.companyName}</h3>
                 <span className="status">Online</span>
                 <button onClick={() => {logout(); toggleMenu();}} className="logout-btn">Logout</button>
               </div>

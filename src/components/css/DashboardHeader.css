@@ -218,3 +218,24 @@
   margin-top: 8px; 
   margin-bottom: 0;
 }
+
+@media screen and (max-width: 768px) {
+  .header-actions {
+    align-items: center;
+    justify-content: space-between;
+    /* margin-left: 100px; */
+  }
+
+  .notification-dropdown {
+    right: 0;
+    left: auto;
+  }
+}
+
+@media screen and (max-width: 568px) {
+  .header-actions {
+    align-items: center;
+    justify-content: space-between;
+    /* margin-left: 10px; */
+  }
+}
