@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import  {Joyride, STATUS } from 'react-joyride';
 
-const TourBot = ({ run, setRun }) => {
+const TourBot = ({ run, setRun, userId }) => {
   const [tourKey, setTourKey] = useState(0);
 
   useEffect(() => {
@@ -59,7 +59,7 @@ const TourBot = ({ run, setRun }) => {
     
     if (finishedStatuses.includes(status)) {
       setRun(false);
-      localStorage.setItem('hcaTourCompleted', 'true');
+      localStorage.setItem(`hcaTourCompleted_${userId || 'default'}`, 'true');
     }
   };
 

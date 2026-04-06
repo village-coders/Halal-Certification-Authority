@@ -313,7 +313,7 @@ const Product = () => {
                             <tr>
                               <th>#</th>
                               <th>Name</th>
-                              <th>Application Number</th>
+                              {/* <th>Application Number</th> */}
                               <th>Note</th>
                               <th>Actions</th>
                             </tr>
@@ -323,7 +323,7 @@ const Product = () => {
                               <tr key={p._id}>
                                 <td>{((currentPage - 1) * itemsPerPage) + index + 1}</td>
                                 <td style={{ fontWeight: 500 }}>{p.name}</td>
-                                <td><span className="app-number">{p?.applicationId?.applicationNumber}</span></td>
+                                {/* <td><span className="app-number">{p?.applicationId?.applicationNumber}</span></td> */}
                                 <td>{p.note}</td>
                                 <td>
                                   <div className="action-buttons">
@@ -648,10 +648,10 @@ const Product = () => {
                     <span className="detail-label">Product Name:</span>
                     <span className="detail-value">{selectedProduct.name}</span>
                   </div>
-                  <div className="detail-item">
+                  {/* <div className="detail-item">
                     <span className="detail-label">Application Number:</span>
                     <span className="detail-value">{selectedProduct.applicationId.applicationNumber}</span>
-                  </div>
+                  </div> */}
                   <div className="detail-item">
                     <span className="detail-label">Note :</span>
                     <span className="detail-value">{selectedProduct.note}</span>

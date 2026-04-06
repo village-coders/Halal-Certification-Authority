@@ -47,10 +47,19 @@ function Dashboard() {
 
   useEffect(() => {
     fetchDashboardData();
-    if (!localStorage.getItem('hcaTourCompleted')) {
-      setRunTour(true);
-    }
   }, []);
+
+  useEffect(() => {
+    if (user && user._id) {
+      if (!localStorage.getItem(`hcaTourCompleted_${user._id}`)) {
+        // Add a tiny delay to ensure all nested components and refs are mounted
+        const timer = setTimeout(() => {
+          setRunTour(true);
+        }, 500);
+        return () => clearTimeout(timer);
+      }
+    }
+  }, [user]);
 
 
   const fetchDashboardData = async () => {
@@ -88,12 +97,12 @@ function Dashboard() {
       );
       
       // Fetch certificates count
-      // const certsResponse = await axios.get(
-      //   `${API_BASE_URL}/certificates`,
-      //   {
-      //     headers: { Authorization: `Bearer ${token}` }
-      //   }
-      // );
+      const certsResponse = await axios.get(
+        `${API_BASE_URL}/certificates`,
+        {
+          headers: { Authorization: `Bearer ${token}` }
+        }
+      );
       
       // Fetch products count (assuming this endpoint exists)
       const productsResponse = await axios.get(
@@ -107,7 +116,7 @@ function Dashboard() {
       
 
       setStats({
-        // certificates: certsResponse.headers['x-total-count'] || certsResponse.data.length || 0,
+        certificates: certsResponse.headers['x-total-count'] || certsResponse.data.length || 0,
         products: productsResponse.headers['x-total-count'] || productsResponse.data.products.length || 0,
         applications: appsResponse.headers['x-total-count'] || appsResponse.data.length || 0
       });
@@ -271,7 +280,7 @@ function Dashboard() {
 
   return (
     <>
-      <TourBot run={runTour} setRun={setRunTour} />
+      <TourBot run={runTour} setRun={setRunTour} userId={user?._id} />
       <div className="dash">       
       <Sidebar activeD='active' /> 
       <main className="content">

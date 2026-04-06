@@ -69,7 +69,7 @@ function Certificate() {
         );
         if (response.data && Array.isArray(response.data)) {
           setCertificates(response.data);
-          
+          console.log(response)
         } else {
           setCertificates([]);
         }
@@ -131,15 +131,15 @@ function Certificate() {
   };
 
   const handleRenewCertificate = (certificate) => {
-    // Navigate to applications page with certificate ID for renewal
-    window.location.href = `/applications?renewCertificate=${certificate._id}`;
+    // Navigate to applications page with action for renewal
+    window.location.href = `/applications?action=renew&certId=${certificate._id}`;
   };
 
   const getStatusColor = (status) => {
     const colors = {
-      "Active": "#10b981",
-      "Expiring Soon": "#f59e0b",
-      "Expired": "#ef4444",
+      "Active": "#16a34a", /* Green */
+      "Expiring Soon": "#ea580c", /* Orange */
+      "Expired": "#dc2626", /* Red */
       "Suspended": "#6b7280",
       "Revoked": "#dc2626",
       "Pending": "#6366f1"
@@ -349,7 +349,7 @@ function Certificate() {
                             >
                               <i className="fas fa-download"></i>
                             </button>
-                            {(cert.status === 'Active' || cert.status === 'Expiring Soon') && (
+                            {(cert.status === 'Active' || cert.status === 'Expiring Soon' || cert.status === 'Expired' || cert.status === 'expired') && (
                               <button 
                                 className="view-btn" 
                                 title="Renew"
@@ -509,7 +509,7 @@ function Certificate() {
                       </>
                     )}
                   </button>
-                  {(selectedCertificate.status === 'Active' || selectedCertificate.status === 'Expiring Soon') && (
+                  {(selectedCertificate.status === 'Active' || selectedCertificate.status === 'Expiring Soon' || selectedCertificate.status === 'Expired' || selectedCertificate.status === 'expired') && (
                     <button 
                       type="button" 
                       className="btn renew-btn"

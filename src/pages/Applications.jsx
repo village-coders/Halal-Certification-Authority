@@ -160,7 +160,11 @@ function Applications() {
   };
 
   const handleRenewApplication = () => {
-    if (applications.filter(app => ["Accepted", "Certified", "Expired", "Renewal", "Renewal Application", "renewal", "expired"].includes(app.status)).length === 0) {
+    const eligibleApps = applications.filter(app => 
+      ["Accepted", "Certified", "Expired", "Issued", "Renewal", "Renewal Application", "renewal", "expired"].includes(app.status)
+    );
+
+    if (eligibleApps.length === 0) {
       toast.error("No eligible applications found for renewal");
       return;
     }
@@ -831,71 +835,34 @@ function Applications() {
       return;
     }
 
+    if (!renewalData.existingApplication) {
+      toast.error("Please select an application to renew");
+      return;
+    }
+
     try {
       setLoading(true);
-
-      const selectedApp = applications.find(app => app._id === renewalData.existingApplication);
-      
-      if (!selectedApp) {
-        throw new Error("Selected application not found");
-      }
-
       const token = JSON.parse(localStorage.getItem("accessToken"));
       
-      const renewalApplicationData = {
-        category: "Renewal Application",
-        product: selectedApp.product,
-        productId: selectedApp.productId,
-        description: `Renewal of ${selectedApp.applicationNumber}. Reason: ${renewalData.reason}`,
-        requestedDate: renewalData.renewalDate,
-        companyId: user.registrationNo,
-        status: "Submitted",
-        applicationNumber: `REN-${Date.now().toString().slice(-8)}`,
-        originalApplicationId: selectedApp._id,
-        hasAppliedBefore: selectedApp.hasAppliedBefore || "",
-        previousHalalAgency: selectedApp.previousHalalAgency || "",
-        hasBeenSupervisedBefore: selectedApp.hasBeenSupervisedBefore || "",
-        supervisingHalalAgency: selectedApp.supervisingHalalAgency || "",
-        foodSafetyPrograms: selectedApp.foodSafetyPrograms || [],
-        otherFoodSafetyProgram: selectedApp.otherFoodSafetyProgram || "",
-        marketType: selectedApp.marketType || "",
-        marketTypeOther: selectedApp.marketTypeOther || "",
-        brandType: selectedApp.brandType || "",
-        brandTypeOther: selectedApp.brandTypeOther || "",
-        usesPorkOrDerivatives: selectedApp.usesPorkOrDerivatives || "",
-        usesAnimalMeatOrDerivatives: selectedApp.usesAnimalMeatOrDerivatives || "",
-        usesGelatinOrCapsule: selectedApp.usesGelatinOrCapsule || "",
-        containsAlcohol: selectedApp.containsAlcohol || "",
-        additivesOrFlavourContainAlcohol: selectedApp.additivesOrFlavourContainAlcohol || "",
-        usesGlycerineOrDerivatives: selectedApp.usesGlycerineOrDerivatives || "",
-        geographicMarkets: selectedApp.geographicMarkets || [],
-        geographicMarketsOther: selectedApp.geographicMarketsOther || "",
-        manufacturingFacility: selectedApp.manufacturingFacility || {},
-        additionalFacilities: selectedApp.additionalFacilities || [],
-        packagingPlant: selectedApp.packagingPlant || {},
-        authorizedBy: selectedApp.authorizedBy || {}
-      };
-
-      const response = await axios.post(
-        `${API_BASE_URL}/applications`,
-        renewalApplicationData,
+      const response = await axios.put(
+        `${API_BASE_URL}/applications/renew/${renewalData.existingApplication}`,
+        { reason: renewalData.reason }, // Optional: pass reason if backend needs it
         {
           headers: {
-            "Content-Type": "application/json",
             Authorization: `Bearer ${token}`
           }
         }
       );
 
-      if (response.data && response.data._id) {
-        toast.success("Renewal application submitted successfully!");
+      if (response.data && response.data.status === "success") {
+        toast.success("Renewal application created successfully!");
         fetchApplications();
         
         setTimeout(() => {
           handleCloseForm();
-        }, 2000);
+        }, 1500);
       } else {
-        throw new Error("Invalid response from server");
+        throw new Error(response.data.message || "Failed to renew application");
       }
     } catch (err) {
       console.error("Error submitting renewal:", err);
@@ -906,16 +873,45 @@ function Applications() {
     }
   };
 
+  const handleDeleteApplication = async (id) => {
+    if (!window.confirm("Are you sure you want to cancel this renewal application? This action cannot be undone.")) {
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const token = JSON.parse(localStorage.getItem("accessToken"));
+      
+      const response = await axios.delete(
+        `${API_BASE_URL}/applications/${id}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        }
+      );
+
+      if (response.data) {
+        toast.success("Application cancelled and deleted successfully!");
+        fetchApplications();
+      }
+    } catch (err) {
+      console.error("Error deleting application:", err);
+      const errorMessage = err.response?.data?.message || err.message || "Failed to cancel application";
+      toast.error(errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const getStatusColor = (status) => {
-    const colors = {
-      "Submitted": "#0077cc",
-      "In-Progress": "#ff9900",
-      "Approved": "#28a745",
-      "Certified": "#28a745",
-      "Rejected": "#d93025",
-      "Pending Review": "#6c757d"
-    };
-    return colors[status] || "#6c757d";
+    const statusLower = status?.toLowerCase() || '';
+    if (statusLower === 'submitted') return "#0077cc";
+    if (statusLower === 'issued' || statusLower === 'certified' || statusLower === 'approved') return "#28a745";
+    if (statusLower === 'renewal' || statusLower === 'renewal application' || statusLower === 'pending') return "#ff9900";
+    if (statusLower === 'expired' || statusLower === 'rejected' || statusLower === 'revoked') return "#d93025";
+    if (statusLower === 'pending review' || statusLower === "with shari'a board") return "#ffc107";
+    return "#6c757d";
   };
 
   const formatDate = (dateString) => {
@@ -1204,8 +1200,8 @@ function Applications() {
               <button 
                 className="renew-btn" 
                 onClick={handleRenewApplication}
-                disabled={applications.filter(app => app.status === "Accepted" || app.status === "Certified").length === 0 || productsLoading}
-                title={applications.filter(app => app.status === "Accepted" || app.status === "Certified").length === 0 ? "No eligible applications found for renewal" : ""}
+                disabled={applications.filter(app => ["approved", "certified", "issued", "expired"].includes(app.status.toLowerCase())).length === 0 || productsLoading}
+                title={applications.filter(app => ["approved", "certified", "issued", "expired"].includes(app.status)).length === 0 ? "No eligible applications found for renewal" : ""}
               >
                 <i className="fas fa-sync-alt"></i> Renew
               </button>
@@ -1314,6 +1310,16 @@ function Applications() {
                               onClick={() => handleEditApplication(app._id)}
                             >
                               <i className="fas fa-edit"></i>
+                            </button>
+                          )}
+                          {(app.status.toLowerCase() === "renewal" || app.status.toLowerCase() === "renewal application") && (
+                            <button 
+                              className="delete-btn" 
+                              title="Cancel Renewal"
+                              onClick={() => handleDeleteApplication(app._id)}
+                              style={{ color: '#d93025' }}
+                            >
+                              <i className="fas fa-trash-alt"></i>
                             </button>
                           )}
                         </div>
@@ -3462,14 +3468,14 @@ function Applications() {
                   >
                     <option value="">Choose application</option>
                     {applications
-                      .filter(app => ["Accepted", "Certified", "Expired", "Renewal", "Renewal Application", "renewal", "expired"].includes(app.status))
+                      .filter(app => ["accepted", "certified", "expired", "renewal", "renewal application"].includes(app.status.toLowerCase()))
                       .map((app) => (
                         <option key={app._id} value={app._id}>
                           {app.applicationNumber} - {app.product}
                         </option>
                       ))
                     }
-                    {applications.filter(app => ["Accepted", "Certified", "Expired", "Renewal", "Renewal Application", "renewal", "expired"].includes(app.status)).length === 0 && (
+                    {applications.filter(app => ["accepted", "certified", "expired", "renewal", "renewal application"].includes(app.status.toLowerCase())).length === 0 && (
                       <option value="" disabled>No eligible applications found</option>
                     )}
                   </select>

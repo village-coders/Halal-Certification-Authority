@@ -389,8 +389,8 @@ tr:hover {
 }
 
 .status-badge.expiring-soon {
-  background: #fef3c7;
-  color: #d97706;
+  background: #ffedd5;
+  color: #ea580c; /* Orange */
 }
 
 .status-badge.expired {
