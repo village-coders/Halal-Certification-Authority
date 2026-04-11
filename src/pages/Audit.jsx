@@ -242,24 +242,90 @@ const Audit = () => {
                                 </table>
                             </div>
 
-                            {selectedAudit && selectedAudit.status === 'Correction Needed' && (
-                                <div className="corrections-panel">
-                                    <div className="panel-header">
-                                        <h4>Corrections Needed for {selectedAudit.applicationId?.applicationNumber}</h4>
-                                        <button className="close-panel" onClick={() => setSelectedAudit(null)}><MdClose /></button>
+                            {selectedAudit && (
+                                <div className="modal-overlay modal" onClick={() => setSelectedAudit(null)}>
+                                    <div className="modal-content product-details-modal" onClick={e => e.stopPropagation()} style={{maxWidth: '600px', width: '90%'}}>
+                                        <div className="modal-header">
+                                            <h2>Audit Details</h2>
+                                            <button className="close-modal" onClick={() => setSelectedAudit(null)}>×</button>
+                                        </div>
+                                        <div className="product-details-content" style={{padding: '20px', maxHeight: '70vh', overflowY: 'auto'}}>
+                                            <div className="details-section">
+                                                <h3 className="details-title">Basic Information</h3>
+                                                <div className="details-grid">
+                                                    <div className="detail-item">
+                                                        <span className="detail-label">Application:</span>
+                                                        <span className="detail-value">{selectedAudit.applicationId?.applicationNumber || "N/A"}</span>
+                                                    </div>
+                                                    <div className="detail-item">
+                                                        <span className="detail-label">Status:</span>
+                                                        <span className="detail-value">{selectedAudit.status}</span>
+                                                    </div>
+                                                    <div className="detail-item">
+                                                        <span className="detail-label">Audit Date & Time:</span>
+                                                        <span className="detail-value">{formatDate(selectedAudit.scheduledDate)} at {selectedAudit.scheduledTime || "TBD"}</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div className="details-section" style={{marginTop: '20px'}}>
+                                                <h3 className="details-title">Auditor Information</h3>
+                                                <div className="details-grid">
+                                                    <div className="detail-item">
+                                                        <span className="detail-label">Name:</span>
+                                                        <span className="detail-value">{selectedAudit.staffName || "Not Assigned"}</span>
+                                                    </div>
+                                                    {selectedAudit.auditorEmail && (
+                                                    <div className="detail-item">
+                                                        <span className="detail-label">Email:</span>
+                                                        <span className="detail-value">{selectedAudit.auditorEmail}</span>
+                                                    </div>
+                                                    )}
+                                                    {selectedAudit.auditorPhone && (
+                                                    <div className="detail-item">
+                                                        <span className="detail-label">Phone:</span>
+                                                        <span className="detail-value">{selectedAudit.auditorPhone}</span>
+                                                    </div>
+                                                    )}
+                                                    {selectedAudit.meetingLink && (
+                                                    <div className="detail-item">
+                                                        <span className="detail-label">Meeting Link:</span>
+                                                        <span className="detail-value">
+                                                            <a href={selectedAudit.meetingLink} target="_blank" rel="noopener noreferrer" style={{color: '#00853b', textDecoration: 'underline'}}>Join Meeting</a>
+                                                        </span>
+                                                    </div>
+                                                    )}
+                                                </div>
+                                            </div>
+
+                                            {selectedAudit.status === 'Correction Needed' && selectedAudit.corrections?.length > 0 && (
+                                                <div className="details-section" style={{marginTop: '20px'}}>
+                                                    <h3 className="details-title">Corrections Needed</h3>
+                                                    <ul className="corrections-list" style={{listStyle: 'none', padding: 0}}>
+                                                        {selectedAudit.corrections.map(correction => (
+                                                            <li key={correction._id} style={{padding: '10px', backgroundColor: '#fffbeb', border: '1px solid #fde68a', borderRadius: '4px', marginBottom: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
+                                                                <span className="issue-text" style={{ flex: 1, marginRight: '10px' }}>{correction.issue}</span>
+                                                                {correction.status === 'Pending' ? (
+                                                                    <button style={{backgroundColor: '#059669', color: 'white', border: 'none', padding: '6px 12px', borderRadius: '4px', cursor: 'pointer', fontSize: '12px'}} onClick={() => resolveCorrection(selectedAudit._id, correction._id)}>Mark Resolved</button>
+                                                                ) : (
+                                                                    <span style={{color: '#059669', fontSize: '12px', fontWeight: 'bold'}}>Resolved</span>
+                                                                )}
+                                                            </li>
+                                                        ))}
+                                                    </ul>
+                                                </div>
+                                            )}
+
+                                            <div className="modal-actions" style={{marginTop: '30px', display: 'flex', justifyContent: 'flex-end'}}>
+                                                <button 
+                                                    onClick={() => setSelectedAudit(null)}
+                                                    style={{backgroundColor: '#f3f4f6', color: '#374151', border: '1px solid #d1d5db', padding: '8px 16px', borderRadius: '6px', cursor: 'pointer', fontWeight: 500}}
+                                                >
+                                                    Close Details
+                                                </button>
+                                            </div>
+                                        </div>
                                     </div>
-                                    <ul className="corrections-list">
-                                        {selectedAudit.corrections.map(correction => (
-                                            <li key={correction._id} className={`correction-item ${correction.status.toLowerCase()}`}>
-                                                <span className="issue-text">{correction.issue}</span>
-                                                {correction.status === 'Pending' ? (
-                                                    <button className="resolve-btn" onClick={() => resolveCorrection(selectedAudit._id, correction._id)}>Mark Resolved</button>
-                                                ) : (
-                                                    <span className="resolved-tag">Resolved</span>
-                                                )}
-                                            </li>
-                                        ))}
-                                    </ul>
                                 </div>
                             )}
                         </>
