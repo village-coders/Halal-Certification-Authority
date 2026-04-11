@@ -85,7 +85,7 @@ const TrackApplication = () => {
     const hasShariaSent = !!pd.shariaBoardSentAt;
     const hasProcessing = !!pd.processingStartedAt;
     const isIssued = status === 'issued';
-    const isAccepted = status === 'accepted' || status === 'issued';
+    const isAccepted = status === 'accepted' || status === 'issued' || status === "with shari'a board" || status === 'renewal';
 
     switch (stepId) {
       case 1:  return 'completed';
@@ -130,7 +130,7 @@ const TrackApplication = () => {
                 onClick={() => navigate('/applications')} 
                 className="action-btn"
                 title="Back to Applications"
-                style={{ height: '40px', width: '40px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifySelf: 'center' }}
+                style={{ height: '40px', width: '40px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
               >
                 <i className="fas fa-arrow-left"></i>
               </button>
@@ -139,7 +139,7 @@ const TrackApplication = () => {
             <div className="header-actions">
               <div className="app-info-summary">
                 <span>App Number: <strong>{application?.applicationNumber}</strong></span>
-                <span>Status: <span className={`status-badge`} style={{ 
+                <span>Status: <span className="status-tag" style={{ 
                   backgroundColor: getStatusColor(application?.status) + '20',
                   color: getStatusColor(application?.status),
                   border: `1px solid ${getStatusColor(application?.status)}`,
@@ -181,7 +181,7 @@ const TrackApplication = () => {
                 <span className="activity-date">{new Date(application?.createdAt).toLocaleDateString()}</span>
                 <span className="activity-desc">Application submitted successfully.</span>
               </div>
-              {(application?.status === 'Accepted' || application?.status === 'Accepted') && (
+              {(application?.status === 'Accepted' || application?.status === 'Issued' || application?.status === "With Shari'a Board") && (
                 <div className="activity-item completed">
                   <span className="activity-date">Recently</span>
                   <span className="activity-desc">Application has been accepted by the admin.</span>
