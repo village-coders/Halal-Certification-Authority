@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-d
 import Home from "./pages/Home";
 import Dashboard from "./pages/Dashboard";
 import Applications from "./pages/Applications";
+import TrackApplication from "./pages/TrackApplication";
 import Certificate from "./pages/Certificate";
 import Product from "./pages/Product";
 import Profile from "./pages/Profile";
@@ -37,6 +38,7 @@ function App() {
             <Route element={<ProtectedRoutes />}>
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/applications" element={<Applications />} />
+              <Route path="/applications/:id/track" element={<TrackApplication />} />
               <Route path="/certificates" element={<Certificate />} />
               <Route path="/products" element={<Product />} />
               <Route path="/profile" element={<Profile />} />

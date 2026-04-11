@@ -183,18 +183,12 @@ const Sidebar = ({activeD, activeApp, activeCert, activeP, activeMess, activeI, 
                 {!isCollapsed && <span>User Guide</span>}
               </button>
             </li>
-            {/* <li>
+            <li>
               <button onClick={() =>{ if (isMobile) {toggleSidebar(); setIsCollapsed(true);}  navigate('/manage-users')}} className={`dropdown-btn ${openMenu === "manage-users" ? "active" : ""} ${activeUse}`} title="Manage Users">
                 <TbUsersGroup />
                 {!isCollapsed && <span>Manage Users</span>}
               </button>
-            </li> */}
-            {/* <li>
-              <button onClick={() =>{ if (isMobile) toggleSidebar();  navigate('/manage-site')}} className="dropdown-btn" title="Manage Sites">
-                <i className="fas fa-building"></i>
-                {!isCollapsed && <span>Manage Sites</span>}
-              </button>
-            </li> */}
+            </li>
           </ul>
         </nav>
         

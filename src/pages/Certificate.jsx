@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import "./css/Certificate.css";
 import Sidebar from "../components/Sidebar";
+import TableActions from "../components/TableActions";
 import axios from "axios";
 import { useAuth } from "../hooks/useAuth";
 
@@ -98,28 +99,33 @@ function Certificate() {
       setDownloading(true);
       setError("");
       setSuccess("");
+
+      // 1. Automatically open the certificate in a new tab
+      if (certificate.pdfPath) {
+        window.open(certificate.pdfPath, '_blank', 'noopener,noreferrer');
+      }
+
+      // 2. Fetch the actual PDF data to force the download
+      // Using standard fetch for the blob:
+      const response = await fetch(certificate.pdfPath);
       
-      // In real implementation, this would download the PDF
-      const token = JSON.parse(localStorage.getItem("accessToken"));
-      const response = await axios.get(
-        `${API_BASE_URL}/certificates/${certificate._id}/download`,
-        { 
-          responseType: 'blob',
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        }
-      );
+      if (!response.ok) throw new Error("Failed to fetch file");
       
-      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const blob = await response.blob(); 
+      
+      // 3. Create an Object URL from the ACTUAL file data
+      const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.setAttribute('download', `${certificate.certificateNumber}.pdf`);
+      link.setAttribute('download', `Certificate_${certificate.certificateNumber || 'certificate'}.pdf`);
+      
+      // Append, click, and clean up
       document.body.appendChild(link);
       link.click();
       link.remove();
+      window.URL.revokeObjectURL(url); // Free up memory
       
-      setSuccess("Certificate downloaded successfully!");
+      setSuccess("Certificate opened and downloaded successfully!");
       setTimeout(() => setSuccess(""), 3000);
     } catch (err) {
       console.error("Error downloading certificate:", err);
@@ -333,32 +339,26 @@ function Certificate() {
                         <td>{cert?.product?.name || "N/A"}</td>
                         <td>{formatDate(cert.expiryDate)}</td>
                         <td>
-                          <div className="action-buttons">
-                            <button 
-                              className="view-btn" 
-                              title="View Details"
-                              onClick={() => handleViewCertificate(cert)}
-                            >
-                              <i className="fas fa-eye"></i>
-                            </button>
-                            <button 
-                              className="view-btn" 
-                              title="Download"
-                              onClick={() => handleDownloadCertificate(cert)}
-                              disabled={downloading}
-                            >
-                              <i className="fas fa-download"></i>
-                            </button>
-                            {(cert.status === 'Active' || cert.status === 'Expiring Soon' || cert.status === 'Expired' || cert.status === 'expired') && (
-                              <button 
-                                className="view-btn" 
-                                title="Renew"
-                                onClick={() => handleRenewCertificate(cert)}
-                              >
-                                <i className="fas fa-sync-alt"></i>
-                              </button>
-                            )}
-                          </div>
+                          <TableActions 
+                            actions={[
+                              {
+                                label: 'View Details',
+                                icon: <i className="fas fa-eye"></i>,
+                                onClick: () => handleViewCertificate(cert)
+                              },
+                              {
+                                label: 'Download',
+                                icon: <i className="fas fa-download"></i>,
+                                onClick: () => handleDownloadCertificate(cert),
+                                disabled: downloading
+                              },
+                              (cert.status === 'Active' || cert.status === 'Expiring Soon' || cert.status === 'Expired' || cert.status === 'expired') && {
+                                label: 'Renew',
+                                icon: <i className="fas fa-sync-alt"></i>,
+                                onClick: () => handleRenewCertificate(cert)
+                              }
+                            ].filter(Boolean)}
+                          />
                         </td>
                       </tr>
                     );

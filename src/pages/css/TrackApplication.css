@@ -1,0 +1,207 @@
+.track-header {
+  margin-bottom: 30px;
+}
+
+.back-btn {
+  background: none;
+  border: none;
+  color: #0d6efd;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 500;
+  margin-bottom: 20px;
+}
+
+.back-btn:hover {
+  text-decoration: underline;
+}
+
+.app-info-summary {
+  margin-top: 10px;
+  display: flex;
+  gap: 20px;
+  color: #64748b;
+  font-size: 15px;
+}
+
+.status-tag {
+  padding: 4px 10px;
+  border-radius: 99px;
+  font-weight: 600;
+  font-size: 13px;
+  text-transform: uppercase;
+  background-color: #e2e8f0;
+}
+
+.status-tag.submitted { background-color: #dbeafe; color: #1e40af; }
+.status-tag.accepted { background-color: #dcfce7; color: #166534; }
+.status-tag.issued { background-color: #f0fdf4; color: #15803d; border: 1px solid #bbf7d0; }
+
+.stepper-container {
+  background-color: white;
+  border-radius: 12px;
+  padding: 40px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  margin-bottom: 30px;
+  border: 1px solid #e2e8f0;
+}
+
+.stepper-title {
+  color: #334155;
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 50px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.stepper-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 80px;
+}
+
+.stepper-row {
+  display: flex;
+  width: 100%;
+}
+
+.step-item {
+  flex: 1;
+  text-align: center;
+  position: relative;
+}
+
+.step-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #334155;
+  margin-bottom: 15px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.step-visual {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.step-line {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: 100%;
+  height: 4px;
+  background-color: #e2e8f0;
+  transform: translateY(-50%);
+  z-index: 1;
+}
+
+.step-circle {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background-color: white;
+  border: 3px solid #e2e8f0;
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+}
+
+/* Colors for statuses */
+.step-item.completed .step-circle {
+  background-color: #84cc16; /* Light green from the image */
+  border-color: #84cc16;
+  color: white;
+}
+
+.step-item.completed .step-line {
+  background-color: #84cc16;
+}
+
+.step-item.active .step-circle {
+  border-color: #84cc16;
+  background-color: white;
+  box-shadow: 0 0 0 4px rgba(132, 204, 22, 0.2);
+}
+
+.step-item.active .step-label {
+  color: #15803d;
+}
+
+/* Hide first half line of first step in row and last half of last step? 
+   Actually, the image shows a single long line. Let's adjust. */
+
+/* Row connections? The image doesn't show rows connected visually. They are separate rows. */
+
+.tracking-details-card {
+  background-color: white;
+  border-radius: 12px;
+  padding: 30px;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+  border: 1px solid #e2e8f0;
+}
+
+.activity-list {
+  margin-top: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.activity-item {
+  display: flex;
+  gap: 15px;
+  padding-left: 20px;
+  position: relative;
+}
+
+.activity-item::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 4px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background-color: #e2e8f0;
+}
+
+.activity-item.completed::before {
+  background-color: #84cc16;
+}
+
+.activity-date {
+  font-weight: 600;
+  color: #64748b;
+  min-width: 100px;
+}
+
+.activity-desc {
+  color: #334155;
+}
+
+@media (max-width: 1100px) {
+  .stepper-row {
+    flex-wrap: wrap;
+    gap: 20px;
+  }
+  
+  .step-item {
+    flex: 0 0 calc(50% - 10px);
+  }
+  
+  .step-line {
+    display: none;
+  }
+}

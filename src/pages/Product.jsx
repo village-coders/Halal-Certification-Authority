@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import Sidebar from "../components/Sidebar";
+import TableActions from "../components/TableActions";
 import "./css/Product.css";
 import axios from "axios";
 import { toast } from "sonner";
@@ -326,24 +327,22 @@ const Product = () => {
                                 {/* <td><span className="app-number">{p?.applicationId?.applicationNumber}</span></td> */}
                                 <td>{p.note}</td>
                                 <td>
-                                  <div className="action-buttons">
-                                    <button 
-                                      className="view-btn"
-                                      onClick={() => viewProductDetails(p)}
-                                      title="View product details"
-                                    >
-                                      <i className="fas fa-eye"></i>
-                                    </button>
-                                    <button 
-                                      className="view-btn"
-                                      style={{ color: p.status === 'approved' ? 'var(--gray)' : 'var(--danger)', borderColor: p.status === 'approved' ? 'var(--gray-border)' : 'var(--danger)', opacity: p.status === 'approved' || isDeletingId === p._id ? 0.5 : 1 }}
-                                      onClick={() => deleteProductFromList(p._id, p.status)}
-                                      title={p.status === 'approved' ? 'Approved products cannot be deleted' : 'Delete product'}
-                                      disabled={p.status === 'approved' || isDeletingId === p._id}
-                                    >
-                                      {isDeletingId === p._id ? <i className="fas fa-spinner fa-spin"></i> : <i className="fas fa-trash-alt"></i>}
-                                    </button>
-                                  </div>
+                                  <TableActions 
+                                    actions={[
+                                      {
+                                        label: 'View Details',
+                                        icon: <i className="fas fa-eye"></i>,
+                                        onClick: () => viewProductDetails(p)
+                                      },
+                                      {
+                                        label: 'Delete Product',
+                                        icon: isDeletingId === p._id ? <i className="fas fa-spinner fa-spin"></i> : <i className="fas fa-trash-alt"></i>,
+                                        onClick: () => deleteProductFromList(p._id, p.status),
+                                        variant: 'danger',
+                                        disabled: p.status === 'approved' || isDeletingId === p._id
+                                      }
+                                    ].filter(Boolean)}
+                                  />
                                 </td>
                               </tr>
                             ))}
@@ -385,23 +384,21 @@ const Product = () => {
                                   {p.markets?.length > 2 && "..."}
                                 </td>
                                 <td>
-                                  <div className="action-buttons">
-                                    <button 
-                                      className="view-btn"
-                                      onClick={() => viewProductDetails(p)}
-                                      title="View product details"
-                                    >
-                                      <i className="fas fa-eye"></i>
-                                    </button>
-                                    <button 
-                                      className="view-btn"
-                                      style={{ color: 'var(--danger)', borderColor: 'var(--danger)' }}
-                                      onClick={() => deleteProductFromList(p._id, p.status)}
-                                      title="Delete product"
-                                    >
-                                      <i className="fas fa-trash-alt"></i>
-                                    </button>
-                                  </div>
+                                  <TableActions 
+                                    actions={[
+                                      {
+                                        label: 'View Details',
+                                        icon: <i className="fas fa-eye"></i>,
+                                        onClick: () => viewProductDetails(p)
+                                      },
+                                      {
+                                        label: 'Delete Product',
+                                        icon: <i className="fas fa-trash-alt"></i>,
+                                        onClick: () => deleteProductFromList(p._id, p.status),
+                                        variant: 'danger'
+                                      }
+                                    ].filter(Boolean)}
+                                  />
                                 </td>
                               </tr>
                             ))}
@@ -443,23 +440,22 @@ const Product = () => {
                                   {p.markets?.length > 2 && "..."}
                                 </td>
                                 <td>
-                                  <div className="action-buttons">
-                                    <button 
-                                      className="view-btn"
-                                      onClick={() => viewProductDetails(p)}
-                                      title="View product details"
-                                    >
-                                      <i className="fas fa-eye"></i>
-                                    </button>
-                                    <button 
-                                      className="view-btn"
-                                      style={{ color: 'var(--gray)', borderColor: 'var(--gray-border)' }}
-                                      title="Approved products cannot be deleted"
-                                      disabled
-                                    >
-                                      <i className="fas fa-trash-alt"></i>
-                                    </button>
-                                  </div>
+                                  <TableActions 
+                                    actions={[
+                                      {
+                                        label: 'View Details',
+                                        icon: <i className="fas fa-eye"></i>,
+                                        onClick: () => viewProductDetails(p)
+                                      },
+                                      {
+                                        label: 'Delete Product',
+                                        icon: <i className="fas fa-trash-alt"></i>,
+                                        onClick: () => {},
+                                        variant: 'danger',
+                                        disabled: true
+                                      }
+                                    ].filter(Boolean)}
+                                  />
                                 </td>
                               </tr>
                             ))}

@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import Sidebar from "../components/Sidebar";
+import TableActions from "../components/TableActions";
 import axios from "axios";
 import { toast } from "sonner";
 import { MdCheck, MdClose, MdInfoOutline, MdEmail, MdPhone, MdFileDownload } from "react-icons/md";
+import { View, FileText } from "lucide-react";
 import "./css/Audit.css";
 
 const API_BASE_URL = import.meta.env.VITE_BASE_URL;
@@ -13,6 +15,35 @@ const Audit = () => {
     const [showRespondModal, setShowRespondModal] = useState(false);
     const [selectedAudit, setSelectedAudit] = useState(null);
     const [rejectReason, setRejectReason] = useState("");
+    const [uploading, setUploading] = useState(null);
+
+    const handleFileUpload = async (applicationId, file) => {
+        if (!file) return;
+        
+        try {
+            setUploading(applicationId);
+            const token = JSON.parse(localStorage.getItem("accessToken"));
+            const formData = new FormData();
+            formData.append('step', 6);
+            formData.append('subStep', 5);
+            formData.append('file', file);
+
+            await axios.patch(`${API_BASE_URL}/applications/${applicationId}/process`, formData, {
+                headers: { 
+                    Authorization: `Bearer ${token}`,
+                    'Content-Type': 'multipart/form-data'
+                }
+            });
+
+            toast.success("Audit report uploaded successfully");
+            fetchAudits();
+        } catch (err) {
+            console.error(err);
+            toast.error(err.response?.data?.message || "Failed to upload audit report");
+        } finally {
+            setUploading(null);
+        }
+    };
 
     const fetchAudits = async () => {
         try {
@@ -69,6 +100,33 @@ const Audit = () => {
         }
     };
 
+    const getStatusColor = (status) => {
+        const colors = {
+            'Scheduled': '#3b82f6',
+            'Accepted': '#10b981',
+            'Rejected': '#ef4444',
+            'Correction Needed': '#f59e0b',
+            'Completed': '#059669'
+        };
+        return colors[status] || '#6b7280';
+    };
+
+    const formatDate = (dateString) => {
+        if (!dateString) return "N/A";
+        return new Date(dateString).toLocaleDateString('en-GB', {
+            day: '2-digit',
+            month: 'short',
+            year: 'numeric'
+        });
+    };
+
+    const calculateDaysRemaining = (dateString) => {
+        if (!dateString) return null;
+        const diff = new Date(dateString) - new Date();
+        const days = Math.ceil(diff / (1000 * 60 * 60 * 24));
+        return days;
+    };
+
     return (
         <div className="dash">
             <Sidebar activeAu="active" />
@@ -84,68 +142,127 @@ const Audit = () => {
                     ) : audits.length === 0 ? (
                         <div className="empty">No audits scheduled yet.</div>
                     ) : (
-                        <div className="audit-list">
-                            {audits.map(audit => (
-                                <div key={audit._id} className={`audit-card ${audit.status.toLowerCase().replace(' ', '-')}`}>
-                                    <div className="audit-info">
-                                        <h3>{audit.applicationId?.applicationNumber} - {audit.applicationId?.category}</h3>
-                                        <div className="audit-meta">
-                                            <span><strong>Date:</strong> {new Date(audit.scheduledDate).toLocaleDateString()}</span>
-                                            <span><strong>Time:</strong> {audit.scheduledTime}</span>
-                                            <span><strong>Lead Auditor:</strong> {audit.staffName}</span>
-                                            {audit.auditorEmail && (
-                                                <span className="auditor-contact">
-                                                    <MdEmail /> {audit.auditorEmail}
-                                                </span>
-                                            )}
-                                            {audit.auditorPhone && (
-                                                <span className="auditor-contact">
-                                                    <MdPhone /> {audit.auditorPhone}
-                                                </span>
-                                            )}
-                                            <span className={`status-tag ${audit.status.toLowerCase().replace(' ', '-')}`}>{audit.status}</span>
-                                        </div>
+                        <>
+                            <div className="table-wrapper">
+                                <table className="applications-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Application</th>
+                                            <th>Category</th>
+                                            <th>Audit Date</th>
+                                            <th>Status</th>
+                                            <th>Auditor</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {audits.map(audit => {
+                                            const daysRemaining = calculateDaysRemaining(audit.scheduledDate);
+                                            return (
+                                                <tr key={audit._id}>
+                                                    <td>
+                                                        <span className="app-number">{audit.applicationId?.applicationNumber || "N/A"}</span>
+                                                    </td>
+                                                    <td>{audit.applicationId?.category || "N/A"}</td>
+                                                    <td>
+                                                        <div className="date-cell">
+                                                            <span className="primary-date">{formatDate(audit.scheduledDate)}</span>
+                                                            <span className="secondary-time">{audit.scheduledTime}</span>
+                                                        </div>
+                                                    </td>
+                                                    <td>
+                                                        <span 
+                                                            className="status-badge"
+                                                            style={{ 
+                                                                backgroundColor: getStatusColor(audit.status) + '20',
+                                                                color: getStatusColor(audit.status),
+                                                                border: `1px solid ${getStatusColor(audit.status)}`
+                                                            }}
+                                                        >
+                                                            {audit.status}
+                                                        </span>
+                                                    </td>
+                                                    <td>
+                                                        <div className="auditor-info">
+                                                            <span className="auditor-name">{audit.staffName}</span>
+                                                            <div className="auditor-contacts">
+                                                                {audit.auditorEmail && <MdEmail title={audit.auditorEmail} />}
+                                                                {audit.auditorPhone && <MdPhone title={audit.auditorPhone} />}
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                    <td>
+                                                        <TableActions 
+                                                            actions={[
+                                                                { 
+                                                                    label: 'View Details', 
+                                                                    icon: <View size={16} />, 
+                                                                    onClick: () => setSelectedAudit(audit === selectedAudit ? null : audit)
+                                                                },
+                                                                ...(audit.status === 'Scheduled' ? [
+                                                                    { 
+                                                                        label: 'Accept', 
+                                                                        icon: <MdCheck size={16} />, 
+                                                                        onClick: () => { setSelectedAudit(audit); handleResponse('Accepted'); }
+                                                                    },
+                                                                    { 
+                                                                        label: 'Reject', 
+                                                                        icon: <MdClose size={16} />, 
+                                                                        onClick: () => { setSelectedAudit(audit); setShowRespondModal(true); }
+                                                                    }
+                                                                ] : []),
+                                                                ...(audit.ncReport ? [
+                                                                    { 
+                                                                        label: 'View NC Report', 
+                                                                        icon: <FileText size={16} />, 
+                                                                        onClick: () => window.open(audit.ncReport.startsWith('http') ? audit.ncReport : `${API_BASE_URL}${audit.ncReport}`, '_blank')
+                                                                    }
+                                                                ] : []),
+                                                                ...(audit.auditReport ? [
+                                                                    { 
+                                                                        label: 'View Audit Report', 
+                                                                        icon: <FileText size={16} />, 
+                                                                        onClick: () => window.open(audit.auditReport.startsWith('http') ? audit.auditReport : `${API_BASE_URL}${audit.auditReport}`, '_blank')
+                                                                    }
+                                                                ] : []),
+                                                                ...(audit.status === 'Correction Needed' ? [
+                                                                    { 
+                                                                        label: 'View Corrections', 
+                                                                        icon: <MdInfoOutline size={16} />, 
+                                                                        onClick: () => setSelectedAudit(audit === selectedAudit ? null : audit)
+                                                                    }
+                                                                ] : [])
+                                                            ]}
+                                                        />
+                                                    </td>
+                                                </tr>
+                                            );
+                                        })}
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            {selectedAudit && selectedAudit.status === 'Correction Needed' && (
+                                <div className="corrections-panel">
+                                    <div className="panel-header">
+                                        <h4>Corrections Needed for {selectedAudit.applicationId?.applicationNumber}</h4>
+                                        <button className="close-panel" onClick={() => setSelectedAudit(null)}><MdClose /></button>
                                     </div>
-
-                                    {audit.auditReport && (
-                                        <div className="report-section">
-                                            <a href={audit.auditReport} target="_blank" rel="noopener noreferrer" className="download-report-btn">
-                                                <MdFileDownload /> Download Audit Report
-                                            </a>
-                                        </div>
-                                    )}
-
-                                    {audit.status === 'Scheduled' && (
-                                        <div className="audit-actions">
-                                            <button className="accept-btn" onClick={() => { setSelectedAudit(audit); handleResponse('Accepted'); }}>
-                                                <MdCheck /> Accept
-                                            </button>
-                                            <button className="reject-btn" onClick={() => { setSelectedAudit(audit); setShowRespondModal(true); }}>
-                                                <MdClose /> Reject
-                                            </button>
-                                        </div>
-                                    )}
-
-                                    {audit.status === 'Correction Needed' && (
-                                        <div className="corrections-section">
-                                            <h4>Corrections Needed</h4>
-                                            <ul>
-                                                {audit.corrections.map(correction => (
-                                                    <li key={correction._id} className={correction.status.toLowerCase()}>
-                                                        <span>{correction.issue}</span>
-                                                        {correction.status === 'Pending' ? (
-                                                            <button onClick={() => resolveCorrection(audit._id, correction._id)}>Mark Resolved</button>
-                                                        ) : (
-                                                            <span className="resolved-tag">Resolved</span>
-                                                        )}
-                                                    </li>
-                                                ))}
-                                            </ul>
-                                        </div>
-                                    )}
+                                    <ul className="corrections-list">
+                                        {selectedAudit.corrections.map(correction => (
+                                            <li key={correction._id} className={`correction-item ${correction.status.toLowerCase()}`}>
+                                                <span className="issue-text">{correction.issue}</span>
+                                                {correction.status === 'Pending' ? (
+                                                    <button className="resolve-btn" onClick={() => resolveCorrection(selectedAudit._id, correction._id)}>Mark Resolved</button>
+                                                ) : (
+                                                    <span className="resolved-tag">Resolved</span>
+                                                )}
+                                            </li>
+                                        ))}
+                                    </ul>
                                 </div>
-                            ))}
-                        </div>
+                            )}
+                        </>
                     )}
                 </div>
             </main>

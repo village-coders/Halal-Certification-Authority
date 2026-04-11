@@ -1,0 +1,115 @@
+.table-actions-container {
+  position: relative;
+  display: inline-block;
+  text-align: left;
+  z-index: 1000;
+}
+
+.table-actions-trigger {
+  padding: 8px;
+  border-radius: 8px;
+  background-color: transparent;
+  color: #6b7280;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  outline: none;
+}
+
+.table-actions-trigger:hover {
+  background-color: #f3f4f6;
+  color: #374151;
+  border-color: #e5e7eb;
+}
+
+.table-actions-trigger:active {
+  transform: scale(0.95);
+}
+
+.table-actions-dropdown {
+  position: absolute;
+  right: 0;
+  margin-top: 8px;
+  width: 192px;
+  border-radius: 12px;
+  background-color: white;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05), 0 0 0 1px rgba(0, 0, 0, 0.05);
+  padding: 6px;
+  animation: dropdown-fade-in 0.15s cubic-bezier(0, 0, 0.2, 1);
+  transform-origin: top right;
+}
+
+@keyframes dropdown-fade-in {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.table-actions-item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #374151;
+  background-color: transparent;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  text-align: left;
+}
+
+.table-actions-item:hover {
+  background-color: #f9fafb;
+  color: #111827;
+}
+
+.table-actions-item.danger {
+  color: #ef4444;
+}
+
+.table-actions-item.danger:hover {
+  background-color: #fef2f2;
+}
+
+.table-actions-item.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.action-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  color: #9ca3af;
+}
+
+.table-actions-item.danger .action-icon {
+  color: #f87171;
+}
+
+.table-actions-item:hover .action-icon {
+  color: #4b5563;
+}
+
+.table-actions-item.danger:hover .action-icon {
+  color: #ef4444;
+}
+
+.action-label {
+  flex: 1;
+}

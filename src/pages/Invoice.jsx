@@ -3,6 +3,7 @@ import Sidebar from "../components/Sidebar";
 import "./css/Certificate.css";
 import axios from "axios";
 import { toast } from "sonner";
+import TableActions from "../components/TableActions";
 
 const API_BASE_URL = import.meta.env.VITE_BASE_URL;
 
@@ -34,12 +35,6 @@ const Invoice = () => {
     return { Authorization: `Bearer ${token}` };
   };
 
-  const formatCurrency = (amount) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'NGN'
-    }).format(amount || 0);
-  };
 
   const formatDate = (dateString) => {
     if (!dateString) return "-";
@@ -180,9 +175,13 @@ const Invoice = () => {
     }
   };
 
-  const handleDownloadInvoice = async (invoice) => {
-    toast.info("Download functionality coming soon");
-    // Implementation for PDF download
+  const handleDownloadInvoice = (invoice) => {
+    if (invoice.invoiceFile) {
+      const url = invoice.invoiceFile.startsWith('http') ? invoice.invoiceFile : `${API_BASE_URL}${invoice.invoiceFile}`;
+      window.open(url, '_blank');
+    } else {
+      toast.error("Invoice document is not available for this record");
+    }
   };
 
   const openUploadModal = (invoice) => {
@@ -292,8 +291,7 @@ const Invoice = () => {
                   <tr>
                     <th>Invoice #</th>
                     <th>Description</th>
-                    <th>Created At</th>
-                    <th>Amount</th>
+                    <th>Issued Date</th>
                     <th>Status</th>
                     <th>Actions</th>
                   </tr>
@@ -306,23 +304,7 @@ const Invoice = () => {
                           <span className="app-number">{invoice.invoiceNumber || "N/A"}</span>
                         </td>
                         <td>{invoice.description || "N/A"}</td>
-                        <td>{formatDate(invoice.createdAt)}</td>
-                        <td>
-                          <span 
-                            className="status-badge"
-                            style={{ 
-                              backgroundColor: '#e0f2fe',
-                              color: '#0369a1',
-                              border: '1px solid #bae6fd',
-                              fontSize: "12px",
-                              fontFamily: 'monospace',
-                              fontWeight: 600,
-                              textWrap: "nowrap"
-                            }}
-                          >
-                            {formatCurrency(invoice.amount)}
-                          </span>
-                        </td>
+                        <td>{formatDate(invoice.issuedAt || invoice.createdAt)}</td>
                         <td>
                           <span 
                             className="status-badge"
@@ -338,31 +320,25 @@ const Invoice = () => {
                           </span>
                         </td>
                         <td>
-                          <div className="action-buttons">
-                            <button 
-                              className="view-btn" 
-                              title="View Details"
-                              onClick={() => openDetailsModal(invoice)}
-                            >
-                              <i className="fas fa-eye"></i>
-                            </button>
-                            <button 
-                              className="view-btn" 
-                              title="Download PDF"
-                              onClick={() => handleDownloadInvoice(invoice)}
-                            >
-                              <i className="fas fa-download"></i>
-                            </button>
-                            {invoice.status === 'Issued' && (
-                              <button 
-                                className="view-btn" 
-                                title="Upload Receipt"
-                                onClick={() => openUploadModal(invoice)}
-                              >
-                                <i className="fas fa-upload" style={{ color: 'var(--primary-color)' }}></i>
-                              </button>
-                            )}
-                          </div>
+                          <TableActions 
+                            actions={[
+                              {
+                                label: 'View Details',
+                                icon: <i className="fas fa-eye"></i>,
+                                onClick: () => openDetailsModal(invoice)
+                              },
+                              // {
+                              //   label: 'View Invoice',
+                              //   icon: <i className="fas fa-file-invoice"></i>,
+                              //   onClick: () => handleDownloadInvoice(invoice)
+                              // },
+                              // invoice.status === 'Issued' && {
+                              //   label: 'Upload Proof of Payment',
+                              //   icon: <i className="fas fa-upload" style={{ color: 'var(--primary-color)' }}></i>,
+                              //   onClick: () => openUploadModal(invoice)
+                              // }
+                            ].filter(Boolean)}
+                          />
                         </td>
                       </tr>
                     );
@@ -445,19 +421,13 @@ const Invoice = () => {
                       </span>
                     </span>
                   </div>
-                  <div className="info-item">
-                    <span className="info-label">Amount:</span>
-                    <span className="info-value" style={{ fontWeight: 600, color: 'var(--primary-shade)', fontSize: '18px' }}>
-                      {formatCurrency(selectedInvoice.amount)}
-                    </span>
-                  </div>
                   <div className="info-item" style={{ gridColumn: '1 / -1' }}>
                     <span className="info-label">Description:</span>
                     <span className="info-value">{selectedInvoice.description || "N/A"}</span>
                   </div>
                 </div>
 
-                {/* Proof of Payment / Invoice Summary (Preview Mock) */}
+                {/* Proof of Payment Summary */}
                 <div className="certificate-preview" style={{ 
                   border: '2px solid #e5e7eb',
                   borderRadius: '8px',
@@ -466,7 +436,7 @@ const Invoice = () => {
                   background: '#f9fafb'
                 }}>
                   <div style={{ textAlign: 'center', marginBottom: '20px' }}>
-                    <h4 style={{ color: '#111827', marginBottom: '10px' }}>Proof of Payment & Receipt</h4>
+                    <h4 style={{ color: '#111827', marginBottom: '10px' }}>Proof of Payment</h4>
                     <p style={{ color: '#6b7280', fontSize: '14px' }}>
                       Attached payment records and details for this invoice
                     </p>
@@ -487,17 +457,19 @@ const Invoice = () => {
                         <i className="fas fa-file-invoice-dollar" style={{ fontSize: '48px', color: '#10b981', marginBottom: '16px' }}></i>
                         <h3 style={{ color: '#111827', marginBottom: '10px' }}>Proof of Payment Submitted</h3>
                         <p style={{ color: '#6b7280', marginBottom: '20px' }}>
-                          A receipt document has been uploaded for verification.
+                          A documentation has been uploaded for verification.
                         </p>
-                        <button 
+                        <a 
+                          href={selectedInvoice.proofOfPayment.startsWith('http') ? selectedInvoice.proofOfPayment : `${API_BASE_URL}${selectedInvoice.proofOfPayment}`}
+                          target="_blank"
+                          rel="noreferrer"
                           className="renew-btn" 
-                          onClick={() => window.open(selectedInvoice.proofOfPayment, '_blank')}
                           style={{
-                            background: 'white', border: '1px solid #d1d5db', color: '#374151', padding: '8px 16px', borderRadius: '6px', cursor: 'pointer'
+                            background: 'white', border: '1px solid #d1d5db', color: '#374151', padding: '8px 16px', borderRadius: '6px', cursor: 'pointer', textDecoration: 'none'
                           }}
                         >
-                          <i className="fas fa-external-link-alt"></i> View Receipt
-                        </button>
+                          <i className="fas fa-external-link-alt"></i> View Proof
+                        </a>
                       </>
                     ) : (
                       <>
@@ -524,7 +496,7 @@ const Invoice = () => {
                     className="btn btn-submit"
                     onClick={() => handleDownloadInvoice(selectedInvoice)}
                   >
-                     <i className="fas fa-file-pdf"></i> Download PDF
+                     <i className="fas fa-file-invoice"></i> View Invoice
                   </button>
                   {selectedInvoice.status === 'Issued' && (
                     <button 
@@ -536,7 +508,7 @@ const Invoice = () => {
                       }}
                       style={{ background: 'var(--primary-color)', color: 'white' }}
                     >
-                      <i className="fas fa-upload"></i> Upload Receipt
+                      <i className="fas fa-upload"></i> Upload Proof of Payment
                     </button>
                   )}
                 </div>
@@ -567,7 +539,7 @@ const Invoice = () => {
                   <i className="fas fa-receipt"></i>
                   <p>
                     <strong>Invoice #{selectedInvoice.invoiceNumber}</strong><br/>
-                    Amount Due: {formatCurrency(selectedInvoice.amount)}
+                    Please upload the proof of payment document for verification.
                   </p>
                 </div>
                 
@@ -604,7 +576,7 @@ const Invoice = () => {
                     {isLoading ? (
                       <><i className="fas fa-spinner fa-spin"></i> Uploading...</>
                     ) : (
-                      <><i className="fas fa-check-circle"></i> Confirm Payment</>
+                      <><i className="fas fa-check-circle"></i> Submit Proof</>
                     )}
                   </button>
                 </div>

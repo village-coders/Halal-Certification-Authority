@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import "./css/Applications.css";
 import Sidebar from "../components/Sidebar";
+import TableActions from "../components/TableActions";
 import axios from "axios";
 import { useAuth } from "../hooks/useAuth";
 import { useProducts } from "../hooks/useProducts";
@@ -1294,36 +1295,33 @@ function Applications() {
                         </span>
                       </td>
                       <td>{formatDate(app.createdAt)}</td>
-                      <td>
-                        <div className="action-buttons">
-                          <button 
-                            className="view-btn" 
-                            title="View Details"
-                            onClick={() => handleViewApplication(app._id)}
-                          >
-                            <i className="fas fa-eye"></i>
-                          </button>
-                          {(app.status === "Submitted" || app.status === "Pending Review") && (
-                            <button 
-                              className="edit-btn" 
-                              title="Edit Application"
-                              onClick={() => handleEditApplication(app._id)}
-                            >
-                              <i className="fas fa-edit"></i>
-                            </button>
-                          )}
-                          {(app.status.toLowerCase() === "renewal" || app.status.toLowerCase() === "renewal application") && (
-                            <button 
-                              className="delete-btn" 
-                              title="Cancel Renewal"
-                              onClick={() => handleDeleteApplication(app._id)}
-                              style={{ color: '#d93025' }}
-                            >
-                              <i className="fas fa-trash-alt"></i>
-                            </button>
-                          )}
-                        </div>
-                      </td>
+                        <td>
+                          <TableActions 
+                            actions={[
+                              {
+                                label: 'Track Processing',
+                                icon: <i className="fas fa-tasks"></i>,
+                                onClick: () => navigate(`/applications/${app._id}/track`)
+                              },
+                              {
+                                label: 'View Details',
+                                icon: <i className="fas fa-eye"></i>,
+                                onClick: () => handleViewApplication(app._id)
+                              },
+                              (app.status === "Submitted" || app.status === "Pending Review") && {
+                                label: 'Edit Application',
+                                icon: <i className="fas fa-edit"></i>,
+                                onClick: () => handleEditApplication(app._id)
+                              },
+                              (app.status.toLowerCase() === "renewal" || app.status.toLowerCase() === "renewal application") && {
+                                label: 'Cancel Renewal',
+                                icon: <i className="fas fa-trash-alt"></i>,
+                                onClick: () => handleDeleteApplication(app._id),
+                                variant: 'danger'
+                              }
+                            ].filter(Boolean)}
+                          />
+                        </td>
                     </tr>
                   ))}
                   {filteredApplications.length === 0 && (
