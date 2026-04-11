@@ -40,8 +40,8 @@ const Product = () => {
     fetchApplications();
   }, []);
   // Filter products based on status
-  const requestedProducts = products.filter(product => product.status === "pending" || product.status === "requested");
-  const approvedProducts = products.filter(product => product.status === "approved");
+  const requestedProducts = products?.filter(product => product?.status === "pending" || product?.status === "requested") || [];
+  const approvedProducts = products?.filter(product => product?.status === "approved") || [];
 
 
   const fetchApplications = useCallback(async () => {
@@ -83,9 +83,9 @@ const Product = () => {
     }
     
     if (searchName) {
-      filtered = filtered.filter(p => p.name?.toLowerCase().includes(searchName.toLowerCase()));
+      filtered = filtered?.filter(p => p?.name?.toLowerCase()?.includes(searchName.toLowerCase()));
     }
-    return filtered;
+    return filtered || [];
   };
 
   const toggleProductForm = () => setShowProductForm(prev => !prev);
