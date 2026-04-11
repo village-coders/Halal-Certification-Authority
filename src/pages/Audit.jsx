@@ -14,8 +14,10 @@ const Audit = () => {
     const [loading, setLoading] = useState(true);
     const [showRespondModal, setShowRespondModal] = useState(false);
     const [selectedAudit, setSelectedAudit] = useState(null);
+    const [showAuditDetails, setShowAuditDetails] = useState(false);
     const [rejectReason, setRejectReason] = useState("");
     const [uploading, setUploading] = useState(null);
+    const [actionLoading, setActionLoading] = useState(null);
 
     const handleFileUpload = async (applicationId, file) => {
         if (!file) return;
@@ -63,15 +65,16 @@ const Audit = () => {
         fetchAudits();
     }, []);
 
-    const handleResponse = async (status) => {
+    const handleResponse = async (auditId, status) => {
         if (status === 'Rejected' && !rejectReason) {
             toast.error("Please provide a reason for rejection");
             return;
         }
 
+        setActionLoading(`${auditId}-${status.toLowerCase()}`);
         try {
             const token = JSON.parse(localStorage.getItem("accessToken"));
-            await axios.put(`${API_BASE_URL}/audits/${selectedAudit._id}/respond`, {
+            await axios.put(`${API_BASE_URL}/audits/${auditId}/respond`, {
                 status,
                 rejectReason
             }, {
@@ -80,23 +83,29 @@ const Audit = () => {
             
             toast.success(`Audit ${status.toLowerCase()} successfully`);
             setShowRespondModal(false);
+            if (!showAuditDetails) setSelectedAudit(null);
             setRejectReason("");
-            fetchAudits();
+            await fetchAudits();
         } catch (err) {
             toast.error(err.response?.data?.message || "Failed to respond to audit");
+        } finally {
+            setActionLoading(null);
         }
     };
 
     const resolveCorrection = async (auditId, correctionId) => {
+        setActionLoading(`${correctionId}-resolve`);
         try {
             const token = JSON.parse(localStorage.getItem("accessToken"));
             await axios.put(`${API_BASE_URL}/audits/${auditId}/correction/${correctionId}/resolve`, {}, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             toast.success("Correction marked as resolved");
-            fetchAudits();
+            await fetchAudits();
         } catch (err) {
             toast.error("Failed to resolve correction");
+        } finally {
+            setActionLoading(null);
         }
     };
 
@@ -197,18 +206,20 @@ const Audit = () => {
                                                                 { 
                                                                     label: 'View Details', 
                                                                     icon: <View size={16} />, 
-                                                                    onClick: () => setSelectedAudit(audit === selectedAudit ? null : audit)
+                                                                    onClick: () => { setSelectedAudit(audit); setShowAuditDetails(true); }
                                                                 },
                                                                 ...(audit.status === 'Scheduled' ? [
                                                                     { 
-                                                                        label: 'Accept', 
-                                                                        icon: <MdCheck size={16} />, 
-                                                                        onClick: () => { setSelectedAudit(audit); handleResponse('Accepted'); }
+                                                                        label: actionLoading === `${audit._id}-accepted` ? 'Accepting...' : 'Accept', 
+                                                                        icon: actionLoading === `${audit._id}-accepted` ? <i className="fas fa-spinner fa-spin" style={{fontSize: '16px'}}></i> : <MdCheck size={16} />, 
+                                                                        onClick: () => { setSelectedAudit(audit); handleResponse(audit._id, 'Accepted'); },
+                                                                        disabled: actionLoading === `${audit._id}-accepted` || actionLoading === `${audit._id}-rejected`
                                                                     },
                                                                     { 
                                                                         label: 'Reject', 
                                                                         icon: <MdClose size={16} />, 
-                                                                        onClick: () => { setSelectedAudit(audit); setShowRespondModal(true); }
+                                                                        onClick: () => { setSelectedAudit(audit); setShowRespondModal(true); },
+                                                                        disabled: actionLoading === `${audit._id}-accepted` || actionLoading === `${audit._id}-rejected`
                                                                     }
                                                                 ] : []),
                                                                 ...(audit.ncReport ? [
@@ -229,7 +240,7 @@ const Audit = () => {
                                                                     { 
                                                                         label: 'View Corrections', 
                                                                         icon: <MdInfoOutline size={16} />, 
-                                                                        onClick: () => setSelectedAudit(audit === selectedAudit ? null : audit)
+                                                                        onClick: () => { setSelectedAudit(audit); setShowAuditDetails(true); }
                                                                     }
                                                                 ] : [])
                                                             ]}
@@ -242,12 +253,12 @@ const Audit = () => {
                                 </table>
                             </div>
 
-                            {selectedAudit && (
-                                <div className="modal-overlay modal" onClick={() => setSelectedAudit(null)}>
+                            {showAuditDetails && selectedAudit && (
+                                <div className="modal-overlay modal" onClick={() => setShowAuditDetails(false)}>
                                     <div className="modal-content product-details-modal" onClick={e => e.stopPropagation()} style={{maxWidth: '600px', width: '90%'}}>
                                         <div className="modal-header">
                                             <h2>Audit Details</h2>
-                                            <button className="close-modal" onClick={() => setSelectedAudit(null)}>×</button>
+                                            <button className="close-modal" onClick={() => setShowAuditDetails(false)}>×</button>
                                         </div>
                                         <div className="product-details-content" style={{padding: '20px', maxHeight: '70vh', overflowY: 'auto'}}>
                                             <div className="details-section">
@@ -265,6 +276,12 @@ const Audit = () => {
                                                         <span className="detail-label">Audit Date & Time:</span>
                                                         <span className="detail-value">{formatDate(selectedAudit.scheduledDate)} at {selectedAudit.scheduledTime || "TBD"}</span>
                                                     </div>
+                                                    {selectedAudit.status === 'Rejected' && selectedAudit.rejectReason && (
+                                                    <div className="detail-item" style={{ gridColumn: '1 / -1', backgroundColor: '#fef2f2', border: '1px solid #fecaca', padding: '12px', borderRadius: '6px', marginTop: '4px' }}>
+                                                        <span className="detail-label" style={{ color: '#991b1b', marginBottom: '4px', display: 'block' }}>Rejection Reason:</span>
+                                                        <span className="detail-value" style={{ color: '#991b1b', fontSize: '13px' }}>{selectedAudit.rejectReason}</span>
+                                                    </div>
+                                                    )}
                                                 </div>
                                             </div>
 
@@ -306,7 +323,9 @@ const Audit = () => {
                                                             <li key={correction._id} style={{padding: '10px', backgroundColor: '#fffbeb', border: '1px solid #fde68a', borderRadius: '4px', marginBottom: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
                                                                 <span className="issue-text" style={{ flex: 1, marginRight: '10px' }}>{correction.issue}</span>
                                                                 {correction.status === 'Pending' ? (
-                                                                    <button style={{backgroundColor: '#059669', color: 'white', border: 'none', padding: '6px 12px', borderRadius: '4px', cursor: 'pointer', fontSize: '12px'}} onClick={() => resolveCorrection(selectedAudit._id, correction._id)}>Mark Resolved</button>
+                                                                    <button style={{backgroundColor: '#059669', color: 'white', border: 'none', padding: '6px 12px', borderRadius: '4px', cursor: actionLoading === `${correction._id}-resolve` ? 'not-allowed' : 'pointer', fontSize: '12px', opacity: actionLoading === `${correction._id}-resolve` ? 0.7 : 1}} onClick={() => resolveCorrection(selectedAudit._id, correction._id)} disabled={actionLoading === `${correction._id}-resolve`}>
+                                                                        {actionLoading === `${correction._id}-resolve` ? 'Resolving...' : 'Mark Resolved'}
+                                                                    </button>
                                                                 ) : (
                                                                     <span style={{color: '#059669', fontSize: '12px', fontWeight: 'bold'}}>Resolved</span>
                                                                 )}
@@ -318,7 +337,7 @@ const Audit = () => {
 
                                             <div className="modal-actions" style={{marginTop: '30px', display: 'flex', justifyContent: 'flex-end'}}>
                                                 <button 
-                                                    onClick={() => setSelectedAudit(null)}
+                                                    onClick={() => setShowAuditDetails(false)}
                                                     style={{backgroundColor: '#f3f4f6', color: '#374151', border: '1px solid #d1d5db', padding: '8px 16px', borderRadius: '6px', cursor: 'pointer', fontWeight: 500}}
                                                 >
                                                     Close Details
@@ -333,19 +352,27 @@ const Audit = () => {
                 </div>
             </main>
 
-            {showRespondModal && (
-                <div className="modal-overlay">
-                    <div className="modal-content">
-                        <h3>Reject Audit Schedule</h3>
-                        <p>Please provide a reason for rejecting this audit date/time.</p>
-                        <textarea 
-                            value={rejectReason} 
-                            onChange={(e) => setRejectReason(e.target.value)}
-                            placeholder="Reason for rejection..."
-                        />
-                        <div className="modal-actions">
-                            <button onClick={() => setShowRespondModal(false)}>Cancel</button>
-                            <button className="confirm-reject" onClick={() => handleResponse('Rejected')}>Submit Rejection</button>
+            {showRespondModal && selectedAudit && (
+                <div className="modal-overlay" onClick={() => { setShowRespondModal(false); if(!showAuditDetails) setSelectedAudit(null); }}>
+                    <div className="modal-content" onClick={e => e.stopPropagation()} style={{maxWidth: '500px', width: '90%'}}>
+                        <div className="modal-header">
+                            <h2>Reject Audit Schedule</h2>
+                            <button className="close-modal" onClick={() => { setShowRespondModal(false); if(!showAuditDetails) setSelectedAudit(null); }}>×</button>
+                        </div>
+                        <div style={{padding: '20px'}}>
+                            <p style={{marginBottom: '10px', color: '#4b5563'}}>Please provide a reason for rejecting this audit date/time.</p>
+                            <textarea 
+                                value={rejectReason} 
+                                onChange={(e) => setRejectReason(e.target.value)}
+                                placeholder="Reason for rejection..."
+                                style={{width: '100%', minHeight: '100px', padding: '12px', borderRadius: '8px', border: '1px solid #d1d5db', marginBottom: '20px', resize: 'vertical', outline: 'none'}}
+                            />
+                            <div className="modal-actions" style={{display: 'flex', justifyContent: 'flex-end', gap: '12px'}}>
+                                <button onClick={() => { setShowRespondModal(false); if(!showAuditDetails) setSelectedAudit(null); }} style={{padding: '8px 16px', borderRadius: '6px', border: '1px solid #d1d5db', background: 'white', color: '#374151', cursor: 'pointer', fontWeight: 500}} disabled={actionLoading === `${selectedAudit._id}-rejected`}>Cancel</button>
+                                <button className="confirm-reject" onClick={() => handleResponse(selectedAudit._id, 'Rejected')} disabled={actionLoading === `${selectedAudit._id}-rejected`} style={{padding: '8px 16px', borderRadius: '6px', border: 'none', background: '#ef4444', color: 'white', cursor: actionLoading === `${selectedAudit._id}-rejected` ? 'not-allowed' : 'pointer', fontWeight: 500, opacity: actionLoading === `${selectedAudit._id}-rejected` ? 0.7 : 1}}>
+                                    {actionLoading === `${selectedAudit._id}-rejected` ? 'Submitting...' : 'Submit Rejection'}
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
