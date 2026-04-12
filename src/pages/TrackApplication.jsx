@@ -63,7 +63,7 @@ const TrackApplication = () => {
     { id: 10, label: 'Audit Report Submitted' },
     // Row 3
     { id: 11, label: 'Application Successful for Certification' },
-    { id: 12, label: "Application Sent to Al-Aqaba Shari'a Board" },
+    { id: 12, label: "Application Sent to Shari'a Board" },
     { id: 13, label: 'Certificate Processing' },
     { id: 14, label: 'Certificate Issued' },
   ];
