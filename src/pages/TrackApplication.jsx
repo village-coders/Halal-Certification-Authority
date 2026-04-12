@@ -50,7 +50,7 @@ const TrackApplication = () => {
 
   const steps = [
     // Row 1
-    { id: 1,  label: 'Application Submitted' },
+    { id: 1,  label: application?.category === 'Renewal Application' ? 'Renewal Application Submitted' : 'Application Submitted' },
     { id: 2,  label: 'Application Accepted' },
     { id: 3,  label: 'Invoice Received' },
     { id: 4,  label: 'Payment Received' },
@@ -93,11 +93,11 @@ const TrackApplication = () => {
       case 3:  return (hasInvoice || hasPaidInvoice || hasProductForms || hasAuditDate) ? 'completed' : isAccepted ? 'active' : 'pending';
       case 4:  return (hasPaidInvoice || hasProductForms || hasAuditDate) ? 'completed' : hasInvoice ? 'active' : 'pending';
       case 5:  return (hasProductForms || hasAuditDate) ? 'completed' : hasPaidInvoice ? 'active' : 'pending';
-      case 6:  return (hasAuditDate || hasAudited) ? 'completed' : hasProductForms ? 'active' : 'pending';
-      case 7:  return (hasAudited || hasNcReport || hasAuditReport) ? 'completed' : hasAuditDate ? 'active' : 'pending';
+      case 6:  return (hasAuditDate || hasAudited || hasNcReport || hasAuditReport || hasNcClosed) ? 'completed' : hasProductForms ? 'active' : 'pending';
+      case 7:  return (hasAudited || hasNcReport || hasNcClosed || hasAuditReport) ? 'completed' : (hasAuditDate || pd.audit?.subStep > 0) ? 'active' : 'pending';
       case 8:  return (hasNcReport || hasNcClosed || hasAuditReport) ? 'completed' : hasAudited ? 'active' : 'pending';
       case 9:  return (hasNcClosed || hasAuditReport) ? 'completed' : hasNcReport ? 'active' : 'pending';
-      case 10: return (hasAuditReport && (pd.audit?.subStep >= 6 || hasCertApproval)) ? 'completed' : (hasNcClosed || (hasAudited && !hasNcReport)) ? 'active' : 'pending';
+      case 10: return (hasAuditReport && (pd.audit?.subStep >= 6 || hasCertApproval)) ? 'completed' : (hasAuditReport || hasNcClosed || (hasAudited && !hasNcReport)) ? 'active' : 'pending';
       case 11: return (hasCertApproval || hasShariaSent || hasProcessing || isIssued) ? 'completed' : (hasAuditReport && pd.audit?.subStep >= 6) ? 'active' : 'pending';
       case 12: return (hasShariaSent || hasProcessing || isIssued) ? 'completed' : hasCertApproval ? 'active' : 'pending';
       case 13: return (hasProcessing || isIssued) ? 'completed' : hasShariaSent ? 'active' : 'pending';
@@ -179,7 +179,9 @@ const TrackApplication = () => {
             <div className="activity-list">
               <div className="activity-item completed">
                 <span className="activity-date">{new Date(application?.createdAt).toLocaleDateString()}</span>
-                <span className="activity-desc">Application submitted successfully.</span>
+                <span className="activity-desc">
+                  {application?.category === 'Renewal Application' ? 'Renewal application submitted successfully.' : 'Application submitted successfully.'}
+                </span>
               </div>
               {(application?.status === 'Accepted' || application?.status === 'Issued' || application?.status === "With Shari'a Board") && (
                 <div className="activity-item completed">

@@ -836,8 +836,13 @@ function Applications() {
       return;
     }
 
-    if (!renewalData.existingApplication) {
-      toast.error("Please select an application to renew");
+    const eligibleApps = applications.filter(app => 
+      ["Accepted", "Certified", "Expired", "Issued", "Renewal", "Renewal Application", "renewal", "expired"].includes(app.status)
+    );
+    const appIdToRenew = eligibleApps.length > 0 ? eligibleApps[0]._id : null;
+
+    if (!appIdToRenew) {
+      toast.error("No eligible application found to renew.");
       return;
     }
 
@@ -846,7 +851,7 @@ function Applications() {
       const token = JSON.parse(localStorage.getItem("accessToken"));
       
       const response = await axios.put(
-        `${API_BASE_URL}/applications/renew/${renewalData.existingApplication}`,
+        `${API_BASE_URL}/applications/renew/${appIdToRenew}`,
         { reason: renewalData.reason }, // Optional: pass reason if backend needs it
         {
           headers: {
@@ -3456,30 +3461,6 @@ function Applications() {
                   />
                 </div>
                 <div className="form-group">
-                  <label>Select Application *</label>
-                  <select
-                    name="existingApplication"
-                    value={renewalData.existingApplication}
-                    onChange={handleRenewalInputChange}
-                    required
-                    disabled={loading}
-                  >
-                    <option value="">Choose application</option>
-                    {applications
-                      .filter(app => ["accepted", "certified", "expired", "renewal", "renewal application"].includes(app.status.toLowerCase()))
-                      .map((app) => (
-                        <option key={app._id} value={app._id}>
-                          {app.applicationNumber} - {app.product}
-                        </option>
-                      ))
-                    }
-                    {applications.filter(app => ["accepted", "certified", "expired", "renewal", "renewal application"].includes(app.status.toLowerCase())).length === 0 && (
-                      <option value="" disabled>No eligible applications found</option>
-                    )}
-                  </select>
-                </div>
-
-                <div className="form-group">
                   <label>Renewal Date *</label>
                   <input
                     type="date"
@@ -3552,7 +3533,7 @@ function Applications() {
                   <button 
                     type="submit" 
                     className="btn btn-submit" 
-                    disabled={loading || !renewalData.existingApplication || !renewalData.reason}
+                    disabled={loading || !renewalData.reason}
                   >
                     {loading ? 'Processing...' : 'Submit Renewal'}
                   </button>
