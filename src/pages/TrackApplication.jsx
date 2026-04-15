@@ -100,7 +100,7 @@ const TrackApplication = () => {
       case 10: return (hasAuditReport && (pd.audit?.subStep >= 6 || hasCertApproval)) ? 'completed' : (hasAuditReport || hasNcClosed || (hasAudited && !hasNcReport)) ? 'active' : 'pending';
       case 11: return (hasCertApproval || hasShariaSent || hasProcessing || isIssued) ? 'completed' : (hasAuditReport && pd.audit?.subStep >= 6) ? 'active' : 'pending';
       case 12: return (hasShariaSent || hasProcessing || isIssued) ? 'completed' : hasCertApproval ? 'active' : 'pending';
-      case 13: return (hasProcessing || isIssued) ? 'completed' : hasShariaSent ? 'active' : 'pending';
+      case 13: return (hasProcessing || isIssued) ? 'completed' : 'pending';
       case 14: return isIssued ? 'completed' : hasProcessing ? 'active' : 'pending';
       default: return 'pending';
     }
@@ -199,6 +199,12 @@ const TrackApplication = () => {
                 <div className="activity-item completed">
                   <span className="activity-date">{new Date(application?.updatedAt || Date.now()).toLocaleDateString()}</span>
                   <span className="activity-desc">Certificate has been issued.</span>
+                </div>
+              )}
+              {application?.processData?.shariaBoardSentAt && application?.status !== 'Issued' && (
+                <div className="activity-item completed">
+                  <span className="activity-date">{new Date(application.processData.shariaBoardSentAt).toLocaleDateString()}</span>
+                  <span className="activity-desc">Application has been sent to Shari'a Board for review.</span>
                 </div>
               )}
             </div>
