@@ -1177,7 +1177,7 @@ function Applications() {
           </div>
 
           <div className="modal-footer">
-            <button 
+            {/* <button 
               className="btn btn-primary"
               onClick={() => {
                 handleCloseForm();
@@ -1185,7 +1185,7 @@ function Applications() {
               }}
             >
               <i className="fas fa-edit"></i> Edit Application
-            </button>
+            </button> */}
             <button className="btn btn-secondary" onClick={handleCloseForm}>
               Close
             </button>
@@ -1313,11 +1313,11 @@ function Applications() {
                                 icon: <i className="fas fa-eye"></i>,
                                 onClick: () => handleViewApplication(app._id)
                               },
-                              (app.status === "Submitted" || app.status === "Pending Review") && {
-                                label: 'Edit Application',
-                                icon: <i className="fas fa-edit"></i>,
-                                onClick: () => handleEditApplication(app._id)
-                              },
+                              // (app.status === "Submitted" || app.status === "Pending Review") && {
+                              //   label: 'Edit Application',
+                              //   icon: <i className="fas fa-edit"></i>,
+                              //   onClick: () => handleEditApplication(app._id)
+                              // },
                               (app.status.toLowerCase() === "renewal" || app.status.toLowerCase() === "renewal application") && {
                                 label: 'Cancel Renewal',
                                 icon: <i className="fas fa-trash-alt"></i>,
