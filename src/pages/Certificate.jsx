@@ -11,6 +11,7 @@ function Certificate() {
   const [certificates, setCertificates] = useState([]);
   const [searchNumber, setSearchNumber] = useState("");
   const [searchDate, setSearchDate] = useState("");
+  const [searchStatus, setSearchStatus] = useState("");
   const [isMobile, setIsMobile] = useState(window.innerWidth < 900);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -84,10 +85,13 @@ function Certificate() {
     }
   };
 
-  const filteredCertificates = certificates.filter(cert =>
-    cert.certificateNumber?.toLowerCase().includes(searchNumber.toLowerCase()) &&
-    (searchDate ? cert.issueDate?.includes(searchDate) : true)
-  );
+  const filteredCertificates = certificates.filter(cert => {
+    const matchesNumber = cert.certificateNumber?.toLowerCase().includes(searchNumber.toLowerCase());
+    const matchesDate = searchDate ? cert.issueDate?.includes(searchDate) : true;
+    const matchesStatus = searchStatus ? cert.status?.toLowerCase() === searchStatus.toLowerCase() : true;
+    
+    return matchesNumber && matchesDate && matchesStatus;
+  });
 
   const handleViewCertificate = (certificate) => {
     setSelectedCertificate(certificate);
@@ -189,6 +193,7 @@ function Certificate() {
   const handleClearFilters = () => {
     setSearchNumber("");
     setSearchDate("");
+    setSearchStatus("");
   };
 
   return (
@@ -248,6 +253,20 @@ function Certificate() {
                 onChange={(e) => setSearchDate(e.target.value)}
                 disabled={loading}
               />
+            </div>
+            <div className="field">
+              <label>Status</label>
+              <select 
+                value={searchStatus} 
+                onChange={(e) => setSearchStatus(e.target.value)}
+                disabled={loading}
+                style={{ padding: '0.5rem', borderRadius: '0.375rem', border: '1px solid #d1d5db', width: '100%', outline: 'none' }}
+              >
+                <option value="">All Statuses</option>
+                <option value="active">Active</option>
+                <option value="expiring soon">Expiring Soon</option>
+                <option value="expired">Expired</option>
+              </select>
             </div>
             <button 
               className="search-btn"
