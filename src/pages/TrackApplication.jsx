@@ -62,8 +62,8 @@ const TrackApplication = () => {
     { id: 9,  label: 'NC Reports Closed' },
     { id: 10, label: 'Audit Report Submitted' },
     // Row 3
-    { id: 11, label: 'Application Successful for Certification' },
-    { id: 12, label: "Application Sent to Shari'a Board" },
+    { id: 11, label: "Application Sent to Shari'a Board" },
+    { id: 12, label: 'Application Successful for Certification' },
     { id: 13, label: 'Certificate Processing' },
     { id: 14, label: 'Certificate Issued' },
   ];
@@ -98,9 +98,9 @@ const TrackApplication = () => {
       case 8:  return (hasNcReport || hasNcClosed || hasAuditReport) ? 'completed' : hasAudited ? 'active' : 'pending';
       case 9:  return (hasNcClosed || hasAuditReport) ? 'completed' : hasNcReport ? 'active' : 'pending';
       case 10: return (hasAuditReport && (pd.audit?.subStep >= 6 || hasCertApproval)) ? 'completed' : (hasAuditReport || hasNcClosed || (hasAudited && !hasNcReport)) ? 'active' : 'pending';
-      case 11: return (hasCertApproval || hasShariaSent || hasProcessing || isIssued) ? 'completed' : (hasAuditReport && pd.audit?.subStep >= 6) ? 'active' : 'pending';
-      case 12: return (hasShariaSent || hasProcessing || isIssued) ? 'completed' : hasCertApproval ? 'active' : 'pending';
-      case 13: return (hasProcessing || isIssued) ? 'completed' : 'pending';
+      case 11: return (hasShariaSent || hasCertApproval || hasProcessing || isIssued) ? 'completed' : (hasAuditReport && pd.audit?.subStep >= 6) ? 'active' : 'pending';
+      case 12: return (hasCertApproval || hasProcessing || isIssued) ? 'completed' : hasShariaSent ? 'active' : 'pending';
+      case 13: return (hasProcessing || isIssued) ? 'completed' : hasCertApproval ? 'active' : 'pending';
       case 14: return isIssued ? 'completed' : hasProcessing ? 'active' : 'pending';
       default: return 'pending';
     }
@@ -220,6 +220,7 @@ const getStatusColor = (status) => {
   const colors = {
     "Submitted": "#4361ee",
     "Accepted": "#10b981",
+    "Successful": "#10b981",
     "Issued": "#10b981",
     "Rejected": "#ef4444",
     "With Shari'a Board": "#f59e0b",
