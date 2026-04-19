@@ -1274,7 +1274,7 @@ function Applications() {
                   <tr>
                     <th>App Number</th>
                     <th>Category</th>
-                    <th>Product</th>
+                    {/* <th>Product</th> */}
                     <th>Status</th>
                     <th>Created</th>
                     <th>Actions</th>
@@ -1287,7 +1287,7 @@ function Applications() {
                         <span className="app-number">{app.applicationNumber || "N/A"}</span>
                       </td>
                       <td>{app.category || "N/A"}</td>
-                      <td>{app.product || "N/A"}</td>
+                      {/* <td>{app.product || "N/A"}</td> */}
                       <td>
                         <span 
                           className="status-badge"

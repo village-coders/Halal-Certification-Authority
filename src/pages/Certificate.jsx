@@ -310,7 +310,7 @@ function Certificate() {
                     <th>Type</th>
                     <th>Standard</th>
                     <th>Status</th>
-                    <th>Product</th>
+                    {/* <th>Product</th> */}
                     <th>Expiry Date</th>
                     <th>Actions</th>
                   </tr>
@@ -355,7 +355,7 @@ function Certificate() {
                             {isExpiringSoon && ` (${daysRemaining}d)`}
                           </span>
                         </td>
-                        <td>{cert?.product?.name || "N/A"}</td>
+                        {/* <td>{cert?.product?.name || "N/A"}</td> */}
                         <td>{formatDate(cert.expiryDate)}</td>
                         <td>
                           <TableActions 
