@@ -327,16 +327,16 @@ const Invoice = () => {
                                 icon: <i className="fas fa-eye"></i>,
                                 onClick: () => openDetailsModal(invoice)
                               },
-                              // {
-                              //   label: 'View Invoice',
-                              //   icon: <i className="fas fa-file-invoice"></i>,
-                              //   onClick: () => handleDownloadInvoice(invoice)
-                              // },
-                              // invoice.status === 'Issued' && {
-                              //   label: 'Upload Proof of Payment',
-                              //   icon: <i className="fas fa-upload" style={{ color: 'var(--primary-color)' }}></i>,
-                              //   onClick: () => openUploadModal(invoice)
-                              // }
+                              {
+                                label: 'View Invoice',
+                                icon: <i className="fas fa-file-invoice"></i>,
+                                onClick: () => handleDownloadInvoice(invoice)
+                              },
+                              invoice.status === 'Issued' && {
+                                label: 'Upload Proof of Payment',
+                                icon: <i className="fas fa-upload" style={{ color: 'var(--primary-color)' }}></i>,
+                                onClick: () => openUploadModal(invoice)
+                              }
                             ].filter(Boolean)}
                           />
                         </td>

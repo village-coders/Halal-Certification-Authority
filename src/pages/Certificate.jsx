@@ -140,6 +140,49 @@ function Certificate() {
     }
   };
 
+  const handleDownloadLabel = async (certificate) => {
+    try {
+      setDownloading(true);
+      setError("");
+      setSuccess("");
+
+      if (!certificate.labelPath) {
+         throw new Error("No label path available");
+      }
+
+      window.open(certificate.labelPath, '_blank', 'noopener,noreferrer');
+
+      const response = await fetch(certificate.labelPath);
+      if (!response.ok) throw new Error("Failed to fetch file");
+      
+      const blob = await response.blob(); 
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      
+      // Determine extension from MIME type or path
+      let ext = 'pdf'; // Default to pdf if not found
+      if (certificate.labelPath.endsWith('.png')) ext = 'png';
+      else if (certificate.labelPath.endsWith('.jpg') || certificate.labelPath.endsWith('.jpeg')) ext = 'jpg';
+      
+      link.setAttribute('download', `Label_${certificate.certificateNumber || 'certificate'}.${ext}`);
+      
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url); 
+      
+      setSuccess("Label opened and downloaded successfully!");
+      setTimeout(() => setSuccess(""), 3000);
+    } catch (err) {
+      console.error("Error downloading label:", err);
+      setError("Failed to download label. The file may not be available yet.");
+      setTimeout(() => setError(""), 3000);
+    } finally {
+      setDownloading(false);
+    }
+  };
+
   const handleRenewCertificate = (certificate) => {
     // Navigate to applications page with action for renewal
     window.location.href = `/applications?action=renew&certId=${certificate._id}`;
@@ -371,6 +414,12 @@ function Certificate() {
                                 onClick: () => handleDownloadCertificate(cert),
                                 disabled: downloading
                               },
+                              cert.labelPath && {
+                                label: 'Download Label',
+                                icon: <i className="fas fa-tag"></i>,
+                                onClick: () => handleDownloadLabel(cert),
+                                disabled: downloading
+                              },
                               (cert.status === 'Active' || cert.status === 'Expiring Soon' || cert.status === 'Expired' || cert.status === 'expired') && {
                                 label: 'Renew',
                                 icon: <i className="fas fa-sync-alt"></i>,
@@ -502,6 +551,31 @@ function Certificate() {
                     </div>
                   </div>
                 </div>
+
+                {/* Additional Documents */}
+                {selectedCertificate.labelPath && (
+                  <div className="additional-docs" style={{ marginTop: '20px', padding: '16px', background: '#f3f4f6', borderRadius: '8px', marginBottom: '24px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <div style={{ background: '#e5e7eb', padding: '8px', borderRadius: '6px' }}>
+                          <i className="fas fa-tag" style={{ color: '#4b5563' }}></i>
+                        </div>
+                        <div>
+                          <h4 style={{ margin: 0, fontSize: '14px', color: '#111827' }}>Product Label</h4>
+                          <p style={{ margin: 0, fontSize: '12px', color: '#6b7280' }}>Approved labeling guidelines</p>
+                        </div>
+                      </div>
+                      <button 
+                        onClick={() => handleDownloadLabel(selectedCertificate)}
+                        disabled={downloading}
+                        style={{ padding: '8px 16px', background: 'var(--primary-color)', color: 'white', border: 'none', borderRadius: '6px', fontSize: '13px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}
+                      >
+                        <i className="fas fa-download"></i>
+                        Download
+                      </button>
+                    </div>
+                  </div>
+                )}
 
                 <div className="form-actions">
                   <button 
