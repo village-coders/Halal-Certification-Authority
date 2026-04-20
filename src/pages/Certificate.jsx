@@ -104,24 +104,30 @@ function Certificate() {
       setError("");
       setSuccess("");
 
+      const token = JSON.parse(localStorage.getItem("accessToken"));
+      const downloadUrl = certificate.pdfPath.startsWith('http') ? certificate.pdfPath : `${API_BASE_URL}${certificate.pdfPath}`;
+
       // 1. Automatically open the certificate in a new tab
       if (certificate.pdfPath) {
-        window.open(certificate.pdfPath, '_blank', 'noopener,noreferrer');
+        window.open(downloadUrl, '_blank', 'noopener,noreferrer');
       }
 
       // 2. Fetch the actual PDF data to force the download
-      // Using standard fetch for the blob:
-      const response = await fetch(certificate.pdfPath);
+      const response = await fetch(downloadUrl, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
       
       if (!response.ok) throw new Error("Failed to fetch file");
       
       const blob = await response.blob(); 
       
-      // 3. Create an Object URL from the ACTUAL file data
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.setAttribute('download', `Certificate_${certificate.certificateNumber || 'certificate'}.pdf`);
+      
+      const mimeExt = blob.type.split('/')[1] || 'pdf';
+      const ext = mimeExt === 'jpeg' ? 'jpg' : mimeExt;
+      link.setAttribute('download', `Certificate_${certificate.certificateNumber || 'certificate'}.${ext}`);
       
       // Append, click, and clean up
       document.body.appendChild(link);
@@ -150,9 +156,14 @@ function Certificate() {
          throw new Error("No label path available");
       }
 
-      window.open(certificate.labelPath, '_blank', 'noopener,noreferrer');
+      const token = JSON.parse(localStorage.getItem("accessToken"));
+      const downloadUrl = certificate.labelPath.startsWith('http') ? certificate.labelPath : `${API_BASE_URL}${certificate.labelPath}`;
 
-      const response = await fetch(certificate.labelPath);
+      window.open(downloadUrl, '_blank', 'noopener,noreferrer');
+
+      const response = await fetch(downloadUrl, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
       if (!response.ok) throw new Error("Failed to fetch file");
       
       const blob = await response.blob(); 
@@ -160,17 +171,16 @@ function Certificate() {
       const link = document.createElement('a');
       link.href = url;
       
-      // Determine extension from MIME type or path
-      let ext = 'pdf'; // Default to pdf if not found
-      if (certificate.labelPath.endsWith('.png')) ext = 'png';
-      else if (certificate.labelPath.endsWith('.jpg') || certificate.labelPath.endsWith('.jpeg')) ext = 'jpg';
+      // Determine extension from MIME type
+      const mimeExt = blob.type.split('/')[1] || 'png';
+      const ext = mimeExt === 'jpeg' ? 'jpg' : mimeExt;
       
       link.setAttribute('download', `Label_${certificate.certificateNumber || 'certificate'}.${ext}`);
       
       document.body.appendChild(link);
       link.click();
       link.remove();
-      window.URL.revokeObjectURL(url); 
+      window.URL.revokeObjectURL(url);
       
       setSuccess("Label opened and downloaded successfully!");
       setTimeout(() => setSuccess(""), 3000);
