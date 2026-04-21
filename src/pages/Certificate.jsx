@@ -146,18 +146,20 @@ function Certificate() {
     }
   };
 
-  const handleDownloadLabel = async (certificate) => {
+  const handleDownloadLabel = async (certificate, specificPath = null) => {
     try {
       setDownloading(true);
       setError("");
       setSuccess("");
 
-      if (!certificate.labelPath) {
+      const targetPath = specificPath || certificate.labelPath || (certificate.labelPaths && certificate.labelPaths[0]);
+
+      if (!targetPath) {
          throw new Error("No label path available");
       }
 
       const token = JSON.parse(localStorage.getItem("accessToken"));
-      const downloadUrl = certificate.labelPath.startsWith('http') ? certificate.labelPath : `${API_BASE_URL}${certificate.labelPath}`;
+      const downloadUrl = targetPath.startsWith('http') ? targetPath : `${API_BASE_URL}${targetPath}`;
 
       window.open(downloadUrl, '_blank', 'noopener,noreferrer');
 
@@ -562,28 +564,54 @@ function Certificate() {
                   </div>
                 </div>
 
-                {/* Additional Documents */}
-                {selectedCertificate.labelPath && (
+                {/* Additional Documents - Support for both old labelPath and new labelPaths array */}
+                {((selectedCertificate.labelPaths && selectedCertificate.labelPaths.length > 0) || selectedCertificate.labelPath) && (
                   <div className="additional-docs" style={{ marginTop: '20px', padding: '16px', background: '#f3f4f6', borderRadius: '8px', marginBottom: '24px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                        <div style={{ background: '#e5e7eb', padding: '8px', borderRadius: '6px' }}>
-                          <i className="fas fa-tag" style={{ color: '#4b5563' }}></i>
+                    {/* Map over labelPaths if it exists and is not empty */}
+                    {selectedCertificate.labelPaths && selectedCertificate.labelPaths.length > 0 ? (
+                      selectedCertificate.labelPaths.map((path, index) => (
+                        <div key={index} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: index !== selectedCertificate.labelPaths.length - 1 ? '16px' : 0 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                            <div style={{ background: '#e5e7eb', padding: '8px', borderRadius: '6px' }}>
+                              <i className="fas fa-tag" style={{ color: '#4b5563' }}></i>
+                            </div>
+                            <div>
+                              <h4 style={{ margin: 0, fontSize: '14px', color: '#111827' }}>Product Label {selectedCertificate.labelPaths.length > 1 ? index + 1 : ''}</h4>
+                              <p style={{ margin: 0, fontSize: '12px', color: '#6b7280' }}>Approved labeling guidelines</p>
+                            </div>
+                          </div>
+                          <button 
+                            onClick={() => handleDownloadLabel(selectedCertificate, path)}
+                            disabled={downloading}
+                            style={{ padding: '8px 16px', background: 'var(--primary-color)', color: 'white', border: 'none', borderRadius: '6px', fontSize: '13px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}
+                          >
+                            <i className="fas fa-download"></i>
+                            Download
+                          </button>
                         </div>
-                        <div>
-                          <h4 style={{ margin: 0, fontSize: '14px', color: '#111827' }}>Product Label</h4>
-                          <p style={{ margin: 0, fontSize: '12px', color: '#6b7280' }}>Approved labeling guidelines</p>
+                      ))
+                    ) : (
+                      /* Fallback for single labelPath string */
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                          <div style={{ background: '#e5e7eb', padding: '8px', borderRadius: '6px' }}>
+                            <i className="fas fa-tag" style={{ color: '#4b5563' }}></i>
+                          </div>
+                          <div>
+                            <h4 style={{ margin: 0, fontSize: '14px', color: '#111827' }}>Product Label</h4>
+                            <p style={{ margin: 0, fontSize: '12px', color: '#6b7280' }}>Approved labeling guidelines</p>
+                          </div>
                         </div>
+                        <button 
+                          onClick={() => handleDownloadLabel(selectedCertificate)}
+                          disabled={downloading}
+                          style={{ padding: '8px 16px', background: 'var(--primary-color)', color: 'white', border: 'none', borderRadius: '6px', fontSize: '13px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}
+                        >
+                          <i className="fas fa-download"></i>
+                          Download
+                        </button>
                       </div>
-                      <button 
-                        onClick={() => handleDownloadLabel(selectedCertificate)}
-                        disabled={downloading}
-                        style={{ padding: '8px 16px', background: 'var(--primary-color)', color: 'white', border: 'none', borderRadius: '6px', fontSize: '13px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}
-                      >
-                        <i className="fas fa-download"></i>
-                        Download
-                      </button>
-                    </div>
+                    )}
                   </div>
                 )}
 
