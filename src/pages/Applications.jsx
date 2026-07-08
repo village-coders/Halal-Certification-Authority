@@ -1478,7 +1478,7 @@ function Applications() {
           <div className="modal modal-large">
             <div className="modal-content">
               <div className="modal-header">
-                <h3>{formData.category === "Renewal Application" ? "Renew Halal Certification Application" : "New Halal Certification Application"}</h3>
+                <h3>{formData.category === "Renewal Application" ? "Renewal Application" : "New Application"}</h3>
                 <button
                   className="close-btn"
                   onClick={handleCloseForm}
