@@ -104,13 +104,7 @@ function Applications() {
     rawMaterialsDocument: null
   });
 
-  const [renewalData, setRenewalData] = useState({
-    existingApplication: "",
-    branchId: "",
-    renewalDate: new Date().toISOString().split("T")[0],
-    reason: "",
-    attachments: []
-  });
+
 
   const applicationCategories = [
     "Initial Certification",
@@ -172,7 +166,91 @@ function Applications() {
     setShowEditModal(false);
   };
 
-  const handleRenewApplication = () => {
+  const prefillFormFromApp = async (app) => {
+    if (!app) return;
+    
+    let productNames = [];
+    try {
+      const token = JSON.parse(localStorage.getItem("accessToken"));
+      const prodRes = await axios.get(`${API_BASE_URL}/products?applicationId=${app._id}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (prodRes.data && Array.isArray(prodRes.data.products)) {
+        productNames = prodRes.data.products.map(p => p.name);
+      }
+    } catch (err) {
+      console.error("Error prefilling products:", err);
+    }
+
+    setFormData({
+      category: "Renewal Application",
+      branchId: app.branchId?._id || app.branchId || "",
+      product: app.product || "",
+      productId: app.productId || "",
+      productList: productNames,
+      description: app.description || "",
+      requestedDate: new Date().toISOString().split("T")[0],
+      hasAppliedBefore: app.hasAppliedBefore || "",
+      previousHalalAgency: app.previousHalalAgency || "",
+      hasBeenSupervisedBefore: app.hasBeenSupervisedBefore || "",
+      supervisingHalalAgency: app.supervisingHalalAgency || "",
+      foodSafetyPrograms: app.foodSafetyPrograms || [],
+      otherFoodSafetyProgram: app.otherFoodSafetyProgram || "",
+      marketType: app.marketType || "",
+      marketTypeOther: app.marketTypeOther || "",
+      brandType: app.brandType || "",
+      brandTypeOther: app.brandTypeOther || "",
+      usesPorkOrDerivatives: app.usesPorkOrDerivatives || "",
+      usesAnimalMeatOrDerivatives: app.usesAnimalMeatOrDerivatives || "",
+      usesGelatinOrCapsule: app.usesGelatinOrCapsule || "",
+      containsAlcohol: app.containsAlcohol || "",
+      additivesOrFlavourContainAlcohol: app.additivesOrFlavourContainAlcohol || "",
+      usesGlycerineOrDerivatives: app.usesGlycerineOrDerivatives || "",
+      geographicMarkets: app.geographicMarkets || [],
+      geographicMarketsOther: app.geographicMarketsOther || "",
+      manufacturingFacilitySame: app.manufacturingFacilitySame ?? true,
+      manufacturingFacility: app.manufacturingFacility || {
+        companyName: "",
+        address: "",
+        localGovtArea: "",
+        city: "",
+        state: "",
+        country: "",
+        plantContact: "",
+        positionTitle: "",
+        telephoneNo: "",
+        emailAddress: "",
+        webAddress: "",
+        governmentPlantCode: ""
+      },
+      additionalFacilities: app.additionalFacilities || [],
+      hasSeparatePackagingPlant: app.packagingPlant?.exists ?? false,
+      packagingPlant: app.packagingPlant || {
+        companyName: "",
+        address: "",
+        localGovtArea: "",
+        city: "",
+        state: "",
+        country: "",
+        plantContact: "",
+        positionTitle: "",
+        telephoneNo: "",
+        emailAddress: ""
+      },
+      authorizedBy: {
+        name: app.authorizedBy?.name || "",
+        dateAuthorized: new Date().toISOString().split("T")[0],
+        positionTitle: app.authorizedBy?.positionTitle || ""
+      },
+      mancapDocument: null,
+      nafdacDocument: null,
+      cacDocument: null,
+      companyProfileDocument: null,
+      rawMaterialsDocument: null
+    });
+  };
+
+  const handleRenewApplication = async () => {
     const eligibleApps = applications.filter(app =>
       ["Accepted", "Certified", "Expired", "Issued", "Renewal", "Renewal Application", "renewal", "expired"].includes(app.status)
     );
@@ -182,8 +260,9 @@ function Applications() {
       return;
     }
 
-    setShowRenewalForm(true);
-    setShowApplicationForm(false);
+    await prefillFormFromApp(eligibleApps[0]);
+    setShowApplicationForm(true);
+    setShowRenewalForm(false);
     setShowViewModal(false);
     setShowEditModal(false);
   };
@@ -204,14 +283,17 @@ function Applications() {
 
       if (response.data && Array.isArray(response.data)) {
         setApplications(response.data);
+        return response.data;
       } else {
         console.error("Unexpected response format:", response.data);
         toast.error("Failed to load applications. Invalid data format.");
+        return [];
       }
     } catch (err) {
       console.error("Error fetching applications:", err);
       const errorMessage = err.response?.data?.message || err.message || "Failed to fetch applications";
       toast.error(errorMessage);
+      return [];
     } finally {
       setLoading(false);
     }
@@ -247,21 +329,33 @@ function Applications() {
   }, []);
 
   useEffect(() => {
-    fetchApplications();
     fetchProducts();
     fetchBranches();
-
-    // Process query params
-    const searchParams = new URLSearchParams(window.location.search);
-    const action = searchParams.get('action');
-    if (action === 'new') {
-      setTimeout(() => {
-        setFormData(prev => ({ ...prev, category: "Initial Certification" }));
-        setShowApplicationForm(true);
-      }, 500);
-    } else if (action === 'renew') {
-      setTimeout(() => setShowRenewalForm(true), 500);
-    }
+    fetchApplications().then((apps) => {
+      if (apps && Array.isArray(apps)) {
+        // Process query params
+        const searchParams = new URLSearchParams(window.location.search);
+        const action = searchParams.get('action');
+        if (action === 'new') {
+          setTimeout(() => {
+            setFormData(prev => ({ ...prev, category: "Initial Certification" }));
+            setShowApplicationForm(true);
+          }, 500);
+        } else if (action === 'renew') {
+          setTimeout(async () => {
+            const eligibleApps = apps.filter(app =>
+              ["Accepted", "Certified", "Expired", "Issued", "Renewal", "Renewal Application", "renewal", "expired"].includes(app.status)
+            );
+            if (eligibleApps.length > 0) {
+              await prefillFormFromApp(eligibleApps[0]);
+            } else {
+              setFormData(prev => ({ ...prev, category: "Renewal Application" }));
+            }
+            setShowApplicationForm(true);
+          }, 500);
+        }
+      }
+    });
   }, []);
 
   // View Application Details
@@ -590,13 +684,6 @@ function Applications() {
       rawMaterialsDocument: null
     });
 
-    setRenewalData({
-      existingApplication: "",
-      branchId: "",
-      renewalDate: new Date().toISOString().split("T")[0],
-      reason: "",
-      attachments: []
-    });
   };
 
   const handleInputChange = (e) => {
@@ -728,34 +815,7 @@ function Applications() {
     }));
   };
 
-  const handleRenewalInputChange = (e) => {
-    const { name, value } = e.target;
-    setRenewalData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
 
-  const handleFileUpload = (e) => {
-    const files = Array.from(e.target.files);
-    const oversized = files.find(f => f.size > 5 * 1024 * 1024);
-    if (oversized) {
-      toast.error(`File "${oversized.name}" exceeds the 5MB size limit.`);
-      e.target.value = "";
-      return;
-    }
-    setRenewalData(prev => ({
-      ...prev,
-      attachments: [...prev.attachments, ...files]
-    }));
-  };
-
-  const removeAttachment = (index) => {
-    setRenewalData(prev => ({
-      ...prev,
-      attachments: prev.attachments.filter((_, i) => i !== index)
-    }));
-  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -904,63 +964,7 @@ function Applications() {
     }
   };
 
-  const handleRenewalSubmit = async (e) => {
-    e.preventDefault();
 
-    if (!user?.registrationNo) {
-      toast.error("User not authenticated. Please log in again.");
-      return;
-    }
-
-    if (!renewalData.branchId) {
-      toast.error("Please select a branch for renewal.");
-      return;
-    }
-
-    const eligibleApps = applications.filter(app =>
-      ["Accepted", "Certified", "Expired", "Issued", "Renewal", "Renewal Application", "renewal", "expired", "Issued"].includes(app.status) &&
-      app.branchId?._id === renewalData.branchId
-    );
-
-    const appIdToRenew = eligibleApps.length > 0 ? eligibleApps[0]._id : null;
-
-    if (!appIdToRenew) {
-      toast.error("No eligible application found for this branch to renew.");
-      return;
-    }
-
-    try {
-      setLoading(true);
-      const token = JSON.parse(localStorage.getItem("accessToken"));
-
-      const response = await axios.put(
-        `${API_BASE_URL}/applications/renew/${appIdToRenew}`,
-        { reason: renewalData.reason }, // Optional: pass reason if backend needs it
-        {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        }
-      );
-
-      if (response.data && response.data.status === "success") {
-        toast.success("Renewal application created successfully!");
-        fetchApplications();
-
-        setTimeout(() => {
-          handleCloseForm();
-        }, 1500);
-      } else {
-        throw new Error(response.data.message || "Failed to renew application");
-      }
-    } catch (err) {
-      console.error("Error submitting renewal:", err);
-      const errorMessage = err.response?.data?.message || err.message || "Failed to submit renewal application";
-      toast.error(errorMessage);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleDeleteApplication = async (id) => {
     if (!window.confirm("Are you sure you want to cancel this renewal application? This action cannot be undone.")) {
@@ -1474,7 +1478,7 @@ function Applications() {
           <div className="modal modal-large">
             <div className="modal-content">
               <div className="modal-header">
-                <h3>New Halal Certification Application</h3>
+                <h3>{formData.category === "Renewal Application" ? "Renew Halal Certification Application" : "New Halal Certification Application"}</h3>
                 <button
                   className="close-btn"
                   onClick={handleCloseForm}
@@ -1495,10 +1499,20 @@ function Applications() {
                       <select
                         name="branchId"
                         value={formData.branchId}
-                        onChange={(e) => {
+                        onChange={async (e) => {
                           const bId = e.target.value;
                           const selectedBranch = branches.find(b => b._id === bId);
                           if (selectedBranch) {
+                            if (formData.category === "Renewal Application") {
+                              const branchEligibleApp = applications.find(app =>
+                                app.branchId?._id === bId &&
+                                ["Accepted", "Certified", "Expired", "Issued", "Renewal", "Renewal Application", "renewal", "expired"].includes(app.status)
+                              );
+                              if (branchEligibleApp) {
+                                await prefillFormFromApp(branchEligibleApp);
+                                return;
+                              }
+                            }
                             setFormData(prev => ({
                               ...prev,
                               branchId: bId,
@@ -2810,127 +2824,7 @@ function Applications() {
         {/* View Application Modal */}
         {showViewModal && <ViewApplicationModal />}
 
-        {/* Renewal Application Modal */}
-        {showRenewalForm && (
-          <div className="modal modal-large">
-            <div className="modal-content">
-              <div className="modal-header">
-                <h3>Renew Application</h3>
-                <button
-                  className="close-btn"
-                  onClick={handleCloseForm}
-                  disabled={loading}
-                >
-                  <i className="fas fa-times"></i>
-                </button>
-              </div>
 
-              <form onSubmit={handleRenewalSubmit}>
-                <div className="form-group">
-                  <label>Branch *</label>
-                  <select
-                    name="branchId"
-                    value={renewalData.branchId}
-                    onChange={handleRenewalInputChange}
-                    required
-                    disabled={loading}
-                  >
-                    <option value="">Select Branch</option>
-                    {branches.map((branch) => (
-                      <option key={branch._id} value={branch._id}>{branch.branchName}</option>
-                    ))}
-                  </select>
-                </div>
-                <div className="form-group">
-                  <label>Category *</label>
-                  <input
-                    type="text"
-                    value="Renewal Application"
-                    disabled
-                  />
-                </div>
-                <div className="form-group">
-                  <label>Renewal Date *</label>
-                  <input
-                    type="date"
-                    name="renewalDate"
-                    value={renewalData.renewalDate}
-                    onChange={handleRenewalInputChange}
-                    required
-                    disabled
-                  />
-                </div>
-
-                <div className="form-group">
-                  <label>Reason *</label>
-                  <select
-                    name="reason"
-                    value={renewalData.reason}
-                    onChange={handleRenewalInputChange}
-                    required
-                    disabled={loading}
-                  >
-                    <option value="">Select reason</option>
-                    <option value="continuing_operations">Continuing Operations</option>
-                    <option value="contract_requirement">Contract Requirement</option>
-                    <option value="regulatory_compliance">Regulatory Compliance</option>
-                    <option value="other">Other</option>
-                  </select>
-                </div>
-
-                <div className="form-group">
-                  <label>Supporting Documents</label>
-                  <div className="file-upload">
-                    <input
-                      type="file"
-                      multiple
-                      onChange={handleFileUpload}
-                      disabled={loading}
-                    />
-                    <button type="button" className="btn btn-upload" disabled={loading}>
-                      <i className="fas fa-upload"></i> Upload Files
-                    </button>
-                  </div>
-                  {renewalData.attachments.length > 0 && (
-                    <div className="file-list">
-                      {renewalData.attachments.map((file, i) => (
-                        <div key={i} className="file-item">
-                          <span>{file.name}</span>
-                          <button
-                            type="button"
-                            className="remove-file"
-                            onClick={() => removeAttachment(i)}
-                            disabled={loading}
-                          >
-                            <i className="fas fa-times"></i>
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                <div className="form-actions">
-                  <button
-                    type="button"
-                    className="btn btn-cancel"
-                    onClick={handleCloseForm}
-                    disabled={loading}
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    className="btn btn-submit"
-                    disabled={loading || !renewalData.reason}
-                  >
-                    {loading ? 'Processing...' : 'Submit Renewal'}
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        )}
       </main>
     </div>
   );
