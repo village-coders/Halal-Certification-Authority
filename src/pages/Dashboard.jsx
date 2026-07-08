@@ -160,7 +160,7 @@ function Dashboard() {
   const fetchInProgressApplications = async (token) => {
     try {
       const response = await axios.get(
-        `${API_BASE_URL}/applications?status=Approved`,
+        `${API_BASE_URL}/applications`,
         {
           headers: { Authorization: `Bearer ${token}` }
         }
@@ -311,25 +311,29 @@ function Dashboard() {
       title: certLabel, 
       count: loading.stats ? "..." : stats.certificates, 
       icon: "fa-certificate", 
-      color: certColor 
+      color: certColor,
+      link: "/certificates"
     },
     { 
       title: "PRODUCTS", 
       count: loading.stats ? "..." : stats.products, 
       icon: "fa-cube", 
-      color: "#2196f3" 
+      color: "#2196f3",
+      link: "/products"
     },
     { 
       title: "APPLICATION", 
       count: loading.stats ? "..." : stats.applications, 
       icon: "fa-file-alt", 
-      color: "#ff9800" 
+      color: "#ff9800",
+      link: "/applications"
     },
     { 
       title: "BRANCHES", 
       count: loading.branches ? "..." : branches.length, 
       icon: "fa-building", 
-      color: "#9c27b0" 
+      color: "#9c27b0",
+      link: "/branches"
     }
   ];
 
@@ -418,7 +422,7 @@ function Dashboard() {
           {/* Stats Overview */}
           <div className="stats-overview">
             {statsData.map((stat, index) => (
-              <div key={index} className="stat-card" style={{ borderTop: index === 0 ? `3px solid ${stat.color}` : undefined }}>
+              <Link to={stat.link} key={index} className="stat-card" style={{ textDecoration: 'none', borderTop: index === 0 ? `3px solid ${stat.color}` : undefined }}>
                 <div className="stat-icon">
                   <i className={`fas ${stat.icon}`} style={{ color: stat.color }}></i>
                 </div>
@@ -426,14 +430,14 @@ function Dashboard() {
                   <h3 style={{ color: stat.color }}>{stat.title}</h3>
                   <p className="stat-count" style={{ color: stat.color }}>{stat.count}</p>
                 </div>
-              </div>
+              </Link>
             ))}
           </div>
 
-          {/* Applications Section */}
+          {/* Recent Activities Section */}
           <div className="applications-section">
             <div className="section-header">
-              <h2>Applications</h2>
+              <h2>Recent Activities</h2>
               <div className="tabs">
                 <button 
                   className={`tab ${activeTab === "inProgress" ? "active" : ""}`}
@@ -445,7 +449,7 @@ function Dashboard() {
                       <i className="fas fa-spinner fa-spin"></i> LOADING...
                     </>
                   ) : (
-                    "IN-PROGRESS APPLICATIONS"
+                    "RECENT ACTIVITIES"
                   )}
                 </button>
                 <button 
@@ -475,7 +479,7 @@ function Dashboard() {
                   ) : inProgressApps.length === 0 ? (
                     <div className="empty-state">
                       <i className="fas fa-file-alt"></i>
-                      <p>No in-progress applications found</p>
+                      <p>No recent activities found</p>
                     </div>
                   ) : (
                     <table>
