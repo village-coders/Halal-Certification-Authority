@@ -1,0 +1,405 @@
+/* Profile Page Styles with Descendant Selectors */
+
+
+
+.profile-content {
+  padding: 22px;
+}
+
+.profile-content .profile-section {
+  margin-bottom: 40px;
+  padding-bottom: 32px;
+  border-bottom: 1px solid #eaeaea;
+}
+
+.profile-content .profile-section:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
+
+.profile-content .profile-section h3 {
+  color: #333;
+  font-size: 20px;
+  font-weight: 600;
+  margin-bottom: 24px;
+  padding-bottom: 12px;
+  border-bottom: 2px solid #f0f0f0;
+}
+
+.profile-content .profile-section .form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 24px;
+}
+
+.profile-content .profile-section .form-grid .form-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.profile-content .profile-section .form-grid .form-group.full-width {
+  grid-column: 1 / -1;
+}
+
+.profile-content .profile-section .form-grid .form-group label {
+  font-size: 14px;
+  font-weight: 500;
+  color: #555;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.profile-content .profile-section .form-grid .form-group label::after {
+  content: '*';
+  color: #e53e3e;
+  display: none;
+}
+
+.profile-content .profile-section .form-grid .form-group input:required+label::after,
+.profile-content .profile-section .form-grid .form-group select:required+label::after {
+  display: inline;
+}
+
+.profile-content .profile-section .form-grid .form-group input,
+.profile-content .profile-section .form-grid .form-group select {
+  padding: 12px 16px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 14px;
+  color: #333;
+  background: #fafafa;
+  transition: all 0.3s ease;
+}
+
+.profile-content .profile-section .form-grid .form-group input:focus,
+.profile-content .profile-section .form-grid .form-group select:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  background: white;
+  box-shadow: 0 0 0 3px rgba(0, 133, 59, 0.1);
+}
+
+.profile-content .profile-section .form-grid .form-group input:disabled,
+.profile-content .profile-section .form-grid .form-group select:disabled {
+  background: #f5f5f5;
+  color: #777;
+  cursor: not-allowed;
+}
+
+.profile-content .profile-section .form-grid .form-group input::placeholder {
+  color: #999;
+}
+
+/* Read-only field styling */
+.profile-content .profile-section .form-grid .form-group .read-only-field {
+  background-color: #f8f9fa;
+  border-color: #e9ecef;
+  color: #6c757d;
+}
+
+.profile-content .profile-section .form-grid .form-group .field-note {
+  font-size: 12px;
+  color: #6c757d;
+  margin-top: 4px;
+  font-style: italic;
+}
+
+/* File preview styling */
+.profile-content .profile-section .form-grid .form-group .file-preview {
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 16px;
+  background: #f9f9f9;
+}
+
+.profile-content .profile-section .form-grid .form-group .file-preview .pdf-preview,
+.profile-content .profile-section .form-grid .form-group .file-preview .image-preview {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.profile-content .profile-section .form-grid .form-group .file-preview .pdf-preview i {
+  color: #e53e3e;
+  font-size: 24px;
+}
+
+.profile-content .profile-section .form-grid .form-group .file-preview .pdf-preview span,
+.profile-content .profile-section .form-grid .form-group .file-preview .image-preview span {
+  color: #333;
+  font-size: 14px;
+}
+
+.profile-content .profile-section .form-grid .form-group .file-preview .image-preview img {
+  max-width: 100%;
+  max-height: 150px;
+  border-radius: 4px;
+  border: 1px solid #ddd;
+}
+
+.profile-content .profile-section .form-grid .form-group .file-preview .image-preview i {
+  color: var(--primary-color);
+  font-size: 24px;
+}
+
+/* Responsive Design with Descendant Selectors */
+@media (max-width: 768px) {
+  .profile-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+    padding: 20px;
+  }
+
+  .profile-header .profile-actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+
+  .profile-content {
+    padding: 0px !important;
+  }
+
+  .profile-content .profile-section .form-grid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  .profile-content .profile-section {
+    margin-bottom: 32px;
+    padding-bottom: 24px;
+  }
+
+  .profile-content .profile-section h3 {
+    font-size: 18px;
+  }
+}
+
+@media (max-width: 480px) {
+  .profile-header .profile-actions .edit-actions {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .profile-header .profile-actions .btn-edit,
+  .profile-header .profile-actions .edit-actions .btn-cancel,
+  .profile-header .profile-actions .edit-actions .btn-save {
+    width: 100%;
+    justify-content: center;
+  }
+
+  {
+    margin: 10px;
+  }
+}
+
+/* Loading state */
+.dash .content .loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  font-size: 16px;
+  color: #666;
+}
+
+.dash .content .loading i {
+  margin-right: 10px;
+  color: var(--primary-color);
+}
+
+/* ── Change Password Section ── */
+.change-password-section {
+  margin: 32px 22px 22px;
+  border: 1px solid #eaeaea;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #fff;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+}
+
+.change-password-toggle {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 24px;
+  background: #f8f9fa;
+  border: none;
+  cursor: pointer;
+  font-size: 15px;
+  font-weight: 600;
+  color: #333;
+  transition: background 0.2s ease;
+}
+
+.change-password-toggle:hover {
+  background: #f0f4f0;
+}
+
+.change-password-toggle span {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.change-password-toggle span i {
+  color: var(--primary-color);
+  font-size: 16px;
+}
+
+.change-password-toggle > i {
+  color: #6c757d;
+  font-size: 13px;
+  transition: transform 0.25s ease;
+}
+
+/* Password form */
+.change-password-form {
+  padding: 24px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 20px;
+  border-top: 1px solid #eaeaea;
+  animation: cp-slide-in 0.2s ease;
+}
+
+@keyframes cp-slide-in {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.cp-field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.cp-field-group label {
+  font-size: 13px;
+  font-weight: 500;
+  color: #555;
+}
+
+.cp-input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.cp-input-wrap input {
+  width: 100%;
+  padding: 11px 44px 11px 14px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 14px;
+  color: #333;
+  background: #fafafa;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.cp-input-wrap input:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  background: white;
+  box-shadow: 0 0 0 3px rgba(0, 133, 59, 0.1);
+}
+
+.cp-eye-btn {
+  position: absolute;
+  right: 12px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #888;
+  font-size: 14px;
+  padding: 4px;
+  line-height: 1;
+  transition: color 0.2s;
+}
+
+.cp-eye-btn:hover {
+  color: var(--primary-color);
+}
+
+.cp-hint {
+  font-size: 12px;
+  font-style: italic;
+}
+
+.cp-hint.error  { color: #e53e3e; }
+.cp-hint.success { color: #38a169; }
+
+/* Action buttons — spans full width */
+.cp-actions {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding-top: 4px;
+  border-top: 1px solid #f0f0f0;
+  margin-top: 4px;
+}
+
+.cp-btn-cancel,
+.cp-btn-save {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 20px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s, opacity 0.2s;
+}
+
+.cp-btn-cancel {
+  background: white;
+  border: 1px solid #d1d5db;
+  color: #374151;
+}
+
+.cp-btn-cancel:hover:not(:disabled) {
+  background: #f3f4f6;
+}
+
+.cp-btn-save {
+  background: var(--primary-color);
+  border: none;
+  color: white;
+}
+
+.cp-btn-save:hover:not(:disabled) {
+  opacity: 0.88;
+}
+
+.cp-btn-cancel:disabled,
+.cp-btn-save:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+@media (max-width: 768px) {
+  .change-password-section {
+    margin: 20px 0;
+  }
+
+  .change-password-form {
+    grid-template-columns: 1fr;
+  }
+
+  .cp-actions {
+    flex-direction: column-reverse;
+  }
+
+  .cp-btn-cancel,
+  .cp-btn-save {
+    width: 100%;
+    justify-content: center;
+  }
+}

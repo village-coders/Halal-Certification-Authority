@@ -1,0 +1,576 @@
+import { useState, useEffect } from "react";
+import "./css/Dashboard.css";
+import Sidebar from "../components/Sidebar";
+import DashboardHeader from "../components/DashboardHeader";
+import { Link } from "react-router-dom";
+import TourBot from "../components/TourBot";
+import { useAuth } from "../hooks/useAuth";
+import axios from "axios";
+
+const API_BASE_URL = import.meta.env.VITE_BASE_URL;
+
+function Dashboard() {
+  const [activeTab, setActiveTab] = useState("inProgress");
+  const [stats, setStats] = useState({
+    certificates: 0,
+    products: 0,
+    applications: 0
+  });
+  const [inProgressApps, setInProgressApps] = useState([]);
+  const [applications, setApplications] = useState([]);
+  const [certificates, setCertificates] = useState([]);
+  const [branches, setBranches] = useState([]);
+  const [showBranchPopup, setShowBranchPopup] = useState(false);
+  const [loading, setLoading] = useState({
+    stats: true,
+    applications: true,
+    allApplications: true,
+    certificates: true,
+    branches: true
+  });
+  const [error, setError] = useState("");
+  const [runTour, setRunTour] = useState(false);
+
+  const { user } = useAuth();
+
+  // console.log(certificates)
+
+  const quickActions = [
+    ...(branches.length === 0 ? [{ title: "CREATE BRANCH", icon: "fa-building", color: "#9c27b0", link: "branches" }] : []),
+    ...(applications.length === 0 && branches.length > 0 ? [{ title: "NEW APPLICATION", icon: "fa-plus-circle", color: "#4caf50", link: "applications" }] : []),
+    ...(applications.length !== 0 ? [{ title: "REQUEST PRODUCT", icon: "fa-shopping-cart", color: "#ff5722", link: "products" }] : []),
+    ...(certificates.length > 0
+      ? (() => {
+          const criticalCert = certificates.find(item =>
+            item.status && ["expired", "expiring soon"].includes(item.status.toLowerCase().trim())
+          );
+          if (criticalCert) {
+            const isExpired = criticalCert.status.toLowerCase().trim() === "expired";
+            let desc = "This certificate has expired.";
+            if (!isExpired && criticalCert.expiryDate) {
+              const daysRemaining = Math.max(0, Math.ceil((new Date(criticalCert.expiryDate) - new Date()) / (1000 * 60 * 60 * 24)));
+              desc = `This certificate is expiring soon. ${daysRemaining} day(s) remaining (Expires: ${new Date(criticalCert.expiryDate).toLocaleDateString('en-GB')}).`;
+            } else if (criticalCert.expiryDate) {
+              desc = `This certificate has expired (Expired on: ${new Date(criticalCert.expiryDate).toLocaleDateString('en-GB')}).`;
+            }
+            return [
+              { title: "RENEW CERTIFICATE", icon: "fa-sync-alt", color: "#ef4444", link: "applications", description: desc }
+            ];
+          } else {
+            return [
+              { title: "VIEW CERTIFICATES", icon: "fa-certificate", color: "#4caf50", link: "certificates", description: "All certificates are active and in good standing." }
+            ];
+          }
+        })()
+      : []
+    ),
+  ];
+
+  useEffect(() => {
+    fetchDashboardData();
+  }, []);
+
+  useEffect(() => {
+    if (user && user._id) {
+      if (!localStorage.getItem(`hcaTourCompleted_${user._id}`)) {
+        // Add a tiny delay to ensure all nested components and refs are mounted
+        const timer = setTimeout(() => {
+          setRunTour(true);
+        }, 500);
+        return () => clearTimeout(timer);
+      }
+    }
+  }, [user]);
+
+
+  const fetchDashboardData = async () => {
+    try {
+      setLoading({ stats: true, applications: true, certificates: true });
+      setError("");
+
+      const token = JSON.parse(localStorage.getItem("accessToken"));
+      
+      // Fetch stats
+      await fetchStats(token);
+      
+      // Fetch in-progress applications
+      await fetchInProgressApplications(token);
+      await fetchApplications(token);
+      
+      // Fetch certificates
+      await fetchCertificates(token);
+
+      // Fetch branches
+      await fetchBranches(token);
+    } catch (err) {
+      console.error("Error fetching dashboard data:", err);
+      setError("Failed to load dashboard data. Please refresh the page.");
+    }
+  };
+
+  const fetchStats = async (token) => {
+    try {
+    //   const companyId = user.registrationNo;
+      
+      // Fetch applications count
+      const appsResponse = await axios.get(
+        `${API_BASE_URL}/applications`,
+        {
+          headers: { Authorization: `Bearer ${token}` }
+        }
+      );
+      
+      // Fetch certificates count
+      const certsResponse = await axios.get(
+        `${API_BASE_URL}/certificates`,
+        {
+          headers: { Authorization: `Bearer ${token}` }
+        }
+      );
+      
+      // Fetch products count (assuming this endpoint exists)
+      const productsResponse = await axios.get(
+        `${API_BASE_URL}/products`,
+        {
+          headers: { Authorization: `Bearer ${token}` }
+        }
+      );
+
+      console.log(appsResponse.data);
+      
+
+      setStats({
+        certificates: certsResponse.headers['x-total-count'] || certsResponse.data.length || 0,
+        products: productsResponse.headers['x-total-count'] || productsResponse.data.products.length || 0,
+        applications: appsResponse.headers['x-total-count'] || appsResponse.data.length || 0
+      });
+    } catch (err) {
+      console.error("Error fetching stats:", err);
+      // Set default counts
+      setStats({
+        certificates: 0,
+        products: 0,
+        applications: 0
+      });
+    } finally {
+      setLoading(prev => ({ ...prev, stats: false }));
+    }
+  };
+
+  const fetchInProgressApplications = async (token) => {
+    try {
+      const response = await axios.get(
+        `${API_BASE_URL}/applications?status=Approved`,
+        {
+          headers: { Authorization: `Bearer ${token}` }
+        }
+      );
+      
+      if (response.data && Array.isArray(response.data)) {
+        // Format applications for display
+        const formattedApps = response.data.slice(0, 5).map(app => ({
+          id: app._id,
+          date: app.createdAt ? new Date(app.createdAt).toLocaleDateString('en-GB', {
+            day: '2-digit',
+            month: 'short',
+            year: 'numeric'
+          }).replace(/ /g, '-') : 'N/A',
+          number: app.applicationNumber || 'N/A',
+          category: app.category || 'N/A',
+          site: app.product || 'N/A'
+        }));
+        
+        setInProgressApps(formattedApps);
+      }
+    } catch (err) {
+      console.error("Error fetching applications:", err);
+      setInProgressApps([]);
+    } finally {
+      setLoading(prev => ({ ...prev, applications: false }));
+    }
+  };
+
+  const fetchApplications = async (token) => {
+    try {
+      const response = await axios.get(
+        `${API_BASE_URL}/applications`,
+        {
+          headers: { Authorization: `Bearer ${token}` }
+        }
+      );
+      
+      if (response.data && Array.isArray(response.data)) {
+        // Format applications for display
+        const formattedApps = response.data.slice(0, 5).map(app => ({
+          id: app._id,
+          date: app.createdAt ? new Date(app.createdAt).toLocaleDateString('en-GB', {
+            day: '2-digit',
+            month: 'short',
+            year: 'numeric'
+          }).replace(/ /g, '-') : 'N/A',
+          number: app.applicationNumber || 'N/A',
+          category: app.category || 'N/A',
+          site: app.product || 'N/A'
+        }));
+
+        console.log(formattedApps)
+        
+        setApplications(formattedApps);
+      }
+    } catch (err) {
+      console.error("Error fetching applications:", err);
+      setApplications([]);
+    } finally {
+      setLoading(prev => ({ ...prev, allApplications: false }));
+    }
+  };
+
+  const fetchCertificates = async (token) => {
+    try {
+      const response = await axios.get(
+        `${API_BASE_URL}/certificates`,
+        {
+          headers: { Authorization: `Bearer ${token}` }
+        }
+      );
+      
+      if (response.data && Array.isArray(response.data)) {
+        // Format certificates for display
+        const formattedCerts = response.data.slice(0, 5).map(cert => ({
+          id: cert._id,
+          siteName: cert.product || 'N/A',
+          certRef: cert.certificateNumber || 'N/A',
+          certType: cert.certificateType || 'N/A',
+          status: cert.status || 'Active',
+          expiryDate: cert.expiryDate
+        }));
+        
+        setCertificates(formattedCerts);
+      }
+    } catch (err) {
+      console.error("Error fetching certificates:", err);
+      setCertificates([]);
+    } finally {
+      setLoading(prev => ({ ...prev, certificates: false }));
+    }
+  };
+
+  const fetchBranches = async (token) => {
+    try {
+      const response = await axios.get(`${API_BASE_URL}/branches`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (response.data.status === "success") {
+        setBranches(response.data.branches);
+        if (response.data.branches.length === 0) {
+          setShowBranchPopup(true);
+        }
+      }
+    } catch (err) {
+      console.error("Error fetching branches:", err);
+    } finally {
+      setLoading(prev => ({ ...prev, branches: false }));
+    }
+  };
+
+  const handleStartAction = (action) => {
+    if (action.title === "NEW APPLICATION") {
+      // Navigate to applications page and trigger new application
+      window.location.href = "/applications?action=new";
+    } else if (action.title === "RENEWAL APPLICATION" || action.title === "RENEW CERTIFICATE") {
+      // Navigate to applications page and trigger renewal
+      window.location.href = "/applications?action=renew";
+    }
+    // For "REQUEST PRODUCT" or "VIEW CERTIFICATES", the Link component will handle navigation
+  };
+
+  const formatDate = (dateString) => {
+    if (!dateString) return "N/A";
+    try {
+      const date = new Date(dateString);
+      return isNaN(date.getTime()) 
+        ? "N/A" 
+        : date.toLocaleDateString('en-GB', {
+            day: '2-digit',
+            month: 'short',
+            year: 'numeric'
+          }).replace(/ /g, '-');
+    } catch (err) {
+      return "N/A";
+    }
+  };
+
+  // Determine certificate stat card color based on status
+  const hasExpired = certificates.some(c => c.status && c.status.toLowerCase().trim() === 'expired');
+  const hasExpiringSoon = certificates.some(c => c.status && c.status.toLowerCase().trim() === 'expiring soon');
+  const certColor = hasExpired ? '#dc2626' : hasExpiringSoon ? '#f97316' : '#4caf50';
+  const certLabel = hasExpired ? 'CERTIFICATE (EXPIRED)' : hasExpiringSoon ? 'CERTIFICATE (EXPIRING)' : 'CERTIFICATE';
+
+  const statsData = [
+    { 
+      title: certLabel, 
+      count: loading.stats ? "..." : stats.certificates, 
+      icon: "fa-certificate", 
+      color: certColor 
+    },
+    { 
+      title: "PRODUCTS", 
+      count: loading.stats ? "..." : stats.products, 
+      icon: "fa-cube", 
+      color: "#2196f3" 
+    },
+    { 
+      title: "APPLICATION", 
+      count: loading.stats ? "..." : stats.applications, 
+      icon: "fa-file-alt", 
+      color: "#ff9800" 
+    },
+    { 
+      title: "BRANCHES", 
+      count: loading.branches ? "..." : branches.length, 
+      icon: "fa-building", 
+      color: "#9c27b0" 
+    }
+  ];
+
+  return (
+    <>
+      <TourBot run={runTour} setRun={setRunTour} userId={user?._id} />
+      <div className="dash">       
+      <Sidebar activeD='active' /> 
+      <main className="content">
+        <div className="dashboard-container tour-dashboard-overview">
+          <DashboardHeader title='Dashboard' /> 
+
+          {error && (
+            <div className="dashboard-error">
+              <i className="fas fa-exclamation-circle"></i> {error}
+            </div>
+          )}
+
+          {/* Branch Popup */}
+          {showBranchPopup && !loading.branches && (
+            <div className="modal-overlay" style={{ zIndex: 9999, backgroundColor: "rgba(0,0,0,0.7)" }}>
+              <div className="modal-content" style={{ textAlign: "center", padding: "40px 20px" }}>
+                <i className="fas fa-building" style={{ fontSize: "48px", color: "#00853b", marginBottom: "20px" }}></i>
+                <h2 style={{ marginBottom: "15px" }}>Welcome! Create a Branch to Get Started</h2>
+                <p style={{ color: "#666", marginBottom: "25px", lineHeight: "1.6" }}>
+                  Before you can apply for certification, you need to register at least one branch or facility.
+                </p>
+                <Link to="/branches" className="action-btn" style={{ textDecoration: "none", display: "inline-block", fontSize: "16px", padding: "12px 30px" }}>
+                  Go to Branches
+                </Link>
+                <button 
+                  onClick={() => setShowBranchPopup(false)} 
+                  style={{ display: "block", margin: "15px auto 0", background: "none", border: "none", color: "#888", cursor: "pointer", textDecoration: "underline" }}
+                >
+                  I'll do this later
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Quick Actions */}
+          <div className="quick-actions">
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <h2>Quick Actions</h2>
+              <button 
+                onClick={() => setRunTour(true)} 
+                style={{ fontSize: '13px', background: 'none', border: 'none', color: '#00853b', cursor: 'pointer', textDecoration: 'underline' }}>
+                Restart Tour
+              </button>
+            </div>
+            <div id="tour-new-application-btn" className="actions-grid">
+              {quickActions.map((action, index) => (
+                <div key={index} className="action-card" style={{ borderLeft: `4px solid ${action.color}` }}>
+                  <div className="action-icon">
+                    <i className={`fas ${action.icon}`} style={{ color: action.color }}></i>
+                  </div>
+                  <div className="action-content">
+                    <h3>{action.title}</h3>
+                    {action.description && (
+                      <p style={{ fontSize: "12px", color: "#666", marginTop: "4px", marginBottom: "8px", lineHeight: "1.4" }}>
+                        {action.description}
+                      </p>
+                    )}
+                    {action.link ? (
+                      <Link 
+                        to={`/${action.link}`} 
+                        className="action-btn"
+                        onClick={() => handleStartAction(action)}
+                      >
+                        Start
+                      </Link>
+                    ) : (
+                      <button 
+                        className="action-btn" 
+                        onClick={() => handleStartAction(action)}
+                      >
+                        Start
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Stats Overview */}
+          <div className="stats-overview">
+            {statsData.map((stat, index) => (
+              <div key={index} className="stat-card" style={{ borderTop: index === 0 ? `3px solid ${stat.color}` : undefined }}>
+                <div className="stat-icon">
+                  <i className={`fas ${stat.icon}`} style={{ color: stat.color }}></i>
+                </div>
+                <div className="stat-content">
+                  <h3 style={{ color: stat.color }}>{stat.title}</h3>
+                  <p className="stat-count" style={{ color: stat.color }}>{stat.count}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Applications Section */}
+          <div className="applications-section">
+            <div className="section-header">
+              <h2>Applications</h2>
+              <div className="tabs">
+                <button 
+                  className={`tab ${activeTab === "inProgress" ? "active" : ""}`}
+                  onClick={() => setActiveTab("inProgress")}
+                  disabled={loading.applications}
+                >
+                  {loading.applications ? (
+                    <>
+                      <i className="fas fa-spinner fa-spin"></i> LOADING...
+                    </>
+                  ) : (
+                    "IN-PROGRESS APPLICATIONS"
+                  )}
+                </button>
+                <button 
+                  className={`tab ${activeTab === "certificates" ? "active" : ""}`}
+                  onClick={() => setActiveTab("certificates")}
+                  disabled={loading.certificates}
+                >
+                  {loading.certificates ? (
+                    <>
+                      <i className="fas fa-spinner fa-spin"></i> LOADING...
+                    </>
+                  ) : (
+                    "CERTIFICATE LIST"
+                  )}
+                </button>
+              </div>
+            </div>
+
+            <div className="section-content">
+              {activeTab === "inProgress" ? (
+                <div className="table-container">
+                  {loading.applications ? (
+                    <div className="loading-state">
+                      <i className="fas fa-spinner fa-spin"></i>
+                      <span>Loading applications...</span>
+                    </div>
+                  ) : inProgressApps.length === 0 ? (
+                    <div className="empty-state">
+                      <i className="fas fa-file-alt"></i>
+                      <p>No in-progress applications found</p>
+                    </div>
+                  ) : (
+                    <table>
+                      <thead>
+                        <tr>
+                          <th>Date</th>
+                          <th>Number</th>
+                          <th>Category</th>
+                          <th>Site</th>
+                          <th>Action</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {inProgressApps.map((app, index) => (
+                          <tr key={index}>
+                            <td>{app.date}</td>
+                            <td>{app.number}</td>
+                            <td>{app.category}</td>
+                            <td>{app.site}</td>
+                            <td>
+                              <Link to={`/applications?view=${app.id}`} className="action-menu-btn" title="View Details">
+                                <i className="fas fa-eye"></i>
+                              </Link>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  )}
+                </div>
+              ) : (
+                <div className="table-container">
+                  {loading.certificates ? (
+                    <div className="loading-state">
+                      <i className="fas fa-spinner fa-spin"></i>
+                      <span>Loading certificates...</span>
+                    </div>
+                  ) : certificates.length === 0 ? (
+                    <div className="empty-state">
+                      <i className="fas fa-file-certificate"></i>
+                      <p>No active certificates found</p>
+                    </div>
+                  ) : (
+                    <table>
+                      <thead>
+                        <tr>
+                          <th>Product Name</th>
+                          <th>Certificate Ref No</th>
+                          <th>Certificate Type</th>
+                          <th>Status</th>
+                          <th>Action</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {certificates.map((cert, index) => (
+                          <tr key={index}>
+                            <td>{cert?.siteName.name}</td>
+                            <td>{cert?.certRef}</td>
+                            <td>{cert?.certType}</td>
+                            <td>
+                              <span className={`status-badge ${cert?.status.toLowerCase().replace(' ', '-')}`}>
+                                {cert?.status}
+                              </span>
+                            </td>
+                            <td>
+                              <Link to={`/certificates?view=${cert?.id}`} className="action-menu-btn" title="View Details">
+                                <i className="fas fa-eye"></i>
+                              </Link>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Refresh Button */}
+          <div className="refresh-section">
+            <button 
+              className="refresh-btn"
+              onClick={fetchDashboardData}
+              disabled={loading.stats || loading.applications || loading.certificates}
+            >
+              <i className={`fas fa-sync-alt ${loading.stats || loading.applications || loading.certificates ? 'fa-spin' : ''}`}></i>
+              Refresh Dashboard
+            </button>
+          </div>
+        </div>
+      </main>
+    </div>
+    </>
+  );
+}
+
+export default Dashboard;
