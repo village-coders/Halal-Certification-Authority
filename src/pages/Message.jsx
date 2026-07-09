@@ -909,7 +909,7 @@ function Message() {
                           </div>
                         )}
                         
-                        <div className={`modal-message-wrapper ${message.receiver === "admin"? 'sent' : 'received'}`}>
+                        <div className={`modal-message-wrapper ${message.isMine ? 'sent' : 'received'}`}>
                           <div className="modal-message-content">
                             {!message.isMine && message.sender?.fullName && (
                               <div className="modal-sender-name">
