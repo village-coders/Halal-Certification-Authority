@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import "./css/Sidebar.css";
 import logo from '../assets/hdiLogo1.png';
 import { Link, useNavigate } from "react-router-dom";
-import { MdOutlineDashboard, MdOutlineAssignment, MdOutlineBadge, MdOutlineShoppingBag, MdOutlinePerson, MdOutlineMessage, MdOutlineLogout, MdOutlineReceipt, MdOutlineEventNote, MdOutlineHelp } from "react-icons/md";
+import { MdOutlineDashboard, MdOutlineAssignment, MdOutlineBadge, MdOutlineShoppingBag, MdOutlinePerson, MdOutlineMessage, MdOutlineLogout, MdOutlineReceipt, MdOutlineEventNote, MdOutlineHelp, MdNotifications } from "react-icons/md";
 import { TbUsersGroup } from "react-icons/tb";
 import { FaBuilding } from "react-icons/fa";
 import axios from 'axios';
@@ -13,6 +13,9 @@ const Sidebar = ({ activeD, activeApp, activeCert, activeP, activeMess, activeI,
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 900);
   const [unreadMsgCount, setUnreadMsgCount] = useState(0);
+  const [unreadNotifCount, setUnreadNotifCount] = useState(0);
+  const [notifications, setNotifications] = useState([]);
+  const [showNotifications, setShowNotifications] = useState(false);
   const navigate = useNavigate();
   const baseUrl = import.meta.env.VITE_BASE_URL;
 
@@ -39,25 +42,31 @@ const Sidebar = ({ activeD, activeApp, activeCert, activeP, activeMess, activeI,
   }, [isMobile]);
 
   useEffect(() => {
-    const fetchUnreadMsgCount = async () => {
+    const fetchCounts = async () => {
       try {
         const tokenString = localStorage.getItem("accessToken");
         if (!tokenString) return;
         const token = JSON.parse(tokenString);
 
-        const res = await axios.get(`${baseUrl}/messages/unread/count`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        if (res.data.status === 'success') {
-          setUnreadMsgCount(res.data.count || 0);
+        const [msgRes, notifRes] = await Promise.all([
+          axios.get(`${baseUrl}/messages/unread/count`, { headers: { Authorization: `Bearer ${token}` } }).catch(() => null),
+          axios.get(`${baseUrl}/notifications/user`, { headers: { Authorization: `Bearer ${token}` } }).catch(() => null)
+        ]);
+        
+        if (msgRes?.data?.status === 'success') {
+          setUnreadMsgCount(msgRes.data.count || 0);
+        }
+        if (notifRes?.data?.status === 'success') {
+          setUnreadNotifCount(notifRes.data.unreadCount || 0);
+          setNotifications(notifRes.data.notifications || []);
         }
       } catch (error) {
-        console.error("Failed to fetch unread messages count", error);
+        console.error("Failed to fetch counts", error);
       }
     };
 
-    fetchUnreadMsgCount();
-    const interval = setInterval(fetchUnreadMsgCount, 60000); // Check every minute
+    fetchCounts();
+    const interval = setInterval(fetchCounts, 60000); // Check every minute
     return () => clearInterval(interval);
   }, [baseUrl]);
 
@@ -73,6 +82,20 @@ const Sidebar = ({ activeD, activeApp, activeCert, activeP, activeMess, activeI,
     }
   };
 
+
+  const markNotificationsAsRead = async () => {
+    if (unreadNotifCount === 0) return;
+    try {
+      const token = JSON.parse(localStorage.getItem("accessToken"));
+      await axios.put(`${baseUrl}/notifications/user/mark-read`, {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setUnreadNotifCount(0);
+      setNotifications(prev => prev.map(n => ({...n, isRead: true})));
+    } catch (error) {
+      console.error("Failed to mark notifications as read", error);
+    }
+  };
 
   return (
     <>
@@ -94,6 +117,49 @@ const Sidebar = ({ activeD, activeApp, activeCert, activeP, activeMess, activeI,
 
         <nav className={`sidebar-nav ${isMobile && !isCollapsed ? "mobile-expanded" : ""}`}>
           <ul>
+            <li className="has-submenu">
+              <button 
+                onClick={() => { 
+                  setShowNotifications(!showNotifications); 
+                  if (!showNotifications && unreadNotifCount > 0) markNotificationsAsRead();
+                }} 
+                className={`dropdown-btn ${showNotifications ? "active" : ""}`} 
+                title="Notifications"
+              >
+                <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                  <MdNotifications />
+                  {unreadNotifCount > 0 && <span style={{ position: 'absolute', top: '-2px', right: '-2px', width: '8px', height: '8px', backgroundColor: '#ef4444', borderRadius: '50%' }}></span>}
+                </div>
+                {!isCollapsed && (
+                  <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center', marginLeft: '10px' }}>
+                    <span>Notifications</span>
+                    {unreadNotifCount > 0 && <span className="badge" style={{ backgroundColor: '#ef4444' }}>{unreadNotifCount}</span>}
+                  </div>
+                )}
+              </button>
+              
+              {!isCollapsed && showNotifications && (
+                <div className="notifications-dropdown" style={{ background: '#f8fafc', padding: '10px', borderRadius: '8px', margin: '0 10px', maxHeight: '300px', overflowY: 'auto', border: '1px solid #e2e8f0', borderTop: 'none', borderTopLeftRadius: 0, borderTopRightRadius: 0 }}>
+                  {notifications.length === 0 ? (
+                    <p style={{ fontSize: '13px', color: '#64748b', textAlign: 'center', margin: '10px 0' }}>No notifications yet</p>
+                  ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                      {notifications.map(notif => (
+                        <div key={notif._id} style={{ padding: '8px', borderBottom: '1px solid #e2e8f0', fontSize: '13px', position: 'relative' }}>
+                          <strong style={{ display: 'block', color: '#1e293b', marginBottom: '4px' }}>{notif.title}</strong>
+                          <p style={{ color: '#475569', margin: 0, lineHeight: '1.4' }}>{notif.message}</p>
+                          <span style={{ fontSize: '10px', color: '#94a3b8', display: 'block', marginTop: '4px' }}>
+                            {new Date(notif.createdAt).toLocaleDateString()}
+                          </span>
+                          {!notif.isRead && <span style={{ position: 'absolute', top: '12px', right: '8px', width: '6px', height: '6px', backgroundColor: '#ef4444', borderRadius: '50%' }}></span>}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+            </li>
+
             <li>
               <button onClick={() => { if (isMobile) { toggleSidebar(); setIsCollapsed(true); } navigate('/dashboard') }} className={`dropdown-btn ${activeD}`} title="Dashboard">
                 <MdOutlineDashboard />

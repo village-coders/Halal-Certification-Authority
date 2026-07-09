@@ -58,7 +58,7 @@ const TrackApplication = () => {
   const steps = [
     // Row 1
     { id: 1, label: application?.category === 'Renewal Application' ? 'Renewal Application Submitted' : 'Application Submitted' },
-    { id: 2, label: 'Application Accepted' },
+    { id: 2, label: application?.category === 'Renewal Application' ? 'Renewal Application Accepted' : 'Application Accepted' },
     { id: 4, label: 'Invoice Received' },
     { id: 5, label: 'Payment Received' },
     // Row 2

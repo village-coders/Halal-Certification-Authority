@@ -300,20 +300,7 @@ const Audit = () => {
                                                                         }
                                                                     }
                                                                 ] : []),
-                                                                ...(audit.status === 'Scheduled' ? [
-                                                                    { 
-                                                                        label: actionLoading === `${audit._id}-accepted` ? 'Accepting...' : 'Accept', 
-                                                                        icon: actionLoading === `${audit._id}-accepted` ? <i className="fas fa-spinner fa-spin" style={{fontSize: '16px'}}></i> : <MdCheck size={16} />, 
-                                                                        onClick: () => { setSelectedAudit(audit); handleResponse(audit._id, 'Accepted', { chosenDate: audit.scheduledDate, chosenTime: audit.scheduledTime }); },
-                                                                        disabled: actionLoading === `${audit._id}-accepted` || actionLoading === `${audit._id}-rejected`
-                                                                    },
-                                                                    { 
-                                                                        label: 'Reject', 
-                                                                        icon: <MdClose size={16} />, 
-                                                                        onClick: () => { setSelectedAudit(audit); setShowRespondModal(true); },
-                                                                        disabled: actionLoading === `${audit._id}-accepted` || actionLoading === `${audit._id}-rejected`
-                                                                    }
-                                                                ] : []),
+
                                                                 ...(audit.ncReport ? [
                                                                     { 
                                                                         label: 'View NC Report', 
