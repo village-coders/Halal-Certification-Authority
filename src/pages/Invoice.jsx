@@ -9,6 +9,11 @@ const API_BASE_URL = import.meta.env.VITE_BASE_URL;
 
 const getFileUrl = (path) => {
   if (!path) return '';
+  if (Array.isArray(path)) {
+      if (path.length === 0) return '';
+      path = path[0];
+  }
+  if (typeof path !== 'string') return '';
   if (path.startsWith('http')) return path;
   const base = API_BASE_URL.replace(/\/api$/, '');
   let normalizedPath = path.startsWith('/') ? path : `/${path}`;
