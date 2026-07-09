@@ -12,14 +12,14 @@ function UserGuide() {
           <DashboardHeader title="User Guide" />
           
           <div className="guide-content white-card">
-            <h1>Halal Certification Authority (HCA) Client Dashboard - User's Guide</h1>
-            <p className="intro">Welcome to the <strong>HCA Client Portal</strong>. This guide is designed to help you navigate and fully utilize the features available in your dashboard securely and efficiently.</p>
+            <h1>Halal And Haram Distinction Initiative Development (HDI) Client Dashboard - User's Guide</h1>
+            <p className="intro">Welcome to the <strong>HDI Client Portal</strong>. This guide is designed to help you navigate and fully utilize the features available in your dashboard securely and efficiently.</p>
             
             <hr />
             
             <section>
               <h2>1. Introduction</h2>
-              <p>The HCA Client Dashboard is your central hub for managing your Halal Certification process. From submitting new applications and required documents to communicating with HCA representatives and downloading your official certificates, everything you need is organized in one secure location.</p>
+              <p>The HDI Client Dashboard is your central hub for managing your Halal Certification process. From submitting new applications and required documents to communicating with HDI representatives and downloading your official certificates, everything you need is organized in one secure location.</p>
             </section>
 
             <section>
@@ -40,7 +40,7 @@ function UserGuide() {
 
             <section>
               <h2>4. Submit Relevant Documents</h2>
-              <p>During the certification process, HCA may require specific supporting documents (e.g., standard operating procedures, ingredient lists, or compliance records).</p>
+              <p>During the certification process, HDI may require specific supporting documents (e.g., standard operating procedures, ingredient lists, or compliance records).</p>
               <ul>
                 <li>Use the <strong>Submit Relevant Document</strong> portal to securely upload any requested files.</li>
                 <li>Ensure your documents are clearly labeled for faster processing.</li>
@@ -77,9 +77,9 @@ function UserGuide() {
 
             <section>
               <h2>8. Messages</h2>
-              <p>Communication with the HCA team is streamlined via the built-in <strong>Messages</strong> system.</p>
+              <p>Communication with the HDI team is streamlined via the built-in <strong>Messages</strong> system.</p>
               <ul>
-                <li><strong>Secure Messaging:</strong> Discuss audit findings, application statuses, or general inquiries directly with HCA staff.</li>
+                <li><strong>Secure Messaging:</strong> Discuss audit findings, application statuses, or general inquiries directly with HDI staff.</li>
                 <li><strong>Notifications:</strong> Look for the numbered badge on the Messages icon indicating unread replies or alerts.</li>
               </ul>
             </section>

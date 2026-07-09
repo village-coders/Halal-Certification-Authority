@@ -1,5 +1,5 @@
 import "./css/Header.css";
-import logo from '../assets/hcaLogo.png';
+import logo from '../assets/hdiLogo.png';
 import { Link } from "react-router-dom";
 import { useState } from "react";
 import { FaBars, FaTimes } from "react-icons/fa";

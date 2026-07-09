@@ -91,7 +91,7 @@ const TrackApplication = () => {
     const hasShariaSent = !!pd.shariaBoardSentAt;
     const hasProcessing = !!pd.processingStartedAt;
     const isIssued = status === 'issued';
-    const isAccepted = status === 'accepted' || status === 'issued' || status === "with shari'a board" || status === 'renewal';
+    const isAccepted = status !== 'submitted' && status !== 'rejected';
 
     switch (stepId) {
       case 1: return 'completed';

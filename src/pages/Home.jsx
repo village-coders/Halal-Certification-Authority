@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import logo from '../assets/hcaLogo1.png'
+import logo from '../assets/hdiLogo1.png'
 import { useAuth } from '../hooks/useAuth'; // Adjust the path to your useAuth hook
 import { FiEye, FiEyeOff } from 'react-icons/fi';
 import { Loader2 } from 'lucide-react';

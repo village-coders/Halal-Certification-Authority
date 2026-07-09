@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
-import logo from '../assets/hcaLogo.png'
+import logo from '../assets/hdiLogo.png'
 import { toast } from "sonner";
 import { FiEye, FiEyeOff } from "react-icons/fi";
 import { Loader2 } from "lucide-react";

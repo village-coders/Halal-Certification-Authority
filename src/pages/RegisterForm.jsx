@@ -3,7 +3,7 @@ import "./css/RegisterForm.css";
 import { useState, useEffect } from "react";
 import { FaBuilding, FaUser, FaLock } from "react-icons/fa";
 import { toast } from "sonner";
-import logo from "../assets/hcaLogo.png"
+import logo from "../assets/hdiLogo.png"
 
 function RegisterForm() {
   const countries = [
@@ -55,7 +55,7 @@ function RegisterForm() {
   // Generate registration number once
   useEffect(() => {
     const randomNumber = Math.floor(Math.random() * 1000000000);
-    const regNo = `HCA-${randomNumber}`;
+    const regNo = `HDI-${randomNumber}`;
     setFormData((prev) => ({ ...prev, registrationNo: regNo }));
   }, []);
 

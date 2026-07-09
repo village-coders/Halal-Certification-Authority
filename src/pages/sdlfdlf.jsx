@@ -3,7 +3,7 @@ import React from 'react'
 import './css/Home.css'
 import LoginCard from '../components/LoginCard'
 import { Link } from 'react-router-dom'
-import logo from '../assets/hcaLogo.png'
+import logo from '../assets/hdiLogo.png'
 
 const Home = () => {
   return (

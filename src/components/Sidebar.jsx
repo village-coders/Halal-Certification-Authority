@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import "./css/Sidebar.css";
-import logo from '../assets/hcaLogo1.png';
+import logo from '../assets/hdiLogo1.png';
 import { Link, useNavigate } from "react-router-dom";
 import { MdOutlineDashboard, MdOutlineAssignment, MdOutlineBadge, MdOutlineShoppingBag, MdOutlinePerson, MdOutlineMessage, MdOutlineLogout, MdOutlineReceipt, MdOutlineEventNote, MdOutlineHelp } from "react-icons/md";
 import { TbUsersGroup } from "react-icons/tb";
