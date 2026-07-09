@@ -58,6 +58,8 @@ function Applications() {
     // Geographic markets
     geographicMarkets: [],
     geographicMarketsOther: "",
+    geopoliticalRegion: "",
+    nigerianState: "",
     // Manufacturing facility (if different)
     manufacturingFacilitySame: true,
     manufacturingFacility: {
@@ -145,6 +147,15 @@ function Applications() {
     "Other"
   ];
 
+  const nigerianGeopoliticalData = {
+    "North Central": ["Benue", "Kogi", "Kwara", "Nasarawa", "Niger", "Plateau", "FCT (Abuja)"],
+    "North East": ["Adamawa", "Bauchi", "Borno", "Gombe", "Taraba", "Yobe"],
+    "North West": ["Jigawa", "Kaduna", "Kano", "Katsina", "Kebbi", "Sokoto", "Zamfara"],
+    "South East": ["Abia", "Anambra", "Ebonyi", "Enugu", "Imo"],
+    "South South": ["Akwa Ibom", "Bayelsa", "Cross River", "Delta", "Edo", "Rivers"],
+    "South West": ["Ekiti", "Lagos", "Ogun", "Ondo", "Osun", "Oyo"]
+  };
+
   const { user, fetchUser } = useAuth();
   const { products, fetchProducts, isLoading: productsLoading } = useProducts();
   const navigate = useNavigate();
@@ -208,6 +219,8 @@ function Applications() {
       usesGlycerineOrDerivatives: app.usesGlycerineOrDerivatives || "",
       geographicMarkets: app.geographicMarkets || [],
       geographicMarketsOther: app.geographicMarketsOther || "",
+      geopoliticalRegion: app.geopoliticalRegion || "",
+      nigerianState: app.nigerianState || "",
       manufacturingFacilitySame: app.manufacturingFacilitySame ?? true,
       manufacturingFacility: app.manufacturingFacility || {
         companyName: "",
@@ -429,6 +442,8 @@ function Applications() {
           usesGlycerineOrDerivatives: app.usesGlycerineOrDerivatives || "",
           geographicMarkets: app.geographicMarkets || [],
           geographicMarketsOther: app.geographicMarketsOther || "",
+          geopoliticalRegion: app.geopoliticalRegion || "",
+          nigerianState: app.nigerianState || "",
           manufacturingFacilitySame: !app.manufacturingFacility || Object.keys(app.manufacturingFacility).length === 0,
           manufacturingFacility: app.manufacturingFacility || {
             companyName: "",
@@ -556,6 +571,16 @@ function Applications() {
       return;
     }
 
+    if (formData.geographicMarkets.includes("Within Nigeria") && !formData.geopoliticalRegion) {
+      toast.error("Please select a Geopolitical Region for 'Within Nigeria'");
+      return;
+    }
+
+    if (formData.geographicMarkets.includes("Within Nigeria") && !formData.nigerianState) {
+      toast.error("Please select a State for 'Within Nigeria'");
+      return;
+    }
+
     if (!formData.authorizedBy.name) {
       toast.error("Please enter the name of the authorized person");
       return;
@@ -643,6 +668,8 @@ function Applications() {
       usesGlycerineOrDerivatives: "",
       geographicMarkets: [],
       geographicMarketsOther: "",
+      geopoliticalRegion: "",
+      nigerianState: "",
       manufacturingFacilitySame: true,
       manufacturingFacility: {
         companyName: "",
@@ -766,6 +793,14 @@ function Applications() {
             ...prev,
             geographicMarkets: updatedMarkets,
             geographicMarketsOther: ""
+          };
+        }
+        if (market === "Within Nigeria") {
+          return {
+            ...prev,
+            geographicMarkets: updatedMarkets,
+            geopoliticalRegion: "",
+            nigerianState: ""
           };
         }
       } else {
@@ -893,6 +928,16 @@ function Applications() {
 
     if (formData.geographicMarkets.includes("Other") && !formData.geographicMarketsOther.trim()) {
       toast.error("Please specify the 'Other' geographic market");
+      return;
+    }
+
+    if (formData.geographicMarkets.includes("Within Nigeria") && !formData.geopoliticalRegion) {
+      toast.error("Please select a Geopolitical Region for 'Within Nigeria'");
+      return;
+    }
+
+    if (formData.geographicMarkets.includes("Within Nigeria") && !formData.nigerianState) {
+      toast.error("Please select a State for 'Within Nigeria'");
       return;
     }
 
@@ -2082,6 +2127,42 @@ function Applications() {
                           />
                         </div>
                       )}
+
+                      {formData.geographicMarkets.includes("Within Nigeria") && (
+                        <div className="conditional-field nigeria-region-section">
+                          <div className="form-group">
+                            <label>Geopolitical Region *</label>
+                            <select
+                              value={formData.geopoliticalRegion}
+                              onChange={e => setFormData(prev => ({ ...prev, geopoliticalRegion: e.target.value, nigerianState: "" }))}
+                              disabled={loading}
+                              required
+                            >
+                              <option value="">Select Geopolitical Region</option>
+                              {Object.keys(nigerianGeopoliticalData).map(region => (
+                                <option key={region} value={region}>{region}</option>
+                              ))}
+                            </select>
+                          </div>
+
+                          {formData.geopoliticalRegion && (
+                            <div className="form-group">
+                              <label>State *</label>
+                              <select
+                                value={formData.nigerianState}
+                                onChange={e => setFormData(prev => ({ ...prev, nigerianState: e.target.value }))}
+                                disabled={loading}
+                                required
+                              >
+                                <option value="">Select State</option>
+                                {nigerianGeopoliticalData[formData.geopoliticalRegion].map(state => (
+                                  <option key={state} value={state}>{state}</option>
+                                ))}
+                              </select>
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
                   </div>
 
@@ -2738,6 +2819,42 @@ function Applications() {
                             disabled={editLoading}
                             required
                           />
+                        </div>
+                      )}
+
+                      {formData.geographicMarkets.includes("Within Nigeria") && (
+                        <div className="conditional-field nigeria-region-section">
+                          <div className="form-group">
+                            <label>Geopolitical Region *</label>
+                            <select
+                              value={formData.geopoliticalRegion}
+                              onChange={e => setFormData(prev => ({ ...prev, geopoliticalRegion: e.target.value, nigerianState: "" }))}
+                              disabled={editLoading}
+                              required
+                            >
+                              <option value="">Select Geopolitical Region</option>
+                              {Object.keys(nigerianGeopoliticalData).map(region => (
+                                <option key={region} value={region}>{region}</option>
+                              ))}
+                            </select>
+                          </div>
+
+                          {formData.geopoliticalRegion && (
+                            <div className="form-group">
+                              <label>State *</label>
+                              <select
+                                value={formData.nigerianState}
+                                onChange={e => setFormData(prev => ({ ...prev, nigerianState: e.target.value }))}
+                                disabled={editLoading}
+                                required
+                              >
+                                <option value="">Select State</option>
+                                {nigerianGeopoliticalData[formData.geopoliticalRegion].map(state => (
+                                  <option key={state} value={state}>{state}</option>
+                                ))}
+                              </select>
+                            </div>
+                          )}
                         </div>
                       )}
                     </div>

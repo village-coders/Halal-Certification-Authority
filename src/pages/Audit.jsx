@@ -666,26 +666,38 @@ const Audit = () => {
                                 <label style={{ fontSize: '13px', fontWeight: 600, color: '#374151', display: 'block', marginBottom: '6px' }}>Correction Files</label>
                                 <input 
                                     type="file" 
-                                    accept=".pdf,image/*" 
-                                    multiple
+                                    accept=".pdf,image/*"
                                     onChange={(e) => {
                                         const files = Array.from(e.target.files);
+                                        if (files.length === 0) return;
+                                        
                                         const oversized = files.find(f => f.size > 5 * 1024 * 1024);
                                         if (oversized) {
                                             toast.error(`File "${oversized.name}" exceeds the 5MB size limit.`);
                                             e.target.value = "";
-                                            setNcCorrectionFiles([]);
                                             return;
                                         }
-                                        setNcCorrectionFiles(files);
+                                        setNcCorrectionFiles(prev => [...prev, ...files]);
+                                        e.target.value = ""; // Reset input so same file can be selected again if needed
                                     }}
                                     style={{ width: '100%', padding: '8px', border: '1px solid #cbd5e1', borderRadius: '6px', fontSize: '14px', boxSizing: 'border-box' }}
                                 />
                                 {ncCorrectionFiles.length > 0 && (
-                                    <div style={{ marginTop: '8px' }}>
-                                        <p style={{ fontSize: '12px', fontWeight: 600, color: '#374151', margin: '0 0 4px 0' }}>Selected Files:</p>
-                                        <ul style={{ margin: 0, paddingLeft: '16px', fontSize: '12px', color: '#059669' }}>
-                                            {ncCorrectionFiles.map((file, i) => <li key={i}>{file.name}</li>)}
+                                    <div style={{ marginTop: '12px' }}>
+                                        <p style={{ fontSize: '12px', fontWeight: 600, color: '#374151', margin: '0 0 8px 0' }}>Selected Files (can add more):</p>
+                                        <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                            {ncCorrectionFiles.map((file, i) => (
+                                                <li key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '12px', color: '#059669', background: '#f0fdf4', padding: '6px 10px', borderRadius: '4px', border: '1px solid #bbf7d0' }}>
+                                                    <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{file.name}</span>
+                                                    <button 
+                                                        onClick={() => setNcCorrectionFiles(prev => prev.filter((_, idx) => idx !== i))}
+                                                        style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', padding: '0 4px', fontSize: '14px', flexShrink: 0 }}
+                                                        title="Remove file"
+                                                    >
+                                                        &times;
+                                                    </button>
+                                                </li>
+                                            ))}
                                         </ul>
                                     </div>
                                 )}
