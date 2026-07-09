@@ -4,1130 +4,589 @@ import Sidebar from "../components/Sidebar";
 import DashboardHeader from "../components/DashboardHeader";
 import axios from "axios";
 import { toast } from "sonner";
-import { FaPaperPlane, FaCheckDouble, FaCheck, FaPaperclip, FaSmile, FaTimes, FaUserCircle } from "react-icons/fa";
-import { MdOutlineAttachFile } from "react-icons/md";
-import { format } from "date-fns";
 import { useSocket } from "../contexts/SocketContext";
+import {
+  FaPaperPlane, FaPaperclip, FaTimes, FaPlus, FaTicketAlt,
+  FaCheckCircle, FaClock, FaExclamationCircle, FaLock
+} from "react-icons/fa";
+import { format } from "date-fns";
+
+const CATEGORIES = ["General", "Application", "Certificate", "Payment", "Audit", "Product", "Other"];
+const PRIORITIES = ["Low", "Medium", "High", "Urgent"];
+
+const STATUS_CONFIG = {
+  open:        { label: "Open",        color: "#3b82f6", bg: "#eff6ff", icon: <FaExclamationCircle /> },
+  "in-progress": { label: "In Progress", color: "#f59e0b", bg: "#fffbeb", icon: <FaClock /> },
+  resolved:    { label: "Resolved",    color: "#10b981", bg: "#ecfdf5", icon: <FaCheckCircle /> },
+  closed:      { label: "Closed",      color: "#6b7280", bg: "#f9fafb", icon: <FaLock /> }
+};
+
+const PRIORITY_CONFIG = {
+  Low:    { color: "#10b981", bg: "#ecfdf5" },
+  Medium: { color: "#f59e0b", bg: "#fffbeb" },
+  High:   { color: "#ef4444", bg: "#fef2f2" },
+  Urgent: { color: "#7c3aed", bg: "#f5f3ff" }
+};
 
 function Message() {
+  const [tickets, setTickets] = useState([]);
+  const [selectedTicket, setSelectedTicket] = useState(null);
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState("");
-  const [selectedConversation, setSelectedConversation] = useState(null);
-  const [conversations, setConversations] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [attachments, setAttachments] = useState([]);
-  const [showChatModal, setShowChatModal] = useState(false);
-  const [unreadCount, setUnreadCount] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
   const [isSending, setIsSending] = useState(false);
-  const [isTyping, setIsTyping] = useState(false);
-  const [isAdminOnline, setIsAdminOnline] = useState(false);
-  
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [newTicket, setNewTicket] = useState({
+    title: "",
+    description: "",
+    category: "General",
+    priority: "Medium"
+  });
+  const [isCreating, setIsCreating] = useState(false);
+
   const messagesEndRef = useRef(null);
   const fileInputRef = useRef(null);
-  const chatModalRef = useRef(null);
-  const typingTimeoutRef = useRef(null);
-  const reconnectTimeoutRef = useRef(null);
-  
   const baseUrl = import.meta.env.VITE_BASE_URL;
-  const { socket, isConnected, sendTyping } = useSocket();
-  const user = JSON.parse(localStorage.getItem('user'));
+  const { socket } = useSocket();
+  const user = JSON.parse(localStorage.getItem("user"));
 
-  // Enhanced socket setup with better reconnection
   useEffect(() => {
-    if (!socket) {
-      console.log('Socket not available, attempting to reconnect...');
-      if (reconnectTimeoutRef.current) {
-        clearTimeout(reconnectTimeoutRef.current);
-      }
-      reconnectTimeoutRef.current = setTimeout(() => {
-        setupSocketListeners();
-      }, 2000);
-      return;
+    fetchTickets();
+  }, [statusFilter]);
+
+  useEffect(() => {
+    if (selectedTicket) {
+      fetchTicketMessages(selectedTicket._id);
     }
+  }, [selectedTicket]);
 
-    setupSocketListeners();
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
 
-    return () => {
-      if (typingTimeoutRef.current) {
-        clearTimeout(typingTimeoutRef.current);
-      }
-      if (reconnectTimeoutRef.current) {
-        clearTimeout(reconnectTimeoutRef.current);
-      }
-      cleanupSocketListeners();
-    };
-  }, [socket, user?.id]);
-
-  const setupSocketListeners = () => {
+  // Socket listener for real-time replies
+  useEffect(() => {
     if (!socket) return;
 
-    console.log('Setting up Socket.IO listeners for user:', user?.id);
-
-    // Enhanced connection events
-    socket.on('connect', () => {
-      console.log('✅ User Socket.IO connected:', socket.id);
-      setIsAdminOnline(true);
-      
-      // Join user's personal room
-      if (user?.id) {
-        socket.emit('join-conversation', user.id);
-        console.log(`User ${user.id} joined their room`);
-      }
-    });
-
-    socket.on('disconnect', (reason) => {
-      console.log('❌ User Socket.IO disconnected:', reason);
-      setIsAdminOnline(false);
-      if (reason === 'io server disconnect' || reason === 'transport close') {
-        // Server disconnected, try to reconnect
-        setTimeout(() => {
-          if (socket && !socket.connected) {
-            socket.connect();
-          }
-        }, 1000);
-      }
-    });
-
-    socket.on('connect_error', (error) => {
-      console.error('User Socket connection error:', error);
-      setIsAdminOnline(false);
-    });
-
-    // Listen for new messages
-    socket.on('new-message', (message) => {
-      console.log('📨 New message received via Socket.IO:', {
-        id: message._id,
-        content: message.content?.substring(0, 50),
-        sender: message.sender?._id,
-        receiver: message.receiver,
-        isForCurrentUser: message.receiver === user?.id
-      });
-      
-      // Check if this message is for the current user or from admin
-      if (message.receiver === user?.id || (message.sender && message.sender.role === 'admin')) {
-        handleIncomingMessage(message);
-      }
-    });
-
-    // Listen for message read events
-    socket.on('message-read', ({ messageId }) => {
-      console.log('✅ Message read event:', messageId);
-      setMessages(prev => prev.map(msg => 
-        msg._id === messageId ? { ...msg, read: true, readAt: new Date() } : msg
-      ));
-      
-      // Update unread count
-      setUnreadCount(prev => Math.max(0, prev - 1));
-    });
-
-    // Listen for typing indicators
-    socket.on('user-typing', ({ userId, isTyping }) => {
-      console.log('⌨️ Typing event:', userId, isTyping);
-      // Admin is typing (admin's userId will be different from user's id)
-      if (userId && userId !== user?.id) {
-        setIsTyping(isTyping);
-        
-        // Clear previous timeout
-        if (typingTimeoutRef.current) {
-          clearTimeout(typingTimeoutRef.current);
-        }
-        
-        // Auto-clear typing after 3 seconds
-        if (isTyping) {
-          typingTimeoutRef.current = setTimeout(() => {
-            setIsTyping(false);
-          }, 3000);
-        }
-      }
-    });
-
-    // Listen for admin online status
-    socket.on('admin-online', ({ adminId, isOnline }) => {
-      console.log('👨‍💼 Admin online status:', adminId, isOnline);
-      setIsAdminOnline(isOnline);
-    });
-
-    // Test connection
-    socket.on('connected', (data) => {
-      console.log('Socket connected event:', data);
-    });
-
-    // Handle reconnection
-    socket.on('reconnect', (attemptNumber) => {
-      console.log(`🔄 Reconnected on attempt ${attemptNumber}`);
-      setIsAdminOnline(true);
-      // Refresh messages after reconnection
-      if (selectedConversation) {
-        fetchMessages();
-      }
-    });
-  };
-
-  const cleanupSocketListeners = () => {
-    if (!socket) return;
-    
-    socket.off('connect');
-    socket.off('disconnect');
-    socket.off('connect_error');
-    socket.off('new-message');
-    socket.off('message-read');
-    socket.off('user-typing');
-    socket.off('admin-online');
-    socket.off('connected');
-    socket.off('reconnect');
-  };
-
-  // Handle incoming message with deduplication
-  const handleIncomingMessage = (message) => {
-    setMessages(prev => {
-      // Check if message already exists
-      const exists = prev.some(msg => msg._id === message._id);
-      if (exists) return prev;
-      
-      // Add new message at the end (chronological order)
-      return [...prev, {
-        ...message,
-        isMine: message.sender?._id === user?.id
-      }];
-    });
-    
-    // Update unread count if message is not from user and not read
-    if (message.sender?._id !== user?.id && !message.read) {
-      setUnreadCount(prev => prev + 1);
-      
-      // Show notification if not in chat modal
-      if (!showChatModal) {
-        toast.info(`New message from ${message.sender?.fullName || 'Admin'}`, {
-          description: message.content?.substring(0, 100) || 'Attachment sent',
-          duration: 5000,
-          action: {
-            label: 'View',
-            onClick: () => openChatModal(conversations[0])
-          }
+    const handleTicketReply = ({ ticketId, message, status }) => {
+      if (selectedTicket?._id === ticketId) {
+        setMessages(prev => {
+          const exists = prev.some(m => m._id === message._id);
+          if (exists) return prev;
+          return [...prev, message];
         });
+        setSelectedTicket(prev => prev ? { ...prev, status } : prev);
       }
-    }
-    
-    // Update conversation
-    updateConversationWithNewMessage(message);
-    
-    // Scroll to bottom
-    setTimeout(() => scrollToBottom(), 100);
-  };
-
-  // Update conversation with new message
-  const updateConversationWithNewMessage = (message) => {
-    setConversations(prev => {
-      if (prev.length === 0) {
-        return [{
-          _id: "admin-conversation",
-          subject: "Admin Support",
-          lastMessage: message,
-          unreadCount: message.sender?._id !== user?.id && !message.read ? 1 : 0,
-          updatedAt: new Date().toISOString()
-        }];
-      }
-      
-      const updatedConversations = [...prev];
-      updatedConversations[0] = {
-        ...updatedConversations[0],
-        lastMessage: message,
-        unreadCount: message.sender?._id !== user?.id && !message.read 
-          ? updatedConversations[0].unreadCount + 1 
-          : updatedConversations[0].unreadCount,
-        updatedAt: new Date().toISOString()
-      };
-      return updatedConversations;
-    });
-  };
-
-  // Fetch messages when chat modal opens
-  useEffect(() => {
-    if (showChatModal && selectedConversation) {
-      fetchMessages();
-      markAsRead();
-      
-      // Join conversation room for real-time updates
-      if (socket && isConnected && user?.id) {
-        socket.emit('join-conversation', user.id);
-      }
-    }
-  }, [showChatModal, selectedConversation]);
-
-  // Scroll to bottom when messages change
-  useEffect(() => {
-    if (showChatModal) {
-      scrollToBottom();
-    }
-  }, [messages, showChatModal]);
-
-  // Handle typing events
-  const handleTyping = (isTyping) => {
-    if (!socket || !isConnected) {
-      console.log('Socket not connected, cannot send typing event');
-      return;
-    }
-
-    // Send typing event to admin
-    sendTyping(user?.id || 'user', isTyping);
-    
-    // Clear previous timeout
-    if (typingTimeoutRef.current) {
-      clearTimeout(typingTimeoutRef.current);
-    }
-
-    // Set timeout to stop typing after 2 seconds
-    if (isTyping) {
-      typingTimeoutRef.current = setTimeout(() => {
-        sendTyping(user?.id || 'user', false);
-      }, 2000);
-    }
-  };
-
-  // Close modal when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (chatModalRef.current && !chatModalRef.current.contains(event.target)) {
-        setShowChatModal(false);
-        setIsTyping(false);
-        // Stop typing indicator when closing modal
-        handleTyping(false);
-      }
+      setTickets(prev =>
+        prev.map(t => t._id === ticketId ? { ...t, lastRepliedAt: new Date().toISOString(), status } : t)
+      );
     };
 
-    if (showChatModal) {
-      document.addEventListener('mousedown', handleClickOutside);
-    }
+    const handleStatusUpdate = ({ ticketId, status }) => {
+      setSelectedTicket(prev => prev?._id === ticketId ? { ...prev, status } : prev);
+      setTickets(prev => prev.map(t => t._id === ticketId ? { ...t, status } : t));
+      toast.info(`Ticket status updated to ${status}`);
+    };
+
+    socket.on("ticket-reply", handleTicketReply);
+    socket.on("ticket-status-updated", handleStatusUpdate);
 
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
+      socket.off("ticket-reply", handleTicketReply);
+      socket.off("ticket-status-updated", handleStatusUpdate);
     };
-  }, [showChatModal]);
+  }, [socket, selectedTicket]);
 
-  // Initial data fetch - USING YOUR ORIGINAL API ROUTES
-  useEffect(() => {
-    fetchConversations();
-    fetchUnreadCount();
-    
-    // Setup periodic refresh for messages
-    const refreshInterval = setInterval(() => {
-      if (showChatModal && selectedConversation) {
-        fetchMessages();
-      }
-      fetchUnreadCount();
-    }, 30000); // Refresh every 30 seconds
-    
-    return () => clearInterval(refreshInterval);
-  }, []);
-
-  // USING YOUR ORIGINAL API ROUTES
-  const fetchConversations = async () => {
+  const fetchTickets = async () => {
     try {
       setIsLoading(true);
       const token = JSON.parse(localStorage.getItem("accessToken"));
-      
-      // Using your original API route: /messages/admin/conversation
-      const response = await axios.get(`${baseUrl}/messages/admin/conversation`, {
-        headers: { Authorization: `Bearer ${token}` }
+      const params = statusFilter !== "all" ? { status: statusFilter } : {};
+      const res = await axios.get(`${baseUrl}/tickets/my`, {
+        headers: { Authorization: `Bearer ${token}` },
+        params
       });
-
-      if (response.data.status === "success") {
-        const messagesData = response.data.messages || [];
-        
-        // Create conversation from messages
-        const conversation = {
-          _id: "admin-conversation",
-          subject: "Admin Support",
-          lastMessage: messagesData[messagesData.length - 1],
-          unreadCount: messagesData.filter(msg => 
-            !msg.read && msg.senderType === 'admin'
-          ).length,
-          updatedAt: messagesData[messagesData.length - 1]?.createdAt || new Date()
-        };
-
-        setConversations([conversation]);
-        
-        // If no conversation is selected, select this one
-        if (!selectedConversation) {
-          setSelectedConversation(conversation);
-        }
-        
-        // Set messages for the chat
-        if (messagesData.length > 0) {
-          const formattedMessages = messagesData.map(msg => ({
-            ...msg,
-            isMine: msg.sender?._id === user?.id,
-            // Ensure senderType is set correctly
-            senderType: msg.senderType || (msg.sender?._id === user?.id ? 'user' : 'admin')
-          }));
-          setMessages(formattedMessages);
-        }
+      if (res.data.status === "success") {
+        setTickets(res.data.data);
       }
-    } catch (error) {
-      console.error('Error fetching conversations:', error);
-      if (error.response?.status !== 401) {
-        toast.error("Failed to load conversations");
-      }
+    } catch (err) {
+      console.error("Failed to fetch tickets:", err);
     } finally {
       setIsLoading(false);
     }
   };
 
-  // USING YOUR ORIGINAL API ROUTES
-  const fetchMessages = async () => {
+  const fetchTicketMessages = async (ticketId) => {
     try {
       const token = JSON.parse(localStorage.getItem("accessToken"));
-      const response = await axios.get(`${baseUrl}/messages/admin/conversation`, {
+      const res = await axios.get(`${baseUrl}/tickets/${ticketId}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-
-      if (response.data.status === "success") {
-        const messagesData = response.data.messages || [];
-        const formattedMessages = messagesData.map(msg => ({
-          ...msg,
-          isMine: msg.sender?._id === user?.id,
-          senderType: msg.senderType || (msg.sender?._id === user?.id ? 'user' : 'admin')
-        }));
-        setMessages(formattedMessages);
+      if (res.data.status === "success") {
+        setMessages(res.data.data.messages || []);
       }
-    } catch (error) {
-      console.error('Error fetching messages:', error);
-      if (error.response?.status !== 401 && showChatModal) {
-        toast.error("Failed to load messages");
-      }
+    } catch (err) {
+      console.error("Failed to fetch ticket messages:", err);
     }
   };
 
-  // USING YOUR ORIGINAL API ROUTES
-  const fetchUnreadCount = async () => {
-    try {
-      const token = JSON.parse(localStorage.getItem("accessToken"));
-      const response = await axios.get(`${baseUrl}/messages/unread/count`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-
-      if (response.data.status === "success") {
-        setUnreadCount(response.data.count || 0);
-      }
-    } catch (error) {
-      console.error("Failed to fetch unread count:", error);
-    }
-  };
-
-  // USING YOUR ORIGINAL API ROUTES
-  const markAsRead = async () => {
-    try {
-      const token = JSON.parse(localStorage.getItem("accessToken"));
-      const unreadMessages = messages.filter(msg => 
-        !msg.read && msg.senderType === 'admin'
-      );
-      
-      if (unreadMessages.length > 0) {
-        // Mark each unread message individually - using your original route
-        for (const msg of unreadMessages) {
-          await axios.put(`${baseUrl}/messages/${msg._id}/read`, {}, {
-            headers: { Authorization: `Bearer ${token}` }
-          });
-        }
-        
-        // Update local state
-        setMessages(prev => prev.map(msg => 
-          ({ ...msg, read: true })
-        ));
-        
-        // Update conversations
-        setConversations(prev => {
-          if (prev.length > 0) {
-            return [{
-              ...prev[0],
-              unreadCount: 0
-            }];
-          }
-          return prev;
-        });
-        
-        // Reset unread count
-        setUnreadCount(0);
-        
-        // Emit read event via socket
-        if (socket && isConnected) {
-          unreadMessages.forEach(msg => {
-            socket.emit('message-read', { messageId: msg._id });
-          });
-        }
-      }
-    } catch (error) {
-      console.error("Failed to mark as read:", error);
-    }
-  };
-
-  // USING YOUR ORIGINAL API ROUTES
-  const handleSendMessage = async (e) => {
+  const handleCreateTicket = async (e) => {
     e.preventDefault();
-    
-    if (!newMessage.trim() && attachments.length === 0) {
-      toast.error("Message cannot be empty");
+    if (!newTicket.title.trim() || !newTicket.description.trim()) {
+      toast.error("Title and description are required");
       return;
     }
 
-    if (!isConnected) {
-      toast.error("Please connect to send messages");
+    setIsCreating(true);
+    try {
+      const token = JSON.parse(localStorage.getItem("accessToken"));
+      const formData = new FormData();
+      formData.append("title", newTicket.title);
+      formData.append("description", newTicket.description);
+      formData.append("category", newTicket.category);
+      formData.append("priority", newTicket.priority);
+      attachments.forEach(f => formData.append("attachments", f));
+
+      const res = await axios.post(`${baseUrl}/tickets`, formData, {
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "multipart/form-data" }
+      });
+
+      if (res.data.status === "success") {
+        toast.success("Ticket created successfully!");
+        setShowCreateModal(false);
+        setNewTicket({ title: "", description: "", category: "General", priority: "Medium" });
+        setAttachments([]);
+        fetchTickets();
+        setSelectedTicket(res.data.data);
+      }
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Failed to create ticket");
+    } finally {
+      setIsCreating(false);
+    }
+  };
+
+  const handleSendReply = async (e) => {
+    e.preventDefault();
+    if (!newMessage.trim() && attachments.length === 0) {
+      toast.error("Please type a message");
       return;
     }
+    if (!selectedTicket) return;
 
     setIsSending(true);
     try {
       const token = JSON.parse(localStorage.getItem("accessToken"));
       const formData = new FormData();
-      
       formData.append("content", newMessage);
-      // No need to append receiver since your backend defaults to 'admin'
-      
-      attachments.forEach((file, index) => {
-        formData.append("files", file);
+      attachments.forEach(f => formData.append("attachments", f));
+
+      const res = await axios.post(`${baseUrl}/tickets/${selectedTicket._id}/reply`, formData, {
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "multipart/form-data" }
       });
 
-      // Stop typing indicator
-      handleTyping(false);
-      
-      // Using your original API route: /messages/send
-      const response = await axios.post(`${baseUrl}/messages/send`, formData, {
-        headers: { 
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'multipart/form-data'
-        }
-      });
-
-      if (response.data.status === "success") {
-        // Add the new message to the list immediately
-        const newMsg = {
-          ...response.data.data,
-          isMine: true,
-          senderType: 'user',
-          read: false
-        };
-        
-        setMessages(prev => [...prev, newMsg]);
+      if (res.data.status === "success") {
+        const sentMsg = { ...res.data.data, sender: { fullName: user?.fullName, role: "user" } };
+        setMessages(prev => [...prev, sentMsg]);
+        setSelectedTicket(prev => ({ ...prev, status: res.data.ticketStatus || prev.status }));
         setNewMessage("");
         setAttachments([]);
-        
-        // Update conversation
-        updateConversationWithNewMessage(newMsg);
-        
-        // Scroll to bottom
-        setTimeout(() => scrollToBottom(), 100);
-        
-        // Emit socket event for real-time update
-        if (socket && isConnected) {
-          socket.emit('new-message', newMsg);
-        }
-        
-        toast.success("Message sent!");
+        scrollToBottom();
       }
-    } catch (error) {
-      console.error('Error sending message:', error);
-      toast.error(error.response?.data?.message || "Failed to send message");
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Failed to send reply");
     } finally {
       setIsSending(false);
     }
   };
 
-  const handleFileUpload = (e) => {
+  const scrollToBottom = () => {
+    setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }), 100);
+  };
+
+  const handleFileChange = (e) => {
     const files = Array.from(e.target.files);
-    const validFiles = files.filter(file => {
-      // Limit file size to 5MB
-      if (file.size > 5 * 1024 * 1024) {
-        toast.error(`"${file.name}" exceeds the 5MB size limit.`);
-        return false;
-      }
+    const valid = files.filter(f => {
+      if (f.size > 10 * 1024 * 1024) { toast.error(`${f.name} exceeds 10MB`); return false; }
       return true;
     });
-
-    setAttachments(prev => [...prev, ...validFiles]);
+    setAttachments(prev => [...prev, ...valid]);
   };
 
-  const removeAttachment = (index) => {
-    setAttachments(prev => prev.filter((_, i) => i !== index));
-  };
-
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
-
-  const formatTime = (date) => {
-    if (!date) return '';
+  const formatDate = (d) => {
+    if (!d) return "";
     try {
-      return format(new Date(date), 'hh:mm a');
-    } catch (error) {
-      return '';
-    }
-  };
-
-  const formatDate = (date) => {
-    if (!date) return '';
-    try {
+      const date = new Date(d);
       const today = new Date();
-      const messageDate = new Date(date);
-      
-      if (today.toDateString() === messageDate.toDateString()) {
-        return "Today";
-      }
-      
-      const yesterday = new Date(today);
-      yesterday.setDate(yesterday.getDate() - 1);
-      
-      if (yesterday.toDateString() === messageDate.toDateString()) {
-        return "Yesterday";
-      }
-      
-      return format(messageDate, 'MMM dd, yyyy');
-    } catch (error) {
-      return '';
-    }
+      if (date.toDateString() === today.toDateString()) return "Today";
+      return format(date, "MMM dd, yyyy");
+    } catch { return ""; }
   };
 
-  const openChatModal = (conversation) => {
-    setSelectedConversation(conversation);
-    setShowChatModal(true);
-    markAsRead();
+  const formatTime = (d) => {
+    if (!d) return "";
+    try { return format(new Date(d), "hh:mm a"); } catch { return ""; }
   };
 
-  const closeChatModal = () => {
-    setShowChatModal(false);
-    setIsTyping(false);
-    // Stop typing indicator when closing modal
-    handleTyping(false);
-  };
-
-  const handleReconnect = () => {
-    if (socket) {
-      socket.connect();
-      toast.info("Attempting to reconnect...");
-    }
-  };
-
-  const statsData = [
-    { 
-      title: "TOTAL MESSAGES", 
-      count: messages.length, 
-      icon: "fa-comments", 
-      color: "#4caf50" 
-    },
-    { 
-      title: "UNREAD MESSAGES", 
-      count: unreadCount, 
-      icon: "fa-envelope", 
-      color: "#2196f3" 
-    },
-    { 
-      title: "SUPPORT STATUS", 
-      count: isAdminOnline && isConnected ? "Online" : "Offline", 
-      icon: "fa-headset", 
-      color: isAdminOnline && isConnected ? "#4caf50" : "#ff9800" 
-    }
-  ];
+  const filteredTickets = statusFilter === "all" ? tickets : tickets.filter(t => t.status === statusFilter);
+  const openCount = tickets.filter(t => t.status === "open").length;
+  const inProgressCount = tickets.filter(t => t.status === "in-progress").length;
+  const resolvedCount = tickets.filter(t => t.status === "resolved").length;
 
   return (
-    <div className="dash">       
-      <Sidebar activeMess="active" /> 
+    <div className="dash">
+      <Sidebar activeMess="active" />
       <main className="content">
-        <div className="messages-container">
-          <DashboardHeader title="Messages" />
-          
-          {/* Enhanced Connection Status Indicator */}
-          <div className="connection-status" style={{
-            marginBottom: '20px',
-            padding: '12px 16px',
-            borderRadius: '8px',
-            backgroundColor: isConnected && isAdminOnline ? '#e8f5e9' : '#ffebee',
-            border: `1px solid ${isConnected && isAdminOnline ? '#4caf50' : '#f44336'}`,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: '10px'
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <div style={{
-                width: '10px',
-                height: '10px',
-                borderRadius: '50%',
-                backgroundColor: isConnected && isAdminOnline ? '#4caf50' : '#f44336',
-                animation: isConnected && isAdminOnline ? 'pulse 2s infinite' : 'none'
-              }}></div>
-              <div>
-                <span style={{
-                  color: isConnected && isAdminOnline ? '#2e7d32' : '#c62828',
-                  fontSize: '14px',
-                  fontWeight: '500'
-                }}>
-                  {isConnected && isAdminOnline ? 'Real-time messaging connected' : 'Real-time messaging disconnected'}
-                </span>
-                {isConnected && !isAdminOnline && (
-                  <p style={{ margin: '4px 0 0', fontSize: '12px', color: '#666' }}>
-                    Support team is currently offline
-                  </p>
-                )}
-              </div>
-            </div>
-            {(!isConnected || !isAdminOnline) && (
-              <button 
-                onClick={handleReconnect}
-                style={{
-                  padding: '6px 12px',
-                  backgroundColor: '#2196f3',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '4px',
-                  cursor: 'pointer',
-                  fontSize: '12px',
-                  fontWeight: '500'
-                }}
-              >
-                {!isConnected ? 'Reconnect' : 'Check Status'}
-              </button>
-            )}
-          </div>
+        <DashboardHeader title="Support Tickets" />
 
-          {/* Quick Actions */}
-          <div className="quick-actions">
-            <h2>Quick Actions</h2>  
-            <div className="actions-grid">
-              <div 
-                className="action-card" 
-                style={{ borderLeft: "4px solid #4caf50", cursor: "pointer" }}
-                onClick={() => openChatModal(conversations[0] || {
-                  _id: "admin-conversation",
-                  subject: "Admin Support",
-                  lastMessage: null,
-                  unreadCount: 0
-                })}
-              >
-                <div className="action-icon">
-                  <i className="fas fa-comment-dots" style={{ color: "#4caf50" }}></i>
+        <div style={{ padding: "20px 24px" }}>
+          {/* Stats Row */}
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "16px", marginBottom: "24px" }}>
+            {[
+              { label: "Total Tickets", value: tickets.length, color: "#6366f1", bg: "#eef2ff" },
+              { label: "Open", value: openCount, color: "#3b82f6", bg: "#eff6ff" },
+              { label: "In Progress", value: inProgressCount, color: "#f59e0b", bg: "#fffbeb" },
+              { label: "Resolved", value: resolvedCount, color: "#10b981", bg: "#ecfdf5" }
+            ].map((s, i) => (
+              <div key={i} style={{ background: "white", borderRadius: "12px", padding: "20px", boxShadow: "0 1px 3px rgba(0,0,0,0.08)", border: "1px solid #f1f5f9", display: "flex", alignItems: "center", gap: "14px" }}>
+                <div style={{ width: "48px", height: "48px", borderRadius: "12px", background: s.bg, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <FaTicketAlt style={{ color: s.color, fontSize: "20px" }} />
                 </div>
-                <div className="action-content">
-                  <h3>CONTACT SUPPORT</h3>
-                  <button className="action-btn">Chat Now</button>
-                </div>
-              </div>
-              
-              <div className="action-card" style={{ borderLeft: "4px solid #2196f3" }}>
-                <div className="action-icon">
-                  <i className="fas fa-history" style={{ color: "#2196f3" }}></i>
-                </div>
-                <div className="action-content">
-                  <h3>MESSAGE HISTORY</h3>
-                  <button 
-                    className="action-btn"
-                    onClick={() => openChatModal(conversations[0])}
-                  >
-                    View
-                  </button>
-                </div>
-              </div>
-              
-              <div className="action-card" style={{ borderLeft: "4px solid #9c27b0" }}>
-                <div className="action-icon">
-                  <i className="fas fa-file-alt" style={{ color: "#9c27b0" }}></i>
-                </div>
-                <div className="action-content">
-                  <h3>SUPPORT TICKETS</h3>
-                  <button className="action-btn">Create</button>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Stats Overview */}
-          <div className="stats-overview">
-            {statsData.map((stat, index) => (
-              <div key={index} className="stat-card">
-                <div className="stat-icon">
-                  <i className={`fas ${stat.icon}`} style={{ color: stat.color }}></i>
-                </div>
-                <div className="stat-content">
-                  <h3>{stat.title}</h3>
-                  <p className="stat-count">{stat.count}</p>
+                <div>
+                  <p style={{ margin: 0, fontSize: "13px", color: "#64748b", fontWeight: 500 }}>{s.label}</p>
+                  <p style={{ margin: 0, fontSize: "26px", fontWeight: 700, color: "#1e293b" }}>{s.value}</p>
                 </div>
               </div>
             ))}
           </div>
 
-          {/* Recent Messages */}
-          <div className="recent-messages-section">
-            <div className="section-header">
-              <h2>Recent Messages</h2>
-              <button 
-                className="view-all-btn"
-                onClick={() => openChatModal(conversations[0])}
-              >
-                View All
-              </button>
-            </div>
-            
-            <div className="recent-messages-list">
-              {isLoading ? (
-                <div className="loading-messages">
-                  <div className="spinner"></div>
-                  <p>Loading messages...</p>
-                </div>
-              ) : messages.length === 0 ? (
-                <div className="empty-messages">
-                  <div className="empty-icon">
-                    <i className="fas fa-comments"></i>
-                  </div>
-                  <h3>No messages yet</h3>
-                  <p>Start a conversation with our support team</p>
-                  <button 
-                    className="start-conversation-btn"
-                    onClick={() => openChatModal(conversations[0] || {
-                      _id: "admin-conversation",
-                      subject: "Admin Support",
-                      lastMessage: null,
-                      unreadCount: 0
-                    })}
+          {/* Main Panel */}
+          <div style={{ display: "grid", gridTemplateColumns: "340px 1fr", gap: "20px", height: "calc(100vh - 280px)", minHeight: "500px" }}>
+            {/* Left: Ticket List */}
+            <div style={{ background: "white", borderRadius: "16px", boxShadow: "0 1px 3px rgba(0,0,0,0.08)", border: "1px solid #f1f5f9", display: "flex", flexDirection: "column", overflow: "hidden" }}>
+              {/* List Header */}
+              <div style={{ padding: "16px 20px", borderBottom: "1px solid #f1f5f9" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
+                  <h2 style={{ margin: 0, fontSize: "16px", fontWeight: 700, color: "#1e293b" }}>My Tickets</h2>
+                  <button
+                    onClick={() => setShowCreateModal(true)}
+                    style={{ display: "flex", alignItems: "center", gap: "6px", padding: "8px 14px", background: "#00853b", color: "white", border: "none", borderRadius: "8px", cursor: "pointer", fontSize: "13px", fontWeight: 600 }}
                   >
-                    Start Conversation
+                    <FaPlus size={11} /> New Ticket
                   </button>
                 </div>
-              ) : (
-                <div className="messages-preview">
-                  {[...messages].reverse().slice(0, 1).map((message) => (
-                    <div 
-                      key={message._id}
-                      className="message-preview-item"
-                      onClick={() => openChatModal(conversations[0])}
-                    >
-                      <div className="preview-avatar">
-                        {message.isMine ? (
-                          <FaUserCircle />
-                        ) : (
-                          <i className="fas fa-user-tie"></i>
-                        )}
-                      </div>
-                      <div className="preview-content">
-                        <div className="preview-header">
-                          <span className="preview-sender">
-                            {message.isMine ? 'You' : 'Support Team'}
-                          </span>
-                          <span className="preview-time">
-                            {formatTime(message.createdAt)}
-                          </span>
-                        </div>
-                        <p className="preview-text">
-                          {message.content?.substring(0, 60) || 'Attachment sent...'}
-                          {message.content && message.content.length > 60 && '...'}
-                        </p>
-                        {!message.read && message.receiver === "admin" && (
-                          <span className="unread-indicator"></span>
-                        )}
-                      </div>
-                    </div>
+                {/* Filter tabs */}
+                <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
+                  {["all", "open", "in-progress", "resolved", "closed"].map(s => (
+                    <button key={s} onClick={() => setStatusFilter(s)} style={{
+                      padding: "4px 10px", borderRadius: "20px", border: "none", cursor: "pointer",
+                      background: statusFilter === s ? "#00853b" : "#f1f5f9",
+                      color: statusFilter === s ? "white" : "#64748b",
+                      fontSize: "12px", fontWeight: 600, textTransform: "capitalize"
+                    }}>
+                      {s === "all" ? "All" : s.replace("-", " ")}
+                    </button>
                   ))}
                 </div>
-              )}
-            </div>
-          </div>
-        </div>
-      </main>
-
-      {/* Enhanced Chat Modal */}
-      {showChatModal && (
-        <div className="chat-modal-overlay">
-          <div className="chat-modal" ref={chatModalRef}>
-            {/* Modal Header */}
-            <div className="chat-modal-header">
-              <div className="modal-header-left">
-                <div className="modal-avatar">
-                  <i className="fas fa-user-tie"></i>
-                </div>
-                <div className="modal-user-info">
-                  <h3>Admin Support</h3>
-                  <p className="modal-status">
-                    <span className="status-indicator" style={{ 
-                      backgroundColor: isAdminOnline && isConnected ? '#22c55e' : '#ef4444'
-                    }}></span>
-                    {isAdminOnline && isConnected ? 'Online • Usually replies within minutes' : 'Offline • Messages will be delivered when online'}
-                    {isTyping && isAdminOnline && (
-                      <span className="typing-indicator" style={{
-                        marginLeft: '10px',
-                        color: '#2196f3',
-                        fontStyle: 'italic',
-                        animation: 'pulse 1.5s infinite'
-                      }}>
-                        typing...
-                      </span>
-                    )}
-                  </p>
-                </div>
               </div>
-              <div className="modal-header-right">
-                {unreadCount > 0 && !showChatModal && (
-                  <span className="unread-badge" style={{
-                    backgroundColor: '#ef4444',
-                    color: 'white',
-                    fontSize: '12px',
-                    padding: '2px 8px',
-                    borderRadius: '10px',
-                    marginRight: '10px'
-                  }}>
-                    {unreadCount}
-                  </span>
-                )}
-                <button className="close-modal-btn" onClick={closeChatModal}>
-                  <FaTimes />
-                </button>
-              </div>
-            </div>
 
-            {/* Messages Container */}
-            <div className="chat-modal-body">
-              {messages.length === 0 ? (
-                <div className="empty-chat">
-                  <div className="empty-chat-icon">
-                    <i className="fas fa-comments"></i>
+              {/* Ticket Items */}
+              <div style={{ flex: 1, overflowY: "auto" }}>
+                {isLoading ? (
+                  <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "200px" }}>
+                    <div style={{ width: "28px", height: "28px", border: "3px solid #f1f5f9", borderTop: "3px solid #00853b", borderRadius: "50%", animation: "spin 0.8s linear infinite" }}></div>
                   </div>
-                  <h3>Start a conversation</h3>
-                  <p>Send a message to our support team</p>
-                  {!isConnected && (
-                    <p className="connection-warning" style={{ color: '#ef4444', marginTop: '8px' }}>
-                      <i className="fas fa-exclamation-circle"></i> Connect to enable real-time chat
-                    </p>
-                  )}
-                </div>
-              ) : (
-                <div className="modal-messages-list">
-                  {messages.map((message, index) => {
-                    const showDate = index === 0 || 
-                      formatDate(messages[index-1].createdAt) !== formatDate(message.createdAt);
-                    
+                ) : filteredTickets.length === 0 ? (
+                  <div style={{ textAlign: "center", padding: "60px 20px", color: "#94a3b8" }}>
+                    <FaTicketAlt style={{ fontSize: "40px", marginBottom: "12px", opacity: 0.4 }} />
+                    <p style={{ margin: 0, fontWeight: 600 }}>No tickets yet</p>
+                    <p style={{ margin: "6px 0 0", fontSize: "13px" }}>Create your first support ticket</p>
+                  </div>
+                ) : (
+                  filteredTickets.map(ticket => {
+                    const sc = STATUS_CONFIG[ticket.status] || STATUS_CONFIG.open;
+                    const pc = PRIORITY_CONFIG[ticket.priority] || PRIORITY_CONFIG.Medium;
+                    const isSelected = selectedTicket?._id === ticket._id;
                     return (
-                      <div key={message._id}>
-                        {showDate && (
-                          <div className="modal-date-divider">
-                            <span>{formatDate(message.createdAt)}</span>
-                          </div>
-                        )}
-                        
-                        <div className={`modal-message-wrapper ${message.isMine ? 'sent' : 'received'}`}>
-                          <div className="modal-message-content">
-                            {!message.isMine && message.sender?.fullName && (
-                              <div className="modal-sender-name">
-                                {message.sender.fullName}
-                              </div>
-                            )}
-                            {message.content && (
-                              <p>{message.content}</p>
-                            )}
-                            
-                            {message.attachments?.length > 0 && (
-                              <div className="modal-attachments">
-                                {message.attachments.map((attachment, idx) => (
-                                  <div key={idx} className="modal-attachment-item">
-                                    {attachment.fileType?.startsWith('image/') || attachment.url?.match(/\.(jpg|jpeg|png|gif)$/i) ? (
-                                      <div className="modal-image-attachment">
-                                        <img 
-                                          src={attachment.url} 
-                                          alt="Attachment" 
-                                          className="modal-attachment-image"
-                                          onClick={() => window.open(attachment.url, '_blank')}
-                                        />
-                                        <span className="attachment-name">{attachment.filename}</span>
-                                      </div>
-                                    ) : (
-                                      <div className="modal-file-attachment">
-                                        <i className="fas fa-file"></i>
-                                        <div className="file-info">
-                                          <span className="file-name">{attachment.filename}</span>
-                                          <span className="file-size">
-                                            {(attachment.size / 1024).toFixed(1)} KB
-                                          </span>
-                                        </div>
-                                        <a 
-                                          href={attachment.url} 
-                                          download
-                                          className="modal-download-btn"
-                                        >
-                                          <i className="fas fa-download"></i>
-                                        </a>
-                                      </div>
-                                    )}
-                                  </div>
-                                ))}
-                              </div>
-                            )}
-                            
-                            <div className="modal-message-footer">
-                              <span className="modal-message-time">
-                                {formatTime(message.createdAt)}
-                              </span>
-                              {message.isMine && (
-                                <span className="modal-message-status">
-                                  {message.read ? (
-                                    <>
-                                      <FaCheckDouble color="#4caf50" />
-                                      <span style={{ fontSize: '10px', marginLeft: '4px' }}>Read</span>
-                                    </>
-                                  ) : (
-                                    <>
-                                      <FaCheck color="#999" />
-                                      <span style={{ fontSize: '10px', marginLeft: '4px' }}>Sent</span>
-                                    </>
-                                  )}
-                                </span>
-                              )}
-                            </div>
-                          </div>
+                      <div
+                        key={ticket._id}
+                        onClick={() => setSelectedTicket(ticket)}
+                        style={{
+                          padding: "14px 20px",
+                          borderBottom: "1px solid #f1f5f9",
+                          cursor: "pointer",
+                          background: isSelected ? "#f0fdf4" : "transparent",
+                          borderLeft: isSelected ? "3px solid #00853b" : "3px solid transparent",
+                          transition: "all 0.15s ease"
+                        }}
+                      >
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "6px" }}>
+                          <span style={{ fontSize: "11px", fontWeight: 700, color: "#00853b", fontFamily: "monospace" }}>{ticket.ticketNumber}</span>
+                          <span style={{ fontSize: "10px", fontWeight: 600, padding: "2px 8px", borderRadius: "12px", background: sc.bg, color: sc.color }}>
+                            {sc.label}
+                          </span>
+                        </div>
+                        <p style={{ margin: "0 0 6px", fontSize: "13px", fontWeight: 600, color: "#1e293b", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{ticket.title}</p>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                          <span style={{ fontSize: "11px", padding: "2px 7px", borderRadius: "10px", background: pc.bg, color: pc.color, fontWeight: 600 }}>{ticket.priority}</span>
+                          <span style={{ fontSize: "11px", color: "#94a3b8" }}>{formatDate(ticket.lastRepliedAt)}</span>
                         </div>
                       </div>
                     );
-                  })}
-                  <div ref={messagesEndRef} />
-                </div>
-              )}
-            </div>
-
-            {/* Message Input */}
-            <form className="chat-modal-input" onSubmit={handleSendMessage}>
-              {/* Attachments Preview */}
-              {attachments.length > 0 && (
-                <div className="modal-attachments-preview">
-                  {attachments.map((file, index) => (
-                    <div key={index} className="modal-attachment-preview">
-                      <div className="modal-preview-info">
-                        <i className="fas fa-paperclip"></i>
-                        <span className="modal-preview-name">{file.name}</span>
-                        <span className="modal-preview-size">
-                          {(file.size / 1024).toFixed(1)} KB
-                        </span>
-                      </div>
-                      <button
-                        type="button"
-                        className="modal-remove-attachment"
-                        onClick={() => removeAttachment(index)}
-                      >
-                        <i className="fas fa-times"></i>
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              <div className="modal-input-container">
-                <button 
-                  type="button" 
-                  className="modal-attach-btn"
-                  onClick={() => fileInputRef.current.click()}
-                  title="Attach file"
-                  disabled={!isConnected}
-                >
-                  <FaPaperclip />
-                  <input
-                    type="file"
-                    ref={fileInputRef}
-                    onChange={handleFileUpload}
-                    multiple
-                    style={{ display: 'none' }}
-                  />
-                </button>
-                
-                <input
-                  type="text"
-                  className="modal-text-input"
-                  placeholder={isConnected ? "Type your message here..." : "Connect to send messages..."}
-                  value={newMessage}
-                  onChange={(e) => {
-                    setNewMessage(e.target.value);
-                    // Send typing event
-                    if (e.target.value.trim() && isConnected) {
-                      handleTyping(true);
-                    } else {
-                      handleTyping(false);
-                    }
-                  }}
-                  onBlur={() => handleTyping(false)}
-                  onKeyPress={(e) => {
-                    if (e.key === 'Enter' && !e.shiftKey && isConnected) {
-                      e.preventDefault();
-                      handleSendMessage(e);
-                    }
-                  }}
-                  disabled={isSending || !isConnected}
-                />
-                
-                <button 
-                  type="submit" 
-                  className="modal-send-btn"
-                  disabled={(!newMessage.trim() && attachments.length === 0) || isSending || !isConnected}
-                  title={!isConnected ? "Connect to send messages" : "Send message"}
-                >
-                  {isSending ? (
-                    <i className="fas fa-spinner fa-spin"></i>
-                  ) : (
-                    <FaPaperPlane />
-                  )}
-                </button>
-              </div>
-              
-              <div className="modal-input-footer">
-                <p className="file-hint">
-                  <i className="fas fa-info-circle"></i>
-                  Maximum file size: 5MB • Supported: Images, PDF, Documents
-                </p>
-                {!isConnected && (
-                  <p className="connection-hint" style={{ color: '#f44336', marginTop: '5px' }}>
-                    <i className="fas fa-exclamation-circle"></i>
-                    Connect to enable real-time messaging
-                  </p>
+                  })
                 )}
               </div>
-            </form>
+            </div>
+
+            {/* Right: Ticket Detail / Messages */}
+            <div style={{ background: "white", borderRadius: "16px", boxShadow: "0 1px 3px rgba(0,0,0,0.08)", border: "1px solid #f1f5f9", display: "flex", flexDirection: "column", overflow: "hidden" }}>
+              {!selectedTicket ? (
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "100%", color: "#94a3b8", textAlign: "center", padding: "40px" }}>
+                  <FaTicketAlt style={{ fontSize: "56px", marginBottom: "16px", opacity: 0.25 }} />
+                  <h3 style={{ margin: "0 0 8px", fontSize: "18px", color: "#64748b" }}>Select a ticket to view</h3>
+                  <p style={{ margin: "0 0 24px", fontSize: "14px" }}>Or create a new support ticket to get help</p>
+                  <button
+                    onClick={() => setShowCreateModal(true)}
+                    style={{ display: "flex", alignItems: "center", gap: "8px", padding: "10px 20px", background: "#00853b", color: "white", border: "none", borderRadius: "10px", cursor: "pointer", fontWeight: 600 }}
+                  >
+                    <FaPlus /> Create New Ticket
+                  </button>
+                </div>
+              ) : (
+                <>
+                  {/* Ticket Header */}
+                  <div style={{ padding: "16px 24px", borderBottom: "1px solid #f1f5f9" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                      <div>
+                        <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "4px" }}>
+                          <span style={{ fontSize: "12px", fontWeight: 700, color: "#00853b", fontFamily: "monospace" }}>{selectedTicket.ticketNumber}</span>
+                          <span style={{ width: "4px", height: "4px", borderRadius: "50%", background: "#cbd5e1" }}></span>
+                          <span style={{ fontSize: "12px", color: "#64748b" }}>{selectedTicket.category}</span>
+                        </div>
+                        <h3 style={{ margin: 0, fontSize: "17px", fontWeight: 700, color: "#1e293b" }}>{selectedTicket.title}</h3>
+                      </div>
+                      <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                        {(() => {
+                          const sc = STATUS_CONFIG[selectedTicket.status] || STATUS_CONFIG.open;
+                          const pc = PRIORITY_CONFIG[selectedTicket.priority] || PRIORITY_CONFIG.Medium;
+                          return (
+                            <>
+                              <span style={{ fontSize: "12px", fontWeight: 600, padding: "4px 12px", borderRadius: "16px", background: pc.bg, color: pc.color }}>{selectedTicket.priority}</span>
+                              <span style={{ display: "flex", alignItems: "center", gap: "5px", fontSize: "12px", fontWeight: 600, padding: "4px 12px", borderRadius: "16px", background: sc.bg, color: sc.color }}>
+                                {sc.icon} {sc.label}
+                              </span>
+                            </>
+                          );
+                        })()}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Messages */}
+                  <div style={{ flex: 1, overflowY: "auto", padding: "20px 24px", background: "#f8fafc" }}>
+                    {messages.map((msg, i) => {
+                      const isMe = msg.senderType === "user";
+                      const showDate = i === 0 || formatDate(messages[i - 1].createdAt) !== formatDate(msg.createdAt);
+                      return (
+                        <div key={msg._id || i}>
+                          {showDate && (
+                            <div style={{ textAlign: "center", margin: "16px 0" }}>
+                              <span style={{ fontSize: "11px", background: "white", padding: "4px 14px", borderRadius: "20px", color: "#94a3b8", border: "1px solid #e2e8f0" }}>{formatDate(msg.createdAt)}</span>
+                            </div>
+                          )}
+                          <div style={{ display: "flex", justifyContent: isMe ? "flex-end" : "flex-start", marginBottom: "12px" }}>
+                            <div style={{ maxWidth: "70%" }}>
+                              {!isMe && (
+                                <div style={{ fontSize: "11px", color: "#64748b", marginBottom: "4px", fontWeight: 600 }}>
+                                  HDI Support
+                                </div>
+                              )}
+                              <div style={{
+                                padding: "10px 16px",
+                                borderRadius: isMe ? "16px 16px 4px 16px" : "16px 16px 16px 4px",
+                                background: isMe ? "#00853b" : "white",
+                                color: isMe ? "white" : "#1e293b",
+                                boxShadow: "0 1px 2px rgba(0,0,0,0.08)",
+                                border: isMe ? "none" : "1px solid #e2e8f0"
+                              }}>
+                                <p style={{ margin: 0, fontSize: "14px", lineHeight: "1.5" }}>{msg.content}</p>
+                                {msg.attachments?.length > 0 && (
+                                  <div style={{ marginTop: "8px", display: "flex", flexDirection: "column", gap: "4px" }}>
+                                    {msg.attachments.map((att, ai) => (
+                                      <a key={ai} href={att.url} target="_blank" rel="noopener noreferrer"
+                                        style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "12px", color: isMe ? "rgba(255,255,255,0.9)" : "#3b82f6", textDecoration: "underline" }}>
+                                        <FaPaperclip size={11} /> {att.filename}
+                                      </a>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+                              <div style={{ textAlign: isMe ? "right" : "left", marginTop: "3px" }}>
+                                <span style={{ fontSize: "10px", color: "#94a3b8" }}>{formatTime(msg.createdAt)}</span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                    <div ref={messagesEndRef} />
+                  </div>
+
+                  {/* Reply Input */}
+                  {selectedTicket.status === "closed" ? (
+                    <div style={{ padding: "16px 24px", borderTop: "1px solid #f1f5f9", textAlign: "center", background: "#f8fafc" }}>
+                      <p style={{ margin: 0, color: "#94a3b8", fontSize: "13px" }}>
+                        <FaLock style={{ marginRight: "6px" }} />
+                        This ticket is closed. Create a new ticket if you need further assistance.
+                      </p>
+                    </div>
+                  ) : (
+                    <form onSubmit={handleSendReply} style={{ padding: "16px 24px", borderTop: "1px solid #f1f5f9", background: "white" }}>
+                      {attachments.length > 0 && (
+                        <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", marginBottom: "10px" }}>
+                          {attachments.map((f, i) => (
+                            <div key={i} style={{ display: "flex", alignItems: "center", gap: "6px", background: "#f1f5f9", borderRadius: "6px", padding: "4px 8px", fontSize: "12px" }}>
+                              <FaPaperclip size={10} color="#64748b" />
+                              <span style={{ color: "#334155", maxWidth: "120px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{f.name}</span>
+                              <button type="button" onClick={() => setAttachments(prev => prev.filter((_, pi) => pi !== i))} style={{ background: "none", border: "none", cursor: "pointer", color: "#94a3b8", padding: 0 }}><FaTimes size={10} /></button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      <div style={{ display: "flex", gap: "8px", alignItems: "flex-end" }}>
+                        <button type="button" onClick={() => fileInputRef.current.click()}
+                          style={{ padding: "10px", background: "#f1f5f9", border: "none", borderRadius: "10px", cursor: "pointer", color: "#64748b", flexShrink: 0 }}>
+                          <FaPaperclip />
+                          <input ref={fileInputRef} type="file" multiple style={{ display: "none" }} onChange={handleFileChange} />
+                        </button>
+                        <input
+                          type="text"
+                          value={newMessage}
+                          onChange={e => setNewMessage(e.target.value)}
+                          onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSendReply(e); } }}
+                          placeholder="Type your reply..."
+                          style={{ flex: 1, padding: "10px 16px", border: "1px solid #e2e8f0", borderRadius: "10px", fontSize: "14px", outline: "none" }}
+                        />
+                        <button type="submit" disabled={isSending}
+                          style={{ padding: "10px 18px", background: "#00853b", color: "white", border: "none", borderRadius: "10px", cursor: isSending ? "not-allowed" : "pointer", opacity: isSending ? 0.7 : 1, flexShrink: 0 }}>
+                          <FaPaperPlane />
+                        </button>
+                      </div>
+                    </form>
+                  )}
+                </>
+              )}
+            </div>
           </div>
         </div>
-      )}
 
-      {/* Add CSS for spinner */}
-      <style>{`
-        @keyframes pulse {
-          0% { opacity: 1; }
-          50% { opacity: 0.5; }
-          100% { opacity: 1; }
-        }
-        
-        .loading-messages .spinner {
-          border: 3px solid #f3f3f3;
-          border-top: 3px solid #00853b;
-          border-radius: 50%;
-          width: 30px;
-          height: 30px;
-          animation: spin 1s linear infinite;
-          margin: 0 auto 10px;
-        }
-        
-        @keyframes spin {
-          0% { transform: rotate(0deg); }
-          100% { transform: rotate(360deg); }
-        }
-        
-        .modal-sender-name {
-          font-size: 12px;
-          font-weight: 600;
-          margin-bottom: 4px;
-          color: #666;
-        }
-        
-        .modal-header-right {
-          display: flex;
-          align-items: center;
-        }
-        
-        .connection-warning {
-          display: flex;
-          align-items: center;
-          gap: 6px;
-          font-size: 12px;
-        }
-      `}</style>
+        {/* Create Ticket Modal */}
+        {showCreateModal && (
+          <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.45)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000, padding: "20px" }}>
+            <div style={{ background: "white", borderRadius: "20px", padding: "32px", width: "100%", maxWidth: "600px", maxHeight: "90vh", overflowY: "auto", boxShadow: "0 20px 60px rgba(0,0,0,0.2)" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "24px" }}>
+                <div>
+                  <h2 style={{ margin: 0, fontSize: "20px", fontWeight: 700, color: "#1e293b" }}>Create Support Ticket</h2>
+                  <p style={{ margin: "4px 0 0", fontSize: "13px", color: "#64748b" }}>Describe your issue and our team will get back to you</p>
+                </div>
+                <button onClick={() => setShowCreateModal(false)}
+                  style={{ background: "#f1f5f9", border: "none", borderRadius: "8px", padding: "8px", cursor: "pointer", color: "#64748b" }}>
+                  <FaTimes />
+                </button>
+              </div>
+
+              <form onSubmit={handleCreateTicket}>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
+                  {/* Title - full width */}
+                  <div style={{ gridColumn: "1 / -1" }}>
+                    <label style={{ display: "block", fontSize: "13px", fontWeight: 600, color: "#374151", marginBottom: "6px" }}>Subject / Title *</label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="Brief description of your issue"
+                      value={newTicket.title}
+                      onChange={e => setNewTicket(p => ({ ...p, title: e.target.value }))}
+                      style={{ width: "100%", padding: "10px 14px", border: "1px solid #e2e8f0", borderRadius: "10px", fontSize: "14px", outline: "none", boxSizing: "border-box" }}
+                    />
+                  </div>
+
+                  {/* Category */}
+                  <div>
+                    <label style={{ display: "block", fontSize: "13px", fontWeight: 600, color: "#374151", marginBottom: "6px" }}>Category</label>
+                    <select value={newTicket.category} onChange={e => setNewTicket(p => ({ ...p, category: e.target.value }))}
+                      style={{ width: "100%", padding: "10px 14px", border: "1px solid #e2e8f0", borderRadius: "10px", fontSize: "14px", outline: "none", background: "white" }}>
+                      {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+                    </select>
+                  </div>
+
+                  {/* Priority */}
+                  <div>
+                    <label style={{ display: "block", fontSize: "13px", fontWeight: 600, color: "#374151", marginBottom: "6px" }}>Priority</label>
+                    <select value={newTicket.priority} onChange={e => setNewTicket(p => ({ ...p, priority: e.target.value }))}
+                      style={{ width: "100%", padding: "10px 14px", border: "1px solid #e2e8f0", borderRadius: "10px", fontSize: "14px", outline: "none", background: "white" }}>
+                      {PRIORITIES.map(p => <option key={p} value={p}>{p}</option>)}
+                    </select>
+                  </div>
+
+                  {/* Description - full width */}
+                  <div style={{ gridColumn: "1 / -1" }}>
+                    <label style={{ display: "block", fontSize: "13px", fontWeight: 600, color: "#374151", marginBottom: "6px" }}>Description *</label>
+                    <textarea
+                      required
+                      placeholder="Provide a detailed description of your issue..."
+                      value={newTicket.description}
+                      onChange={e => setNewTicket(p => ({ ...p, description: e.target.value }))}
+                      rows={5}
+                      style={{ width: "100%", padding: "10px 14px", border: "1px solid #e2e8f0", borderRadius: "10px", fontSize: "14px", outline: "none", resize: "vertical", fontFamily: "inherit", boxSizing: "border-box" }}
+                    />
+                  </div>
+
+                  {/* Attachments - full width */}
+                  <div style={{ gridColumn: "1 / -1" }}>
+                    <label style={{ display: "block", fontSize: "13px", fontWeight: 600, color: "#374151", marginBottom: "6px" }}>Attachments (optional)</label>
+                    <div
+                      onClick={() => fileInputRef.current.click()}
+                      style={{ border: "2px dashed #e2e8f0", borderRadius: "10px", padding: "20px", textAlign: "center", cursor: "pointer", color: "#94a3b8", fontSize: "13px" }}>
+                      <FaPaperclip style={{ marginBottom: "6px", fontSize: "20px" }} />
+                      <p style={{ margin: 0 }}>Click to attach files (max 10MB each)</p>
+                      <input ref={fileInputRef} type="file" multiple style={{ display: "none" }} onChange={handleFileChange} />
+                    </div>
+                    {attachments.length > 0 && (
+                      <div style={{ marginTop: "8px", display: "flex", flexWrap: "wrap", gap: "6px" }}>
+                        {attachments.map((f, i) => (
+                          <div key={i} style={{ display: "flex", alignItems: "center", gap: "6px", background: "#f1f5f9", borderRadius: "6px", padding: "4px 8px", fontSize: "12px" }}>
+                            <FaPaperclip size={10} />
+                            <span style={{ maxWidth: "150px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{f.name}</span>
+                            <button type="button" onClick={() => setAttachments(prev => prev.filter((_, pi) => pi !== i))}
+                              style={{ background: "none", border: "none", cursor: "pointer", color: "#ef4444", padding: 0 }}><FaTimes size={10} /></button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div style={{ display: "flex", justifyContent: "flex-end", gap: "12px", marginTop: "24px" }}>
+                  <button type="button" onClick={() => setShowCreateModal(false)}
+                    style={{ padding: "10px 20px", background: "#f1f5f9", color: "#374151", border: "none", borderRadius: "10px", cursor: "pointer", fontWeight: 600 }}>
+                    Cancel
+                  </button>
+                  <button type="submit" disabled={isCreating}
+                    style={{ padding: "10px 24px", background: "#00853b", color: "white", border: "none", borderRadius: "10px", cursor: isCreating ? "not-allowed" : "pointer", fontWeight: 600, opacity: isCreating ? 0.7 : 1, display: "flex", alignItems: "center", gap: "8px" }}>
+                    {isCreating ? "Creating..." : <><FaPlus /> Create Ticket</>}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        <style>{`
+          @keyframes spin { to { transform: rotate(360deg); } }
+        `}</style>
+      </main>
     </div>
   );
 }
