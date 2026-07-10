@@ -38,7 +38,7 @@ function Dashboard() {
   const quickActions = [
     ...(branches.length === 0 ? [{ title: "CREATE BRANCH", icon: "fa-building", color: "#9c27b0", link: "branches" }] : []),
     ...(applications.length === 0 && branches.length > 0 ? [{ title: "NEW APPLICATION", icon: "fa-plus-circle", color: "#4caf50", link: "applications" }] : []),
-    ...(applications.length !== 0 ? [{ title: "REQUEST PRODUCT", icon: "fa-shopping-cart", color: "#ff5722", link: "products" }] : []),
+
     ...(certificates.length > 0
       ? (() => {
           const criticalCert = certificates.find(item =>
