@@ -500,6 +500,11 @@ function Applications() {
       return;
     }
 
+    if (!formData.productList || formData.productList.length === 0) {
+      toast.error("Please add at least one product to certify");
+      return;
+    }
+
     // Validate food safety programs
     if (formData.foodSafetyPrograms.length === 0) {
       toast.error("Please select at least one food safety program");
@@ -857,6 +862,11 @@ function Applications() {
 
     if (!user?.registrationNo) {
       toast.error("User not authenticated. Please log in again.");
+      return;
+    }
+
+    if (!formData.productList || formData.productList.length === 0) {
+      toast.error("Please add at least one product to certify");
       return;
     }
 
