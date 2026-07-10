@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import "./css/Sidebar.css";
 import logo from '../assets/hdiLogo1.png';
 import { Link, useNavigate } from "react-router-dom";
@@ -47,58 +47,88 @@ const Sidebar = ({ activeD, activeApp, activeCert, activeP, activeMess, activeI,
   const [openMenu, setOpenMenu] = useState("");
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 900);
-  const [unreadMsgCount, setUnreadMsgCount] = useState(0);
-  const [unreadNotifCount, setUnreadNotifCount] = useState(0);
+
+  // Per-page unread counts
+  const [badgeCounts, setBadgeCounts] = useState({
+    application: 0,
+    invoice: 0,
+    certificate: 0,
+    audit: 0,
+    product: 0,
+    message: 0,
+  });
+
   const navigate = useNavigate();
   const baseUrl = import.meta.env.VITE_BASE_URL;
-
   const { logout } = useAuth();
+
+  // Fetch and compute per-type unread counts
+  const fetchCounts = useCallback(async () => {
+    try {
+      const tokenString = localStorage.getItem("accessToken");
+      if (!tokenString) return;
+      const token = JSON.parse(tokenString);
+
+      const notifRes = await axios
+        .get(`${baseUrl}/notifications/user`, { headers: { Authorization: `Bearer ${token}` } })
+        .catch(() => null);
+
+      if (notifRes?.data?.notifications) {
+        const unread = notifRes.data.notifications.filter(n => !n.isRead);
+        const counts = {
+          application: 0,
+          invoice: 0,
+          certificate: 0,
+          audit: 0,
+          product: 0,
+          message: 0,
+        };
+        unread.forEach(n => {
+          const t = n.type || 'general';
+          if (counts[t] !== undefined) counts[t]++;
+        });
+        setBadgeCounts(counts);
+      }
+    } catch (error) {
+      console.error("Failed to fetch notification counts", error);
+    }
+  }, [baseUrl]);
+
+  useEffect(() => {
+    fetchCounts();
+    const interval = setInterval(fetchCounts, 60000);
+    return () => clearInterval(interval);
+  }, [fetchCounts]);
 
   useEffect(() => {
     const handleResize = () => {
       const mobile = window.innerWidth <= 900;
       setIsMobile(mobile);
-      if (mobile) {
-        setIsCollapsed(true);
-      }
+      if (mobile) setIsCollapsed(true);
     };
-
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
   useEffect(() => {
-    if (isMobile) {
-      setIsCollapsed(true);
-    }
+    if (isMobile) setIsCollapsed(true);
   }, [isMobile]);
 
-  useEffect(() => {
-    const fetchCounts = async () => {
-      try {
-        const tokenString = localStorage.getItem("accessToken");
-        if (!tokenString) return;
-        const token = JSON.parse(tokenString);
-
-        const [msgRes, notifRes] = await Promise.all([
-          axios.get(`${baseUrl}/messages/unread/count`, { headers: { Authorization: `Bearer ${token}` } }).catch(() => null),
-          axios.get(`${baseUrl}/notifications/user`, { headers: { Authorization: `Bearer ${token}` } }).catch(() => null)
-        ]);
-
-        if (msgRes?.data?.status === 'success') {
-          setUnreadMsgCount(msgRes.data.count || 0);
-        }
-        if (notifRes?.data?.status === 'success') {
-          setUnreadNotifCount(notifRes.data.unreadCount || 0);
-        }
-      } catch (error) {
-        console.error("Failed to fetch counts", error);
-      }
-    };
-
-    fetchCounts();
-    const interval = setInterval(fetchCounts, 60000);
-    return () => clearInterval(interval);
+  // Mark all notifications of a given type as read on the server and clear locally
+  const markTypeRead = useCallback(async (type) => {
+    try {
+      const tokenString = localStorage.getItem("accessToken");
+      if (!tokenString) return;
+      const token = JSON.parse(tokenString);
+      await axios.put(
+        `${baseUrl}/notifications/user/mark-read-by-type`,
+        { type },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setBadgeCounts(prev => ({ ...prev, [type]: 0 }));
+    } catch (err) {
+      console.error("Failed to mark notifications read", err);
+    }
   }, [baseUrl]);
 
   const toggleMenu = (menu) => {
@@ -107,14 +137,14 @@ const Sidebar = ({ activeD, activeApp, activeCert, activeP, activeMess, activeI,
 
   const toggleSidebar = () => {
     setIsCollapsed(!isCollapsed);
-    if (!isCollapsed) {
-      setOpenMenu("");
-    }
+    if (!isCollapsed) setOpenMenu("");
   };
 
-  const nav = (path) => {
-    if (isMobile) {
-      setIsCollapsed(true);
+  // Navigate and optionally clear a badge type
+  const nav = (path, notifType = null) => {
+    if (isMobile) setIsCollapsed(true);
+    if (notifType && badgeCounts[notifType] > 0) {
+      markTypeRead(notifType);
     }
     navigate(path);
   };
@@ -152,13 +182,13 @@ const Sidebar = ({ activeD, activeApp, activeCert, activeP, activeMess, activeI,
 
             <li>
               <NavBtn
-                onClick={() => nav('/applications')}
+                onClick={() => nav('/applications', 'application')}
                 className={`${openMenu === "applications" ? "active" : ""} ${activeApp}`}
                 title="Applications"
                 icon={MdOutlineAssignment}
                 label="Applications"
                 isCollapsed={isCollapsed}
-                badge={unreadNotifCount}
+                badge={badgeCounts.application}
               />
             </li>
 
@@ -175,23 +205,25 @@ const Sidebar = ({ activeD, activeApp, activeCert, activeP, activeMess, activeI,
 
             <li>
               <NavBtn
-                onClick={() => nav('/invoices')}
+                onClick={() => nav('/invoices', 'invoice')}
                 className={`${openMenu === "invoices" ? "active" : ""} ${activeI}`}
                 title="Invoice"
                 icon={MdOutlineReceipt}
                 label="Invoices"
                 isCollapsed={isCollapsed}
+                badge={badgeCounts.invoice}
               />
             </li>
 
             <li>
               <NavBtn
-                onClick={() => nav('/certificates')}
+                onClick={() => nav('/certificates', 'certificate')}
                 className={`${openMenu === "certificate" ? "active" : ""} ${activeCert}`}
                 title="Certificate"
                 icon={MdOutlineBadge}
                 label="Certificate"
                 isCollapsed={isCollapsed}
+                badge={badgeCounts.certificate}
               />
             </li>
 
@@ -208,24 +240,25 @@ const Sidebar = ({ activeD, activeApp, activeCert, activeP, activeMess, activeI,
 
             <li>
               <NavBtn
-                onClick={() => nav('/message')}
+                onClick={() => nav('/message', 'message')}
                 className={`${openMenu === "message" ? "active" : ""} ${activeMess}`}
                 title="Messages"
                 icon={MdOutlineMessage}
                 label="Messages"
                 isCollapsed={isCollapsed}
-                badge={unreadMsgCount}
+                badge={badgeCounts.message}
               />
             </li>
 
             <li>
               <NavBtn
-                onClick={() => nav('/audits')}
+                onClick={() => nav('/audits', 'audit')}
                 className={`${openMenu === "audits" ? "active" : ""} ${activeAu}`}
                 title="Audit"
                 icon={MdOutlineEventNote}
                 label="Audits"
                 isCollapsed={isCollapsed}
+                badge={badgeCounts.audit}
               />
             </li>
 
