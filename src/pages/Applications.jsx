@@ -2208,7 +2208,7 @@ function Applications() {
                     </div>
 
                     <div className="form-group">
-                      <label>Position/Title *</label>
+                      <label>Position/Title</label>
                       <input
                         type="text"
                         name="authorizedBy.positionTitle"
@@ -2216,7 +2216,7 @@ function Applications() {
                         onChange={handleInputChange}
                         placeholder="Enter position/title"
                         disabled={loading}
-                        required
+                        // required
                       />
                     </div>
                   </div>
@@ -2264,7 +2264,7 @@ function Applications() {
                         name="cacDocument"
                         onChange={handleDocumentChange}
                         disabled={loading}
-                        required
+                        // required
                       />
                     </div>
 
@@ -2275,7 +2275,7 @@ function Applications() {
                         name="companyProfileDocument"
                         onChange={handleDocumentChange}
                         disabled={loading}
-                        required
+                        // required
                       />
                     </div>
 
