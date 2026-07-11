@@ -277,9 +277,9 @@ const Sidebar = ({ activeD, activeApp, activeCert, activeP, activeMess, activeI,
               <NavBtn
                 onClick={() => nav('/branches')}
                 className={activeBranches}
-                title="Branches"
+                title="Manufacturing Facilities"
                 icon={FaBuilding}
-                label="Branches"
+                label="Manufacturing Facilities"
                 isCollapsed={isCollapsed}
               />
             </li>

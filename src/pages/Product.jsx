@@ -314,7 +314,7 @@ const Product = () => {
                             <tr>
                               <th>#</th>
                               <th>Name</th>
-                              <th>Branch</th>
+                              <th>Manufacturing Facility</th>
                               <th>Note</th>
                               <th>Actions</th>
                             </tr>
@@ -354,7 +354,7 @@ const Product = () => {
                             <tr>
                               <th>#</th>
                               <th>Name</th>
-                              <th>Branch</th>
+                              <th>Manufacturing Facility</th>
                               <th>Market Type</th>
                               <th>Brand</th>
                               <th>Pork</th>
@@ -412,7 +412,7 @@ const Product = () => {
                             <tr>
                               <th>#</th>
                               <th>Name</th>
-                              <th>Branch</th>
+                              <th>Manufacturing Facility</th>
                               <th>Market Type</th>
                               <th>Brand</th>
                               <th>Pork</th>
@@ -653,7 +653,7 @@ const Product = () => {
                     <span className="detail-value">{selectedProduct.applicationId.applicationNumber}</span>
                   </div> */}
                    <div className="detail-item">
-                    <span className="detail-label">Branch:</span>
+                    <span className="detail-label">Manufacturing Facility:</span>
                     <span className="detail-value">{selectedProduct.branchId?.branchName || 'N/A'}</span>
                   </div>
                   <div className="detail-item">

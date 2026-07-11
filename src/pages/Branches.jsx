@@ -100,7 +100,7 @@ function Branches() {
       });
 
       if (response.data.status === "success") {
-        toast.success("Branch added successfully");
+        toast.success("Manufacturing Facility added successfully");
         resetForm();
         fetchBranches();
         setShowContinuePopup(true);
@@ -136,28 +136,28 @@ function Branches() {
       <Sidebar activeBranches="active" /> 
       <main className="content">
         <div className="branches-container">
-          <DashboardHeader title="Branch Management" />
+          <DashboardHeader title="Manufacturing Facilities Management" />
           
           <div className="branches-header-actions">
             <div className="stats-mini">
               <div className="stat-item">
-                <span className="stat-label">Total Branches:</span>
+                <span className="stat-label">Total Manufacturing Facilities:</span>
                 <span className="stat-value">{branches.length}</span>
               </div>
             </div>
             <button className="add-branch-btn" onClick={() => setShowModal(true)}>
-              <MdAdd /> Add New Branch
+              <MdAdd /> Add Manufacturing Facility
             </button>
           </div>
 
           <div className="branches-grid">
             {isLoading ? (
-              <div className="loading-state">Loading branches...</div>
+              <div className="loading-state">Loading manufacturing facilities...</div>
             ) : branches.length === 0 ? (
               <div className="empty-state">
                 <FaBuilding size={48} />
-                <p>No branches found. You must add at least one branch before you can apply for certification.</p>
-                <button className="create-first-btn" onClick={() => setShowModal(true)}>Create Your First Branch</button>
+                <p>No manufacturing facilities found. You must add at least one manufacturing facility before you can apply for certification.</p>
+                <button className="create-first-btn" onClick={() => setShowModal(true)}>Create Your First Manufacturing Facility</button>
               </div>
             ) : (
               branches.map((branch) => (
@@ -190,7 +190,7 @@ function Branches() {
         <div className="modal-overlay" onClick={resetForm}>
           <div className="modal-content" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
-              <h2>Add New Branch</h2>
+              <h2>Add New Manufacturing Facility</h2>
               <button className="close-modal" onClick={resetForm}>×</button>
             </div>
 
@@ -198,7 +198,7 @@ function Branches() {
               <div className="form-section">
                 <h3>Basic Information</h3>
                 <div className="form-group">
-                  <label>Branch Name *</label>
+                  <label>Manufacturing Facility Name *</label>
                   <input type="text" name="branchName" value={formData.branchName} onChange={handleChange} className={errors.branchName ? 'error' : ''} placeholder="e.g. Lagos Factory" />
                   {errors.branchName && <p className="error-text">{errors.branchName}</p>}
                 </div>
@@ -268,7 +268,7 @@ function Branches() {
 
               <div className="form-actions">
                 <button type="button" className="cancel-btn" onClick={resetForm}>Cancel</button>
-                <button type="submit" className="submit-btn">Save Branch</button>
+                <button type="submit" className="submit-btn">Save Manufacturing Facility</button>
               </div>
             </form>
           </div>
@@ -279,9 +279,9 @@ function Branches() {
         <div className="modal-overlay" onClick={() => setShowContinuePopup(false)} style={{ zIndex: 1000 }}>
           <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: '400px', textAlign: 'center', padding: '24px', borderRadius: '12px' }}>
             <div style={{ fontSize: '48px', color: '#00853b', marginBottom: '16px' }}>✓</div>
-            <h2 style={{ marginBottom: '12px', fontSize: '20px', fontWeight: 'bold', color: '#1e293b' }}>Branch Added!</h2>
+            <h2 style={{ marginBottom: '12px', fontSize: '20px', fontWeight: 'bold', color: '#1e293b' }}>Manufacturing Facility Added!</h2>
             <p style={{ color: '#475569', marginBottom: '24px', fontSize: '14px', lineHeight: '1.5' }}>
-              Would you like to continue to create a new application for this branch?
+              Would you like to continue to create a new application for this manufacturing facility?
             </p>
             <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
               <button 

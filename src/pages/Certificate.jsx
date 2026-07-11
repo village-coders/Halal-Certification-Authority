@@ -12,6 +12,7 @@ function Certificate() {
   const [searchNumber, setSearchNumber] = useState("");
   const [searchDate, setSearchDate] = useState("");
   const [searchStatus, setSearchStatus] = useState("");
+  const [activeRenewals, setActiveRenewals] = useState([]);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 900);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -49,9 +50,28 @@ function Certificate() {
 
     window.addEventListener("resize", handleResize);
     fetchCertificates();
+    fetchActiveRenewals();
 
     return () => window.removeEventListener("resize", handleResize);
   }, []);
+
+  const fetchActiveRenewals = async () => {
+    try {
+      const token = JSON.parse(localStorage.getItem("accessToken"));
+      const response = await axios.get(`${API_BASE_URL}/applications`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (response.data && Array.isArray(response.data)) {
+        const renewals = response.data.filter(app => 
+          app.category === "Renewal Application" && 
+          !["issued", "rejected", "expired"].includes(app.status?.toLowerCase())
+        ).map(app => app.branchId?._id || app.branchId || app.companyId);
+        setActiveRenewals(renewals);
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
   const fetchCertificates = async () => {
     try {
@@ -70,8 +90,8 @@ function Certificate() {
           }
         );
         if (response.data && Array.isArray(response.data)) {
-          setCertificates(response.data);
-          console.log(response)
+          const sortedCerts = response.data.sort((a, b) => new Date(b.issueDate) - new Date(a.issueDate));
+          setCertificates(sortedCerts);
         } else {
           setCertificates([]);
         }
@@ -410,7 +430,7 @@ function Certificate() {
                 <thead>
                   <tr>
                     <th>Certificate Number</th>
-                    <th>Branch</th>
+                    <th>Manufacturing Facility</th>
                     <th>Type</th>
                     <th>Standard</th>
                     <th>Status</th>
@@ -482,7 +502,8 @@ function Certificate() {
                                 onClick: () => handleDownloadLabel(cert),
                                 disabled: downloading
                               },
-                              (cert.status === 'Active' || cert.status === 'Expiring Soon' || cert.status === 'Expired' || cert.status === 'expired') && {
+                              (cert.status === 'Active' || cert.status === 'Expiring Soon' || cert.status === 'Expired' || cert.status === 'expired') && 
+                              !activeRenewals.includes(cert.branchId?._id || cert.branchId || cert.companyId || cert._id) && {
                                 label: 'Renew',
                                 icon: <i className="fas fa-sync-alt"></i>,
                                 onClick: () => handleRenewCertificate(cert)
@@ -530,7 +551,7 @@ function Certificate() {
                     <span className="info-value">{selectedCertificate.certificateNumber || "N/A"}</span>
                   </div>
                   <div className="info-item">
-                    <span className="info-label">Branch:</span>
+                    <span className="info-label">Manufacturing Facility:</span>
                     <span className="info-value">{selectedCertificate.branchId?.branchName || "N/A"}</span>
                   </div>
                   <div className="info-item">
@@ -704,7 +725,8 @@ function Certificate() {
                       </>
                     )}
                   </button>
-                  {(selectedCertificate.status === 'Active' || selectedCertificate.status === 'Expiring Soon' || selectedCertificate.status === 'Expired' || selectedCertificate.status === 'expired') && (
+                  {(selectedCertificate.status === 'Active' || selectedCertificate.status === 'Expiring Soon' || selectedCertificate.status === 'Expired' || selectedCertificate.status === 'expired') && 
+                    !activeRenewals.includes(selectedCertificate.branchId?._id || selectedCertificate.branchId || selectedCertificate.companyId || selectedCertificate._id) && (
                     <button 
                       type="button" 
                       className="btn renew-btn"

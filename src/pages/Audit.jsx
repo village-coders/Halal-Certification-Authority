@@ -218,7 +218,7 @@ const Audit = () => {
                                     <thead>
                                         <tr>
                                             <th>Application</th>
-                                            <th>Branch</th>
+                                            <th>Manufacturing Facility</th>
                                             <th>Category</th>
                                             <th>Audit Date</th>
                                             <th>Status</th>
@@ -301,18 +301,19 @@ const Audit = () => {
                                                                     }
                                                                 ] : []),
 
-                                                                ...(audit.ncReport ? [
-                                                                    { 
-                                                                        label: 'View NC Report', 
-                                                                        icon: <FileText size={16} />, 
-                                                                        onClick: () => window.open(getFileUrl(audit.ncReport), '_blank')
-                                                                    },
-                                                                    {
-                                                                        label: audit.ncCorrectionFile && audit.ncCorrectionFile.length > 0 ? 'Re-upload NC Correction' : 'Upload NC Correction',
-                                                                        icon: <Upload size={16} />,
-                                                                        onClick: () => { setSelectedAudit(audit); setNcCorrectionFiles([null]); setShowNcCorrectionModal(true); }
-                                                                    }
-                                                                ] : []),
+                                                                 ...(audit.ncReport ? [
+                                                                     { 
+                                                                         label: 'View NC Report', 
+                                                                         icon: <FileText size={16} />, 
+                                                                         onClick: () => window.open(getFileUrl(audit.ncReport), '_blank')
+                                                                     },
+                                                                     ...((audit.status === 'NC Flagged' || audit.status === 'Correction Needed') ? [{
+                                                                         label: audit.ncRejectReason ? '⚠ Re-upload Corrections (Rejected)' : audit.ncCorrectionFile && audit.ncCorrectionFile.length > 0 ? 'Re-upload NC Correction' : 'Upload NC Correction',
+                                                                         icon: <Upload size={16} />,
+                                                                         style: audit.ncRejectReason ? { color: '#dc2626', fontWeight: 700 } : {},
+                                                                         onClick: () => { setSelectedAudit(audit); setNcCorrectionFiles([null]); setShowNcCorrectionModal(true); }
+                                                                     }] : [])
+                                                                 ] : []),
                                                                 ...(audit.auditReport ? [
                                                                     { 
                                                                         label: 'View Audit Report', 
@@ -353,7 +354,7 @@ const Audit = () => {
                                                         <span className="detail-value">{selectedAudit.applicationId?.applicationNumber || "N/A"}</span>
                                                     </div>
                                                     <div className="detail-item">
-                                                        <span className="detail-label">Branch:</span>
+                                                        <span className="detail-label">Manufacturing Facility:</span>
                                                         <span className="detail-value">{selectedAudit.branchId?.branchName || "N/A"}</span>
                                                     </div>
                                                     <div className="detail-item">
@@ -623,8 +624,8 @@ const Audit = () => {
 
             {/* NC Correction Modal */}
             {showNcCorrectionModal && selectedAudit && (
-                <div className="modal-overlay" onClick={() => setShowNcCorrectionModal(false)}>
-                    <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: '400px', width: '90%' }}>
+                <div className="modal-overlay" onClick={() => setShowNcCorrectionModal(false)} style={{ padding: '16px', boxSizing: 'border-box' }}>
+                    <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: '540px', width: '100%', maxHeight: '90vh', overflowY: 'auto' }}>
                         <div className="modal-header">
                             <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 600, color: '#1e293b' }}>
                                 Upload NC Correction
@@ -638,7 +639,32 @@ const Audit = () => {
                                 Please upload your correction for the Non-Conformance (NC) report. You can upload a PDF or an image file.
                             </p>
                             
-                             {selectedAudit.ncCorrectionFile && (
+                            {/* NC Rejection Reason Alert */}
+                            {selectedAudit.ncRejectReason && (
+                                <div style={{ background: '#fef2f2', border: '1px solid #fca5a5', padding: '14px 16px', borderRadius: '10px', marginBottom: '16px' }}>
+                                    <p style={{ margin: '0 0 6px 0', fontSize: '13px', color: '#991b1b', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                        <MdClose size={16} color="#dc2626" /> Your previous corrections were rejected
+                                    </p>
+                                    <p style={{ margin: 0, fontSize: '13px', color: '#b91c1c', lineHeight: '1.5' }}>
+                                        <strong>Reason:</strong> {selectedAudit.ncRejectReason}
+                                    </p>
+                                    {selectedAudit.ncRejectFiles && selectedAudit.ncRejectFiles.length > 0 && (
+                                        <div style={{ marginTop: '10px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                                            <p style={{ margin: 0, fontSize: '12px', fontWeight: 600, color: '#991b1b' }}>Attached Documents:</p>
+                                            {selectedAudit.ncRejectFiles.map((file, idx) => (
+                                                <a key={idx} href={getFileUrl(file)} target="_blank" rel="noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: '#b91c1c', textDecoration: 'underline', fontWeight: 500 }}>
+                                                    <FileText size={14} /> View Attached Doc #{idx + 1}
+                                                </a>
+                                            ))}
+                                        </div>
+                                    )}
+                                    <p style={{ margin: '12px 0 0 0', fontSize: '12px', color: '#b91c1c' }}>
+                                        Please review the feedback and re-upload corrected documents below.
+                                    </p>
+                                </div>
+                            )}
+                            
+                             {selectedAudit.ncCorrectionFile && !selectedAudit.ncRejectReason && (
                                 <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', padding: '12px', borderRadius: '8px', marginBottom: '16px' }}>
                                     <p style={{ margin: '0 0 4px 0', fontSize: '13px', color: '#166534', fontWeight: 600 }}>Correction already submitted.</p>
                                     {Array.isArray(selectedAudit.ncCorrectionFile) ? (

@@ -144,7 +144,7 @@ const TrackApplication = () => {
             <div className="header-actions">
               <div className="app-info-summary">
                 <span>App Number: <strong>{application?.applicationNumber}</strong></span>
-                <span>Branch: <strong>{application?.branchId?.branchName || 'N/A'}</strong></span>
+                <span>Manufacturing Facility: <strong>{application?.branchId?.branchName || 'N/A'}</strong></span>
                 <span>Status: <span className="status-tag" style={{
                   backgroundColor: getStatusColor(application?.status) + '20',
                   color: getStatusColor(application?.status),

@@ -306,7 +306,7 @@ const Invoice = () => {
                 <thead>
                   <tr>
                     <th>Invoice #</th>
-                    <th>Branch</th>
+                    <th>Manufacturing Facility</th>
                     <th>Description</th>
                     <th>Issued Date</th>
                     <th>Status</th>
@@ -417,7 +417,7 @@ const Invoice = () => {
                     <span className="info-value">{selectedInvoice.invoiceNumber || "N/A"}</span>
                   </div>
                   <div className="info-item">
-                    <span className="info-label">Branch:</span>
+                    <span className="info-label">Manufacturing Facility:</span>
                     <span className="info-value">{selectedInvoice.branchId?.branchName || "N/A"}</span>
                   </div>
                   <div className="info-item">

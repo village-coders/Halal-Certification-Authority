@@ -20,6 +20,7 @@ function Dashboard() {
   const [applications, setApplications] = useState([]);
   const [certificates, setCertificates] = useState([]);
   const [branches, setBranches] = useState([]);
+  const [activeRenewals, setActiveRenewals] = useState([]);
   const [showBranchPopup, setShowBranchPopup] = useState(false);
   const [loading, setLoading] = useState({
     stats: true,
@@ -36,13 +37,14 @@ function Dashboard() {
   // console.log(certificates)
 
   const quickActions = [
-    ...(branches.length === 0 ? [{ title: "CREATE BRANCH", icon: "fa-building", color: "#9c27b0", link: "branches" }] : []),
+    ...(branches.length === 0 ? [{ title: "CREATE MANUFACTURING FACILITY", icon: "fa-building", color: "#9c27b0", link: "branches" }] : []),
     ...(applications.length === 0 && branches.length > 0 ? [{ title: "NEW APPLICATION", icon: "fa-plus-circle", color: "#4caf50", link: "applications" }] : []),
 
     ...(certificates.length > 0
       ? (() => {
           const criticalCert = certificates.find(item =>
-            item.status && ["expired", "expiring soon"].includes(item.status.toLowerCase().trim())
+            item.status && ["expired", "expiring soon"].includes(item.status.toLowerCase().trim()) &&
+            !activeRenewals.includes(item.branchId)
           );
           if (criticalCert) {
             const isExpired = criticalCert.status.toLowerCase().trim() === "expired";
@@ -55,6 +57,10 @@ function Dashboard() {
             }
             return [
               { title: "RENEW CERTIFICATE", icon: "fa-sync-alt", color: "#ef4444", link: "applications", description: desc }
+            ];
+          } else if (activeRenewals.length > 0) {
+            return [
+              { title: "RENEWAL PROCESSING", icon: "fa-sync fa-spin", color: "#f59e0b", link: "applications", description: "Your certificate renewal is currently being processed." }
             ];
           } else {
             return [
@@ -213,8 +219,12 @@ function Dashboard() {
           site: app.product || 'N/A'
         }));
 
-        console.log(formattedApps)
+        const renewals = response.data.filter(app => 
+          app.category === "Renewal Application" && 
+          !["issued", "rejected", "expired"].includes(app.status?.toLowerCase())
+        ).map(app => app.branchId?._id || app.branchId || app.companyId);
         
+        setActiveRenewals(renewals);
         setApplications(formattedApps);
       }
     } catch (err) {
@@ -235,9 +245,27 @@ function Dashboard() {
       );
       
       if (response.data && Array.isArray(response.data)) {
+        // Group by branchId and keep only the latest certificate
+        const latestCertsMap = new Map();
+        response.data.forEach(cert => {
+          const key = cert.branchId?._id || cert.branchId || cert.companyId || cert._id;
+          const existing = latestCertsMap.get(key);
+          if (!existing) {
+            latestCertsMap.set(key, cert);
+          } else {
+            const currentExpiry = new Date(cert.expiryDate).getTime();
+            const existingExpiry = new Date(existing.expiryDate).getTime();
+            if (currentExpiry > existingExpiry) {
+              latestCertsMap.set(key, cert);
+            }
+          }
+        });
+        const latestCerts = Array.from(latestCertsMap.values()).sort((a, b) => new Date(b.issueDate) - new Date(a.issueDate));
+
         // Format certificates for display
-        const formattedCerts = response.data.slice(0, 5).map(cert => ({
+        const formattedCerts = latestCerts.slice(0, 5).map(cert => ({
           id: cert._id,
+          branchId: cert.branchId?._id || cert.branchId || cert.companyId || cert._id,
           siteName: cert.product || 'N/A',
           certRef: cert.certificateNumber || 'N/A',
           certType: cert.certificateType || 'N/A',
@@ -329,7 +357,7 @@ function Dashboard() {
       link: "/applications"
     },
     { 
-      title: "BRANCHES", 
+      title: "MANUFACTURING FACILITIES", 
       count: loading.branches ? "..." : branches.length, 
       icon: "fa-building", 
       color: "#9c27b0",
@@ -357,12 +385,12 @@ function Dashboard() {
             <div className="modal-overlay" style={{ zIndex: 9999, backgroundColor: "rgba(0,0,0,0.7)" }}>
               <div className="modal-content" style={{ textAlign: "center", padding: "40px 20px" }}>
                 <i className="fas fa-building" style={{ fontSize: "48px", color: "#00853b", marginBottom: "20px" }}></i>
-                <h2 style={{ marginBottom: "15px" }}>Welcome! Create a Branch to Get Started</h2>
+                <h2 style={{ marginBottom: "15px" }}>Welcome! Create a Manufacturing Facility to Get Started</h2>
                 <p style={{ color: "#666", marginBottom: "25px", lineHeight: "1.6" }}>
-                  Before you can apply for certification, you need to register at least one branch or facility.
+                  Before you can apply for certification, you need to register at least one manufacturing facility or facility.
                 </p>
                 <Link to="/branches" className="action-btn" style={{ textDecoration: "none", display: "inline-block", fontSize: "16px", padding: "12px 30px" }}>
-                  Go to Branches
+                  Go to Manufacturing Facilities
                 </Link>
                 <button 
                   onClick={() => setShowBranchPopup(false)} 

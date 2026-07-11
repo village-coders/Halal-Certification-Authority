@@ -1137,7 +1137,7 @@ function Applications() {
                 <h5>Basic Information</h5>
                 <div className="details-grid">
                   <div className="detail-item">
-                    <label>Branch</label>
+                    <label>Manufacturing Facility</label>
                     <p>{selectedApplication.branchId?.branchName || 'N/A'}</p>
                   </div>
                   <div className="detail-item">
@@ -1250,10 +1250,10 @@ function Applications() {
 
               {/* Manufacturing, facilities and packaging plant removed */}
 
-              {/* Authorized By */}
+              {/* Prepared By */}
               {selectedApplication.authorizedBy && (
-                <div className="details-section">
-                  <h5>Authorized By</h5>
+                <div className="detail-group highlight-group">
+                  <h5>Prepared By</h5>
                   <div className="details-grid">
                     <div className="detail-item">
                       <label>Name</label>
@@ -1457,7 +1457,7 @@ function Applications() {
                 <thead>
                   <tr>
                     <th>App Number</th>
-                    <th>Branch</th>
+                    <th>Manufacturing Facility</th>
                     <th>Category</th>
                     {/* <th>Product</th> */}
                     <th>Status</th>
@@ -2178,9 +2178,9 @@ function Applications() {
 
 
 
-                  {/* Authorized By */}
+                  {/* Prepared By */}
                   <div className="form-section">
-                    <h4>Application Authorized By</h4>
+                    <h4>Application Prepared By</h4>
 
                     <div className="form-group">
                       <label>Name *</label>
@@ -2870,9 +2870,9 @@ function Applications() {
                     </div>
                   </div>
 
-                  {/* Authorized By */}
+                  {/* Prepared By */}
                   <div className="form-section">
-                    <h4>Application Authorized By</h4>
+                    <h4>Application Prepared By</h4>
 
                     <div className="form-group">
                       <label>Name *</label>
