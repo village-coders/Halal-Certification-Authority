@@ -295,7 +295,7 @@ const Sidebar = ({ activeD, activeApp, activeCert, activeP, activeMess, activeI,
               />
             </li>
 
-            <li>
+            {/* <li>
               <NavBtn
                 onClick={() => nav('/manage-users')}
                 className={`${openMenu === "manage-users" ? "active" : ""} ${activeUse}`}
@@ -304,7 +304,7 @@ const Sidebar = ({ activeD, activeApp, activeCert, activeP, activeMess, activeI,
                 label="Manage Users"
                 isCollapsed={isCollapsed}
               />
-            </li>
+            </li> */}
           </ul>
         </nav>
 
