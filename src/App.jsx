@@ -21,6 +21,7 @@ import ResetPassword from "./pages/ResetPassword";
 import UserGuide from "./pages/UserGuide";
 import PublicGuide from "./pages/PublicGuide";
 import Branches from "./pages/Branches";
+import ImpersonateLogin from "./pages/ImpersonateLogin";
 
 function App() {
   return (
@@ -34,6 +35,7 @@ function App() {
             <Route path="/public-guide" element={<PublicGuide />} />
             <Route path="/verify/:token" element={<VerifyAccount />} />
             <Route path="/reset-password/:token" element={<ResetPassword />} />
+            <Route path="/impersonate-login" element={<ImpersonateLogin />} />
             
             {/* Protected Routes */}
             <Route element={<ProtectedRoutes />}>

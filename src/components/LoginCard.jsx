@@ -2,6 +2,7 @@ import "./css/LoginCard.css";
 import { useAuth } from '../hooks/useAuth';
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { FiEye, FiEyeOff } from "react-icons/fi";
 
 function LoginCard() {
   const { signin, signingIn } = useAuth();
@@ -13,6 +14,7 @@ function LoginCard() {
   };
 
   const [formData, setFormData] = useState(defaultData);
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleInput = (e) => {
     const { name, value } = e.target;
@@ -37,7 +39,30 @@ function LoginCard() {
         
         <div className="form-group">
             <label htmlFor="password" className="required">Your Password</label>
-            <input type="password" name="password" required/>
+            <div style={{ position: 'relative' }}>
+              <input
+                type={showPassword ? "text" : "password"}
+                name="password"
+                onChange={handleInput}
+                required
+                style={{ paddingRight: '40px' }}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                style={{
+                  position: 'absolute', right: '10px', top: '50%',
+                  transform: 'translateY(-50%)', background: 'none',
+                  border: 'none', cursor: 'pointer', color: '#6c757d',
+                  display: 'flex', alignItems: 'center', padding: 0,
+                  width: 'auto'
+                }}
+                tabIndex={-1}
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+              >
+                {showPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
+              </button>
+            </div>
         </div>
         
         <div className="checkbox-group">

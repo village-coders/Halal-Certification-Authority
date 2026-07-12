@@ -21,6 +21,8 @@ const Home = () => {
     confirmPassword: ''
   });
   const [showPass, setShowPass] = useState(false)
+  const [showRegisterPass, setShowRegisterPass] = useState(false);
+  const [showConfirmPass, setShowConfirmPass] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [showEmailModal, setShowEmailModal] = useState(false);
   const [modalAction, setModalAction] = useState('');
@@ -1190,33 +1192,53 @@ const Home = () => {
                     />
                   </div>
 
-                  <div style={styles.formGroup}>
+                  <div style={{ ...styles.formGroup, position: 'relative' }}>
                     <label htmlFor="registerPassword" style={styles.formLabel} className="required">Password</label>
-                    <input
-                      type="password"
-                      id="registerPassword"
-                      value={formData.registerPassword}
-                      onChange={handleInputChange}
-                      required
-                      style={styles.formInput}
-                      onFocus={(e) => Object.assign(e.target.style, styles.formInputFocus)}
-                      onBlur={(e) => Object.assign(e.target.style, styles.formInput)}
-                      placeholder="At least 6 characters"
-                    />
+                    <div style={{ position: 'relative' }}>
+                      <input
+                        type={showRegisterPass ? "text" : "password"}
+                        id="registerPassword"
+                        value={formData.registerPassword}
+                        onChange={handleInputChange}
+                        required
+                        style={{ ...styles.formInput, paddingRight: '44px' }}
+                        onFocus={(e) => Object.assign(e.target.style, styles.formInputFocus)}
+                        onBlur={(e) => Object.assign(e.target.style, styles.formInput)}
+                        placeholder="At least 6 characters"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowRegisterPass(!showRegisterPass)}
+                        style={{ position: 'absolute', right: '14px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8', display: 'flex', alignItems: 'center', padding: 0, width: 'auto' }}
+                        tabIndex={-1}
+                      >
+                        {showRegisterPass ? <FiEyeOff size={18} /> : <FiEye size={18} />}
+                      </button>
+                    </div>
                   </div>
 
-                  <div style={styles.formGroup}>
+                  <div style={{ ...styles.formGroup, position: 'relative' }}>
                     <label htmlFor="confirmPassword" style={styles.formLabel} className="required">Confirm Password</label>
-                    <input
-                      type="password"
-                      id="confirmPassword"
-                      value={formData.confirmPassword}
-                      onChange={handleInputChange}
-                      required
-                      style={styles.formInput}
-                      onFocus={(e) => Object.assign(e.target.style, styles.formInputFocus)}
-                      onBlur={(e) => Object.assign(e.target.style, styles.formInput)}
-                    />
+                    <div style={{ position: 'relative' }}>
+                      <input
+                        type={showConfirmPass ? "text" : "password"}
+                        id="confirmPassword"
+                        value={formData.confirmPassword}
+                        onChange={handleInputChange}
+                        required
+                        style={{ ...styles.formInput, paddingRight: '44px' }}
+                        onFocus={(e) => Object.assign(e.target.style, styles.formInputFocus)}
+                        onBlur={(e) => Object.assign(e.target.style, styles.formInput)}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowConfirmPass(!showConfirmPass)}
+                        style={{ position: 'absolute', right: '14px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8', display: 'flex', alignItems: 'center', padding: 0, width: 'auto' }}
+                        tabIndex={-1}
+                      >
+                        {showConfirmPass ? <FiEyeOff size={18} /> : <FiEye size={18} />}
+                      </button>
+                    </div>
                   </div>
                 </div>
 

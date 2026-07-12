@@ -7,6 +7,7 @@ import { TbUsersGroup } from "react-icons/tb";
 import { FaBuilding } from "react-icons/fa";
 import axios from 'axios';
 import { useAuth } from "../hooks/useAuth";
+import ImportantNotificationModal from "./ImportantNotificationModal";
 
 /**
  * NavBtn - A sidebar button with an optional red-dot notification badge in the top-right corner of the icon.
@@ -47,6 +48,7 @@ const Sidebar = ({ activeD, activeApp, activeCert, activeP, activeMess, activeI,
   const [openMenu, setOpenMenu] = useState("");
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 900);
+  const [modalNotifs, setModalNotifs] = useState([]);
 
   // Per-page unread counts
   const [badgeCounts, setBadgeCounts] = useState({
@@ -88,6 +90,11 @@ const Sidebar = ({ activeD, activeApp, activeCert, activeP, activeMess, activeI,
           if (counts[t] !== undefined) counts[t]++;
         });
         setBadgeCounts(counts);
+
+        const popups = unread.filter(n => n.showAsModal === true);
+        if (popups.length > 0) {
+            setModalNotifs(popups);
+        }
       }
     } catch (error) {
       console.error("Failed to fetch notification counts", error);
@@ -319,8 +326,14 @@ const Sidebar = ({ activeD, activeApp, activeCert, activeP, activeMess, activeI,
           </button>
         </div>
       </aside>
+      {modalNotifs.length > 0 && (
+        <ImportantNotificationModal 
+          notifications={modalNotifs} 
+          onDismiss={() => setModalNotifs([])} 
+        />
+      )}
     </>
   );
-}
+};
 
 export default Sidebar;

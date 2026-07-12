@@ -217,11 +217,11 @@ const Product = () => {
         <div className="manage-applications">
           <div className="header">
             <h2>Products</h2>
-            <div className="header-actions">
+            {/* <div className="header-actions">
               <button className="new-btn" onClick={toggleProductForm}>
                 <i className="fas fa-plus-circle"></i> Request Product
               </button>
-            </div>
+            </div> */}
           </div>
 
           {/* Tabs & Search Filter Combined into search-box */}

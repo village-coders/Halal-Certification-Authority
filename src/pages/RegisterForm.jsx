@@ -2,6 +2,7 @@ import axios from "axios";
 import "./css/RegisterForm.css";
 import { useState, useEffect } from "react";
 import { FaBuilding, FaUser, FaLock } from "react-icons/fa";
+import { FiEye, FiEyeOff } from "react-icons/fi";
 import { toast } from "sonner";
 import logo from "../assets/hdiLogo.png"
 
@@ -45,6 +46,8 @@ function RegisterForm() {
 
   const [errorMessage, setErrorMessage] = useState({});
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const baseUrl = import.meta.env.VITE_BASE_URL;
 
@@ -216,12 +219,44 @@ function RegisterForm() {
           </div>
           <div>
             <label>Password *</label>
-            <input type="password" name="password" value={formData.password} onChange={handleChange} />
+            <div style={{ position: 'relative' }}>
+              <input
+                type={showPassword ? "text" : "password"}
+                name="password"
+                value={formData.password}
+                onChange={handleChange}
+                style={{ paddingRight: '40px' }}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#6c757d', display: 'flex', alignItems: 'center', padding: 0, width: 'auto' }}
+                tabIndex={-1}
+              >
+                {showPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
+              </button>
+            </div>
             <p style={{ color: "red" }}>{errorMessage.password}</p>
           </div>
           <div>
             <label>Confirm Password *</label>
-            <input type="password" name="confirmPassword" value={formData.confirmPassword} onChange={handleChange} />
+            <div style={{ position: 'relative' }}>
+              <input
+                type={showConfirmPassword ? "text" : "password"}
+                name="confirmPassword"
+                value={formData.confirmPassword}
+                onChange={handleChange}
+                style={{ paddingRight: '40px' }}
+              />
+              <button
+                type="button"
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#6c757d', display: 'flex', alignItems: 'center', padding: 0, width: 'auto' }}
+                tabIndex={-1}
+              >
+                {showConfirmPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
+              </button>
+            </div>
             <p style={{ color: "red" }}>{errorMessage.confirmPassword}</p>
           </div>
         </div>
