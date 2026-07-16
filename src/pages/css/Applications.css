@@ -162,8 +162,10 @@ body {
   background: var(--white);
   border-radius: 12px;
   box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-  overflow: visible;
+  overflow-x: auto;
+  overflow-y: visible;
   min-height: 300px;
+  -webkit-overflow-scrolling: touch;
 }
 
 .table-header {
@@ -202,6 +204,7 @@ body {
 .applications-table {
   width: 100%;
   border-collapse: collapse;
+  min-width: 700px;
 }
 
 .applications-table thead {

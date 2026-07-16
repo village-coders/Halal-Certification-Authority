@@ -219,6 +219,7 @@
   width: 100%;
   border-collapse: collapse;
   font-size: 14px;
+  min-width: 700px;
 }
 
 .manage-users-class .users-table thead {
