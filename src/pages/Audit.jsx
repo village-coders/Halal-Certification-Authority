@@ -220,7 +220,7 @@ const Audit = () => {
                                             <th>Application</th>
                                             <th>Manufacturing Facility</th>
                                             <th>Category</th>
-                                            <th>Audit Date</th>
+                                            {/* <th>Audit Date</th> */}
                                             <th>Status</th>
                                             <th>Auditor</th>
                                             <th>Actions</th>
@@ -236,12 +236,12 @@ const Audit = () => {
                                                     </td>
                                                     <td>{audit.branchId?.branchName || "N/A"}</td>
                                                     <td>{audit.applicationId?.category || "N/A"}</td>
-                                                    <td>
+                                                    {/* <td>
                                                         <div className="date-cell">
                                                             <span className="primary-date">{formatDate(audit.scheduledDate)}</span>
                                                             <span className="secondary-time">{audit.scheduledTime}</span>
                                                         </div>
-                                                    </td>
+                                                    </td> */}
                                                     <td>
                                                         <span 
                                                             className="status-badge"
