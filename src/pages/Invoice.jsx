@@ -4,6 +4,7 @@ import "./css/Certificate.css";
 import axios from "axios";
 import { toast } from "sonner";
 import TableActions from "../components/TableActions";
+import { useLocation, useNavigate } from "react-router-dom";
 
 const API_BASE_URL = import.meta.env.VITE_BASE_URL;
 
@@ -26,6 +27,8 @@ const getFileUrl = (path) => {
 const Invoice = () => {
   // --- State Management ---
   const [invoices, setInvoices] = useState([]);
+  const location = useLocation();
+  const navigate = useNavigate();
   const [applications, setApplications] = useState([]);
   const [showInvoiceDetails, setShowInvoiceDetails] = useState(false);
   const [showUploadReceipt, setShowUploadReceipt] = useState(false);
@@ -111,6 +114,25 @@ const Invoice = () => {
     fetchInvoices();
     fetchApplications();
   }, [fetchInvoices, fetchApplications]);
+
+  useEffect(() => {
+    if (invoices.length > 0 && location.search) {
+      const searchParams = new URLSearchParams(location.search);
+      const highlightId = searchParams.get('highlight');
+      if (highlightId) {
+        setTimeout(() => {
+          const el = document.getElementById(`invoice-${highlightId}`);
+          if (el) {
+            el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            el.style.transition = 'background-color 1s ease';
+            el.style.backgroundColor = '#fef3c7';
+            setTimeout(() => { el.style.backgroundColor = ''; }, 3000);
+          }
+        }, 100);
+        navigate('/invoices', { replace: true });
+      }
+    }
+  }, [invoices, location.search, navigate]);
 
   // --- Filter Logic ---
   const getFilteredInvoices = () => {
@@ -316,7 +338,7 @@ const Invoice = () => {
                 <tbody style={{overflowY: "auto"}}>
                   {paginatedData.map((invoice) => {
                     return (
-                      <tr key={invoice._id}>
+                      <tr key={invoice._id} id={`invoice-${invoice._id}`}>
                         <td>
                           <span className="app-number">{invoice.invoiceNumber || "N/A"}</span>
                         </td>

@@ -5,6 +5,7 @@ import axios from "axios";
 import { toast } from "sonner";
 import { MdCheck, MdClose, MdInfoOutline, MdEmail, MdPhone, MdFileDownload } from "react-icons/md";
 import { View, FileText, Upload } from "lucide-react";
+import { useLocation, useNavigate } from "react-router-dom";
 import "./css/Audit.css";
 
 const API_BASE_URL = import.meta.env.VITE_BASE_URL;
@@ -29,6 +30,8 @@ const getFileUrl = (path) => {
 
 const Audit = () => {
     const [audits, setAudits] = useState([]);
+    const location = useLocation();
+    const navigate = useNavigate();
     const [loading, setLoading] = useState(true);
     const [showRespondModal, setShowRespondModal] = useState(false);
     const [selectedAudit, setSelectedAudit] = useState(null);
@@ -121,6 +124,48 @@ const Audit = () => {
     useEffect(() => {
         fetchAudits();
     }, []);
+
+    useEffect(() => {
+        if (audits.length > 0 && location.search) {
+            const searchParams = new URLSearchParams(location.search);
+            const action = searchParams.get('action');
+            const highlightId = searchParams.get('highlight');
+            const targetAuditId = searchParams.get('auditId') || highlightId;
+
+            if (targetAuditId) {
+                const audit = audits.find(a => a._id === targetAuditId);
+                if (audit) {
+                    if (action === 'respond') {
+                        setSelectedAudit(audit);
+                        setNegotiateOptions((audit.proposedDates || []).map(pd => ({
+                            date: pd.date ? new Date(pd.date).toISOString().split('T')[0] : '',
+                            time: pd.fromTime || pd.time || '',
+                            fromTime: pd.fromTime || pd.time || '',
+                            toTime: pd.toTime || '',
+                            isCounter: pd.isCounter || false
+                        })));
+                        setNegotiateCheckboxes([false, false, false]);
+                        setShowNegotiateModal(true);
+                    } else if (action === 'nc_correction') {
+                        setSelectedAudit(audit);
+                        setShowNcCorrectionModal(true);
+                    } else if (highlightId) {
+                        setTimeout(() => {
+                            const el = document.getElementById(`audit-${targetAuditId}`);
+                            if (el) {
+                                el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                el.style.transition = 'background-color 1s ease';
+                                el.style.backgroundColor = '#fef3c7';
+                                setTimeout(() => { el.style.backgroundColor = ''; }, 3000);
+                            }
+                        }, 100);
+                    }
+                    
+                    navigate('/audits', { replace: true });
+                }
+            }
+        }
+    }, [audits, location.search, navigate]);
 
     const handleResponse = async (auditId, status, additionalData = {}) => {
         if (status === 'Rejected' && !rejectReason) {
@@ -230,7 +275,7 @@ const Audit = () => {
                                         {audits.map(audit => {
                                             const daysRemaining = calculateDaysRemaining(audit.scheduledDate);
                                             return (
-                                                <tr key={audit._id}>
+                                                <tr key={audit._id} id={`audit-${audit._id}`}>
                                                     <td>
                                                         <span className="app-number">{audit.applicationId?.applicationNumber || "N/A"}</span>
                                                     </td>
@@ -420,6 +465,26 @@ const Audit = () => {
                                                     </div>
                                                 )}
                                             </div>
+
+                                            {selectedAudit.prepDocuments && selectedAudit.prepDocuments.length > 0 && (
+                                                <div className="details-section" style={{marginTop: '20px'}}>
+                                                    <h3 className="details-title">Preparation Documents</h3>
+                                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                                        {selectedAudit.prepDocuments.map((doc, idx) => (
+                                                            <a 
+                                                                key={idx} 
+                                                                href={getFileUrl(doc.url)} 
+                                                                target="_blank" 
+                                                                rel="noreferrer"
+                                                                style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '10px 14px', background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '6px', color: '#166534', textDecoration: 'none', fontWeight: 500, fontSize: '13px', width: 'fit-content' }}
+                                                            >
+                                                                <FileText size={16} />
+                                                                {doc.name || `Document ${idx + 1}`}
+                                                            </a>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            )}
 
                                             {(selectedAudit.status === 'Correction Needed' || selectedAudit.status === 'NC Flagged') && selectedAudit.corrections?.length > 0 && (
                                                 <div className="details-section" style={{marginTop: '20px'}}>
