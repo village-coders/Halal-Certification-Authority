@@ -5,7 +5,6 @@ import "./css/Product.css";
 import axios from "axios";
 import { toast } from "sonner";
 import { useProducts } from "../hooks/useProducts";
-import { MdOutlineDeleteForever, MdOutlineRemoveRedEye } from "react-icons/md";
 
 
 const API_BASE_URL = import.meta.env.VITE_BASE_URL;
@@ -30,10 +29,9 @@ const Product = () => {
     note: ""
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isDeletingId, setIsDeletingId] = useState(null);
 
   const [errors, setErrors] = useState({});
-  const { products, isLoading, fetchProducts, deleteProduct, setIsLoading } = useProducts();
+  const { products, isLoading, fetchProducts, setIsLoading } = useProducts();
   const baseUrl = import.meta.env.VITE_BASE_URL;
   useEffect(() => {
     fetchProducts();
@@ -183,26 +181,6 @@ const Product = () => {
     setErrors({});
   };
 
-  const deleteProductFromList = async (id, status) => {
-    if (status === 'approved') {
-      toast.error("Approved products cannot be deleted");
-      return;
-    }
-    
-    if (!window.confirm("Are you sure you want to delete this product?")) return;
-    
-    setIsDeletingId(id);
-    try {
-      await deleteProduct(id);
-      fetchProducts();
-      toast.success("Product deleted successfully");
-    } catch (error) {
-      toast.error("Failed to delete product");
-    } finally {
-      setIsDeletingId(null);
-    }
-  };
-
   const viewProductDetails = (product) => {
     setSelectedProduct(product);
     setShowProductDetails(true);
@@ -325,7 +303,7 @@ const Product = () => {
                                 <td>{((currentPage - 1) * itemsPerPage) + index + 1}</td>
                                 <td style={{ fontWeight: 500 }}>{p.name}</td>
                                 <td>{p.branchId?.branchName || 'N/A'}</td>
-                                <td>{p.note}</td>
+                                <td>{p.status ? p.status.charAt(0).toUpperCase() + p.status.slice(1) : 'Pending'}</td>
                                 <td>
                                   <TableActions 
                                     actions={[
@@ -333,13 +311,6 @@ const Product = () => {
                                         label: 'View Details',
                                         icon: <i className="fas fa-eye"></i>,
                                         onClick: () => viewProductDetails(p)
-                                      },
-                                      {
-                                        label: 'Delete Product',
-                                        icon: isDeletingId === p._id ? <i className="fas fa-spinner fa-spin"></i> : <i className="fas fa-trash-alt"></i>,
-                                        onClick: () => deleteProductFromList(p._id, p.status),
-                                        variant: 'danger',
-                                        disabled: p.status === 'approved' || isDeletingId === p._id
                                       }
                                     ].filter(Boolean)}
                                   />
@@ -392,12 +363,6 @@ const Product = () => {
                                         label: 'View Details',
                                         icon: <i className="fas fa-eye"></i>,
                                         onClick: () => viewProductDetails(p)
-                                      },
-                                      {
-                                        label: 'Delete Product',
-                                        icon: <i className="fas fa-trash-alt"></i>,
-                                        onClick: () => deleteProductFromList(p._id, p.status),
-                                        variant: 'danger'
                                       }
                                     ].filter(Boolean)}
                                   />
