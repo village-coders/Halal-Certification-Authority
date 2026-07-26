@@ -359,6 +359,16 @@ const Audit = () => {
                                                                          onClick: () => { setSelectedAudit(audit); setNcCorrectionFiles([null]); setShowNcCorrectionModal(true); }
                                                                      }] : [])
                                                                  ] : []),
+                                                                 ...(audit.ncCorrectionFile && audit.ncCorrectionFile.length > 0 ? [
+                                                                     {
+                                                                         label: 'View Submitted Correction',
+                                                                         icon: <MdFileDownload size={16} />,
+                                                                         onClick: () => {
+                                                                             const files = Array.isArray(audit.ncCorrectionFile) ? audit.ncCorrectionFile : [audit.ncCorrectionFile];
+                                                                             files.forEach(f => window.open(getFileUrl(f), '_blank'));
+                                                                         }
+                                                                     }
+                                                                 ] : []),
                                                                 ...(audit.auditReport ? [
                                                                     { 
                                                                         label: 'View Audit Report', 
@@ -483,6 +493,37 @@ const Audit = () => {
                                                             </a>
                                                         ))}
                                                     </div>
+                                                </div>
+                                            )}
+
+                                            {/* NC Correction Files submitted by the client */}
+                                            {selectedAudit.ncCorrectionFile && selectedAudit.ncCorrectionFile.length > 0 && (
+                                                <div className="details-section" style={{marginTop: '20px'}}>
+                                                    <h3 className="details-title">Your Submitted NC Correction Files</h3>
+                                                    {selectedAudit.ncRejectReason && (
+                                                        <div style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '6px', padding: '10px 14px', marginBottom: '12px', color: '#991b1b', fontSize: '13px' }}>
+                                                            <strong>⚠ Rejection Reason:</strong> {selectedAudit.ncRejectReason}
+                                                        </div>
+                                                    )}
+                                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                                        {(Array.isArray(selectedAudit.ncCorrectionFile) ? selectedAudit.ncCorrectionFile : [selectedAudit.ncCorrectionFile]).map((f, idx) => (
+                                                            <a
+                                                                key={idx}
+                                                                href={getFileUrl(f)}
+                                                                target="_blank"
+                                                                rel="noreferrer"
+                                                                style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '10px 14px', background: '#fffbeb', border: '1px solid #fde68a', borderRadius: '6px', color: '#92400e', textDecoration: 'none', fontWeight: 500, fontSize: '13px', width: 'fit-content' }}
+                                                            >
+                                                                <MdFileDownload size={16} />
+                                                                {f.split('/').pop() || `Correction File ${idx + 1}`}
+                                                            </a>
+                                                        ))}
+                                                    </div>
+                                                    {selectedAudit.ncCorrectionUploadedAt && (
+                                                        <div style={{ fontSize: '11px', color: '#9ca3af', marginTop: '6px' }}>
+                                                            Uploaded: {new Date(selectedAudit.ncCorrectionUploadedAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
+                                                        </div>
+                                                    )}
                                                 </div>
                                             )}
 
