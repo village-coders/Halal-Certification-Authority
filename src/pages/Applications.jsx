@@ -1092,10 +1092,25 @@ function Applications() {
     const baseUrl = import.meta.env.VITE_BASE_URL || 'http://localhost:5000/api';
     const getDocumentUrl = (path) => {
       if (!path) return '#';
+      if (typeof path !== 'string') return '#';
       if (path.startsWith('http')) return path;
-      if (path.startsWith('/api/')) return `${baseUrl.replace('/api', '')}${path}`;
-      if (path.startsWith('/files/')) return `${baseUrl.replace('/api', '')}/api${path}`;
-      return `${baseUrl.replace('/api', '')}/api/files/${path}`;
+      
+      const cleanBase = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
+      
+      let relativePath = path;
+      if (relativePath.startsWith('/api/')) {
+        relativePath = relativePath.slice(4);
+      }
+      
+      if (!relativePath.startsWith('/')) {
+        relativePath = '/' + relativePath;
+      }
+      
+      if (!relativePath.startsWith('/files/')) {
+        relativePath = '/files' + relativePath;
+      }
+      
+      return `${cleanBase}${relativePath}`;
     };
 
     const getYesNoBadge = (value) => {
