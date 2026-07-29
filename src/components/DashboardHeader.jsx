@@ -35,6 +35,49 @@ const DashboardHeader = ({title}) => {
     }
   };
 
+  const impersonateLogId = localStorage.getItem('impersonateLogId');
+
+  const handleExitImpersonation = async () => {
+    if (impersonateLogId) {
+      try {
+        const tokenString = localStorage.getItem("accessToken");
+        const token = tokenString ? JSON.parse(tokenString) : null;
+        await axios.patch(`${baseUrl}/impersonate-logs/${impersonateLogId}/end`, {}, {
+          headers: token ? { Authorization: `Bearer ${token}` } : {}
+        });
+      } catch (err) {
+        console.error('Error ending impersonation log:', err);
+      }
+      localStorage.removeItem('impersonateLogId');
+    }
+    logout();
+    try {
+      window.close();
+    } catch (e) {
+      navigate('/');
+    }
+  };
+
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      const logId = localStorage.getItem('impersonateLogId');
+      if (logId) {
+        const tokenString = localStorage.getItem("accessToken");
+        const token = tokenString ? JSON.parse(tokenString) : null;
+        fetch(`${baseUrl}/impersonate-logs/${logId}/end`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { Authorization: `Bearer ${token}` } : {})
+          },
+          keepalive: true
+        });
+      }
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [baseUrl]);
+
   useEffect(() => {
     fetchNotifications();
     const interval = setInterval(fetchNotifications, 60000);
@@ -109,6 +152,26 @@ const DashboardHeader = ({title}) => {
     <div className="dashboard-header">
       <h1>{title}</h1>
       <div className="header-actions">
+        {impersonateLogId && (
+          <button 
+            onClick={handleExitImpersonation}
+            style={{
+              backgroundColor: '#fee2e2',
+              color: '#dc2626',
+              border: '1px solid #fca5a5',
+              padding: '6px 12px',
+              borderRadius: '6px',
+              fontWeight: 600,
+              fontSize: '13px',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px'
+            }}
+          >
+            <span>⚠️ Exit Impersonation</span>
+          </button>
+        )}
         
         <div id="tour-dashboard-notification" className="notification-container" ref={dropdownRef}>
           <button className="notification-btn cursor-pointer" onClick={handleBellClick}>

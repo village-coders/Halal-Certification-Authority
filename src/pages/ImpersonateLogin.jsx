@@ -10,12 +10,16 @@ const ImpersonateLogin = () => {
   useEffect(() => {
     const token = searchParams.get('token');
     const userStr = searchParams.get('user');
+    const logId = searchParams.get('logId');
 
     if (token && userStr) {
       try {
         const parsedToken = JSON.parse(token);
         localStorage.setItem('accessToken', JSON.stringify(parsedToken));
         localStorage.setItem('user', userStr);
+        if (logId) {
+          localStorage.setItem('impersonateLogId', logId);
+        }
         
         // Load user context
         fetchUser().then(() => {
