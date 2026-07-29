@@ -17,7 +17,7 @@ const ImpersonateLogin = () => {
         const parsedToken = JSON.parse(token);
         localStorage.setItem('accessToken', JSON.stringify(parsedToken));
         localStorage.setItem('user', userStr);
-        if (logId) {
+        if (logId && logId !== 'null' && logId !== 'undefined') {
           localStorage.setItem('impersonateLogId', logId);
         }
         

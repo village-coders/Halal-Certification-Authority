@@ -62,10 +62,15 @@ const DashboardHeader = ({title}) => {
     const handleBeforeUnload = () => {
       const logId = localStorage.getItem('impersonateLogId');
       if (logId) {
-        const tokenString = localStorage.getItem("accessToken");
-        const token = tokenString ? JSON.parse(tokenString) : null;
+        let token = null;
+        try {
+          const tokenString = localStorage.getItem("accessToken");
+          token = tokenString ? JSON.parse(tokenString) : null;
+        } catch (e) {
+          token = localStorage.getItem("accessToken");
+        }
         fetch(`${baseUrl}/impersonate-logs/${logId}/end`, {
-          method: 'PATCH',
+          method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             ...(token ? { Authorization: `Bearer ${token}` } : {})
