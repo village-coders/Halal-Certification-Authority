@@ -32,6 +32,9 @@ const Invoice = () => {
   const [applications, setApplications] = useState([]);
   const [showInvoiceDetails, setShowInvoiceDetails] = useState(false);
   const [showUploadReceipt, setShowUploadReceipt] = useState(false);
+  const [showRejectModal, setShowRejectModal] = useState(false);
+  const [rejectReason, setRejectReason] = useState("");
+  const [isRejecting, setIsRejecting] = useState(false);
   const [selectedInvoice, setSelectedInvoice] = useState(null);
   
   // Search & Filters
@@ -213,6 +216,35 @@ const Invoice = () => {
     }
   };
 
+  const handleRejectInvoice = async () => {
+    if (!selectedInvoice) return;
+    if (!rejectReason.trim()) {
+      toast.error("Please provide a reason for rejecting the invoice");
+      return;
+    }
+
+    try {
+      setIsRejecting(true);
+      const response = await axios.put(`${API_BASE_URL}/invoices/${selectedInvoice._id}/reject`, {
+        reason: rejectReason
+      }, {
+        headers: getAuthHeader()
+      });
+
+      if (response.data) {
+        toast.success("Invoice rejected successfully");
+        setShowRejectModal(false);
+        setRejectReason("");
+        setSelectedInvoice(null);
+        fetchInvoices();
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Failed to reject invoice");
+    } finally {
+      setIsRejecting(false);
+    }
+  };
+
   const handleDownloadInvoice = (invoice) => {
     if (invoice.invoiceFile) {
       const url = getFileUrl(invoice.invoiceFile);
@@ -372,10 +404,18 @@ const Invoice = () => {
                                 icon: <i className="fas fa-file-invoice"></i>,
                                 onClick: () => handleDownloadInvoice(invoice)
                               },
-                              invoice.status === 'Issued' && {
+                              (invoice.status === 'Issued' || invoice.status === 'Invoice Sent') && {
                                 label: 'Upload Proof of Payment',
                                 icon: <i className="fas fa-upload" style={{ color: 'var(--primary-color)' }}></i>,
                                 onClick: () => openUploadModal(invoice)
+                              },
+                              (invoice.status === 'Issued' || invoice.status === 'Invoice Sent') && {
+                                label: 'Reject Invoice',
+                                icon: <i className="fas fa-times-circle" style={{ color: '#ef4444' }}></i>,
+                                onClick: () => {
+                                  setSelectedInvoice(invoice);
+                                  setShowRejectModal(true);
+                                }
                               }
                             ].filter(Boolean)}
                           />
@@ -469,6 +509,12 @@ const Invoice = () => {
                     <span className="info-label">Description:</span>
                     <span className="info-value">{selectedInvoice.description || "N/A"}</span>
                   </div>
+                  {selectedInvoice.rejectionReason && (
+                    <div className="info-item" style={{ gridColumn: '1 / -1' }}>
+                      <span className="info-label" style={{ color: '#ef4444' }}>Rejection Reason:</span>
+                      <span className="info-value" style={{ color: '#b91c1c' }}>{selectedInvoice.rejectionReason}</span>
+                    </div>
+                  )}
                 </div>
 
                 {/* Proof of Payment Summary */}
@@ -542,18 +588,31 @@ const Invoice = () => {
                   >
                      <i className="fas fa-file-invoice"></i> View Invoice
                   </button>
-                  {selectedInvoice.status === 'Issued' && (
-                    <button 
-                      type="button" 
-                      className="btn renew-btn"
-                      onClick={() => {
-                        setShowInvoiceDetails(false);
-                        openUploadModal(selectedInvoice);
-                      }}
-                      style={{ background: 'var(--primary-color)', color: 'white' }}
-                    >
-                      <i className="fas fa-upload"></i> Upload Proof of Payment
-                    </button>
+                  {(selectedInvoice.status === 'Issued' || selectedInvoice.status === 'Invoice Sent') && (
+                    <>
+                      <button 
+                        type="button" 
+                        className="btn renew-btn"
+                        onClick={() => {
+                          setShowInvoiceDetails(false);
+                          openUploadModal(selectedInvoice);
+                        }}
+                        style={{ background: 'var(--primary-color)', color: 'white' }}
+                      >
+                        <i className="fas fa-upload"></i> Upload Proof of Payment
+                      </button>
+                      <button 
+                        type="button" 
+                        className="btn btn-cancel"
+                        onClick={() => {
+                          setShowInvoiceDetails(false);
+                          setShowRejectModal(true);
+                        }}
+                        style={{ background: '#ef4444', color: 'white', border: 'none' }}
+                      >
+                        <i className="fas fa-times-circle"></i> Reject Invoice
+                      </button>
+                    </>
                   )}
                 </div>
               </div>
@@ -621,6 +680,78 @@ const Invoice = () => {
                       <><i className="fas fa-spinner fa-spin"></i> Uploading...</>
                     ) : (
                       <><i className="fas fa-check-circle"></i> Submit Proof</>
+                    )}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Reject Invoice Modal */}
+        {showRejectModal && selectedInvoice && (
+          <div className="modal modal-large">
+            <div className="modal-content">
+              <div className="modal-header">
+                <h3>
+                  <i className="fas fa-times-circle" style={{ color: '#ef4444' }}></i> Reject Invoice #{selectedInvoice.invoiceNumber}
+                </h3>
+                <button 
+                  className="close-btn" 
+                  onClick={() => setShowRejectModal(false)}
+                  disabled={isRejecting}
+                >
+                  <i className="fas fa-times"></i>
+                </button>
+              </div>
+              
+              <div style={{ padding: '24px' }}>
+                <p style={{ color: '#374151', marginBottom: '16px' }}>
+                  Please state your reason for rejecting this invoice. Administrators will be notified to review and address your concerns.
+                </p>
+
+                <div style={{ marginBottom: '24px' }}>
+                  <label style={{ display: 'block', fontWeight: 600, marginBottom: '8px', color: '#111827' }}>
+                    Rejection Reason <span style={{ color: '#ef4444' }}>*</span>
+                  </label>
+                  <textarea 
+                    rows={4}
+                    value={rejectReason}
+                    onChange={(e) => setRejectReason(e.target.value)}
+                    placeholder="Enter reason for rejecting this invoice..."
+                    disabled={isRejecting}
+                    style={{
+                      width: '100%',
+                      padding: '12px',
+                      borderRadius: '6px',
+                      border: '1px solid #d1d5db',
+                      fontSize: '14px',
+                      fontFamily: 'inherit',
+                      resize: 'vertical'
+                    }}
+                  />
+                </div>
+
+                <div className="form-actions">
+                  <button 
+                    type="button" 
+                    className="btn btn-cancel" 
+                    onClick={() => setShowRejectModal(false)}
+                    disabled={isRejecting}
+                  >
+                    Cancel
+                  </button>
+                  <button 
+                    type="button" 
+                    className="btn"
+                    onClick={handleRejectInvoice}
+                    disabled={isRejecting || !rejectReason.trim()}
+                    style={{ background: '#ef4444', color: 'white', border: 'none' }}
+                  >
+                    {isRejecting ? (
+                      <><i className="fas fa-spinner fa-spin"></i> Rejecting...</>
+                    ) : (
+                      <><i className="fas fa-times-circle"></i> Confirm Rejection</>
                     )}
                   </button>
                 </div>
