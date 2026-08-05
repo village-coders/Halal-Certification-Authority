@@ -110,7 +110,8 @@ function Applications() {
 
   const applicationCategories = [
     "Initial Certification",
-    "Renewal Application"
+    "Renewal Application",
+    "Ad-On Application"
   ];
 
   const foodSafetyProgramOptions = [
@@ -280,6 +281,28 @@ function Applications() {
     setShowEditModal(false);
   };
 
+  const handleAdOnApplication = () => {
+    // Check if any branch has a certified application
+    const certifiedBranchIds = applications
+      .filter(app => ["issued", "certified", "approved"].includes(app.status?.toLowerCase()))
+      .map(app => app.branchId?._id || app.branchId);
+
+    if (certifiedBranchIds.length === 0) {
+      toast.error("No certified sites found. Only sites with a certified initial application can apply for an Additional Certificate.");
+      return;
+    }
+
+    setFormData(prev => ({
+      ...prev,
+      category: "Ad-On Application",
+      branchId: ""
+    }));
+    setShowApplicationForm(true);
+    setShowRenewalForm(false);
+    setShowViewModal(false);
+    setShowEditModal(false);
+  };
+
   const fetchApplications = useCallback(async () => {
     try {
       setLoading(true);
@@ -364,6 +387,11 @@ function Applications() {
             } else {
               setFormData(prev => ({ ...prev, category: "Renewal Application" }));
             }
+            setShowApplicationForm(true);
+          }, 500);
+        } else if (action === 'addon') {
+          setTimeout(() => {
+            setFormData(prev => ({ ...prev, category: "Ad-On Application", branchId: "" }));
             setShowApplicationForm(true);
           }, 500);
         }
@@ -1411,6 +1439,16 @@ function Applications() {
                 <i className="fas fa-sync-alt"></i> Renew
               </button>
 
+              <button
+                className="renew-btn"
+                onClick={handleAdOnApplication}
+                disabled={applications.filter(app => ["issued", "certified", "approved"].includes(app.status?.toLowerCase())).length === 0}
+                title={applications.filter(app => ["issued", "certified", "approved"].includes(app.status?.toLowerCase())).length === 0 ? "No certified sites available for Additional Certificate application" : "Apply for an Additional Certificate for a certified site"}
+                style={{ backgroundColor: '#7c3aed', borderColor: '#7c3aed' }}
+              >
+                <i className="fas fa-plus-circle"></i> Additional Certificate
+              </button>
+
               <div className="tooltip-wrapper">
                 <button
                   className="new-btn"
@@ -1487,7 +1525,18 @@ function Applications() {
                         <span className="app-number">{app.applicationNumber || "N/A"}</span>
                       </td>
                       <td>{app.branchId?.branchName || "N/A"}</td>
-                      <td>{app.category || "N/A"}</td>
+                      <td>
+                        <span style={{
+                          padding: '2px 8px',
+                          borderRadius: '20px',
+                          fontSize: '11px',
+                          fontWeight: 700,
+                          background: app.category === 'Ad-On Application' ? '#ede9fe' : app.category === 'Renewal Application' ? '#dbeafe' : '#dcfce7',
+                          color: app.category === 'Ad-On Application' ? '#7c3aed' : app.category === 'Renewal Application' ? '#1e40af' : '#15803d'
+                        }}>
+                          {app.category || "N/A"}
+                        </span>
+                      </td>
                       {/* <td>{app.product || "N/A"}</td> */}
                       <td>
                         <span
@@ -1548,7 +1597,9 @@ function Applications() {
           <div className="modal modal-large">
             <div className="modal-content">
               <div className="modal-header">
-                <h3>{formData.category === "Renewal Application" ? "Renewal Application" : "New Application"}</h3>
+                <h3>
+                  {formData.category === "Renewal Application" ? "🔄 Renewal Application" : formData.category === "Ad-On Application" ? "➕ Ad-On Application" : "New Application"}
+                </h3>
                 <button
                   className="close-btn"
                   onClick={handleCloseForm}
@@ -1609,9 +1660,18 @@ function Applications() {
                         disabled={loading}
                       >
                         <option value="">Select Branch</option>
-                        {branches.map((branch) => (
-                          <option key={branch._id} value={branch._id}>{branch.branchName}</option>
-                        ))}
+                        {branches.map((branch) => {
+                          const isCertified = applications.some(
+                            app => (app.branchId?._id === branch._id || app.branchId === branch._id) && ["issued", "certified", "approved"].includes(app.status?.toLowerCase())
+                          );
+                          const isAdOn = formData.category === "Ad-On Application";
+                          const isDisabled = isAdOn && !isCertified;
+                          return (
+                            <option key={branch._id} value={branch._id} disabled={isDisabled}>
+                              {branch.branchName}
+                            </option>
+                          );
+                        })}
                       </select>
                     </div>
 

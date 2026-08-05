@@ -42,10 +42,13 @@ function Dashboard() {
 
     ...(certificates.length > 0
       ? (() => {
-          const criticalCert = certificates.find(item =>
-            item.status && ["expired", "expiring soon"].includes(item.status.toLowerCase().trim()) &&
-            !activeRenewals.includes(item.branchId)
-          );
+          const criticalCert = certificates
+            .filter(item =>
+              item.status &&
+              ["expired", "expiring soon"].includes(item.status.toLowerCase().trim()) &&
+              !activeRenewals.includes(item.branchId)
+            )
+            .sort((a, b) => new Date(a.expiryDate) - new Date(b.expiryDate))[0];
           if (criticalCert) {
             const isExpired = criticalCert.status.toLowerCase().trim() === "expired";
             let desc = "This certificate has expired.";
@@ -68,6 +71,12 @@ function Dashboard() {
             ];
           }
         })()
+      : []
+    ),
+
+    // Show Additional Certificate action when at least one site is certified (has an Issued application)
+    ...(applications.some(app => ["issued", "certified", "approved"].includes(app.status?.toLowerCase()))
+      ? [{ title: "ADDITIONAL CERTIFICATE", icon: "fa-plus-circle", color: "#7c3aed", link: "applications?action=addon", description: "Apply for an additional certification for a site that is already certified." }]
       : []
     ),
   ];
@@ -225,7 +234,7 @@ function Dashboard() {
         ).map(app => app.branchId?._id || app.branchId || app.companyId);
         
         setActiveRenewals(renewals);
-        setApplications(formattedApps);
+        setApplications(response.data);
       }
     } catch (err) {
       console.error("Error fetching applications:", err);
