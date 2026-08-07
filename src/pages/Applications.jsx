@@ -1272,10 +1272,6 @@ function Applications() {
                     <p>{selectedApplication.category || 'N/A'}</p>
                   </div>
                   <div className="detail-item">
-                    <label>Product</label>
-                    <p>{selectedApplication.product || 'N/A'}</p>
-                  </div>
-                  <div className="detail-item">
                     <label>Requested Date</label>
                     <p>{formatDate(selectedApplication.requestedDate)}</p>
                   </div>
@@ -1385,6 +1381,54 @@ function Applications() {
                 </div>
               </div>
 
+              {/* Products Section */}
+              <div className="details-section" style={{ marginTop: '8px' }}>
+                <h5 style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  Products Under This Application *
+                  {selectedClientProducts.length > 0 && (
+                    <span style={{ background: '#00853b', color: '#fff', borderRadius: '20px', fontSize: '11px', padding: '2px 8px', fontWeight: 700 }}>
+                      {selectedClientProducts.length}
+                    </span>
+                  )}
+                </h5>
+                {selectedClientProducts.length > 0 ? (
+                  <div style={{ overflowX: 'auto' }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+                      <thead>
+                        <tr style={{ background: '#f9fafb', borderBottom: '2px solid #e5e7eb' }}>
+                          <th style={{ padding: '10px 14px', textAlign: 'left', fontWeight: 600, color: '#374151' }}>Product Name</th>
+                          <th style={{ padding: '10px 14px', textAlign: 'left', fontWeight: 600, color: '#374151' }}>Category</th>
+                          <th style={{ padding: '10px 14px', textAlign: 'left', fontWeight: 600, color: '#374151' }}>Status</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {selectedClientProducts.map((product, i) => (
+                          <tr key={product._id || i} style={{ borderBottom: '1px solid #f3f4f6' }}>
+                            <td style={{ padding: '10px 14px', fontWeight: 500 }}>{product.name}</td>
+                            <td style={{ padding: '10px 14px', color: '#6b7280' }}>{product.category || product.productCategory || '—'}</td>
+                            <td style={{ padding: '10px 14px' }}>
+                              <span style={{
+                                padding: '2px 10px',
+                                borderRadius: '20px',
+                                fontSize: '11px',
+                                fontWeight: 700,
+                                textTransform: 'capitalize',
+                                background: product.status === 'acknowledged' ? '#dcfce7' : product.status === 'rejected' ? '#fee2e2' : '#fef9c3',
+                                color: product.status === 'acknowledged' ? '#15803d' : product.status === 'rejected' ? '#dc2626' : '#92400e'
+                              }}>
+                                {product.status || 'Pending'}
+                              </span>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : (
+                  <p style={{ color: '#6b7280', fontSize: '13px', fontStyle: 'italic' }}>No products have been submitted for this application yet.</p>
+                )}
+              </div>
+
               {/* Geographic Markets */}
               <div className="details-section">
                 <h5>Geographic Markets</h5>
@@ -1459,54 +1503,6 @@ function Applications() {
                   <p className="description-text">{selectedApplication.description}</p>
                 </div>
               )}
-
-              {/* Products Section */}
-              <div className="details-section" style={{ marginTop: '8px' }}>
-                <h5 style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  Products Under This Application
-                  {selectedClientProducts.length > 0 && (
-                    <span style={{ background: '#00853b', color: '#fff', borderRadius: '20px', fontSize: '11px', padding: '2px 8px', fontWeight: 700 }}>
-                      {selectedClientProducts.length}
-                    </span>
-                  )}
-                </h5>
-                {selectedClientProducts.length > 0 ? (
-                  <div style={{ overflowX: 'auto' }}>
-                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
-                      <thead>
-                        <tr style={{ background: '#f9fafb', borderBottom: '2px solid #e5e7eb' }}>
-                          <th style={{ padding: '10px 14px', textAlign: 'left', fontWeight: 600, color: '#374151' }}>Product Name</th>
-                          <th style={{ padding: '10px 14px', textAlign: 'left', fontWeight: 600, color: '#374151' }}>Category</th>
-                          <th style={{ padding: '10px 14px', textAlign: 'left', fontWeight: 600, color: '#374151' }}>Status</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {selectedClientProducts.map((product, i) => (
-                          <tr key={product._id || i} style={{ borderBottom: '1px solid #f3f4f6' }}>
-                            <td style={{ padding: '10px 14px', fontWeight: 500 }}>{product.name}</td>
-                            <td style={{ padding: '10px 14px', color: '#6b7280' }}>{product.category || product.productCategory || '—'}</td>
-                            <td style={{ padding: '10px 14px' }}>
-                              <span style={{
-                                padding: '2px 10px',
-                                borderRadius: '20px',
-                                fontSize: '11px',
-                                fontWeight: 700,
-                                textTransform: 'capitalize',
-                                background: product.status === 'acknowledged' ? '#dcfce7' : product.status === 'rejected' ? '#fee2e2' : '#fef9c3',
-                                color: product.status === 'acknowledged' ? '#15803d' : product.status === 'rejected' ? '#dc2626' : '#92400e'
-                              }}>
-                                {product.status || 'Pending'}
-                              </span>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                ) : (
-                  <p style={{ color: '#6b7280', fontSize: '13px', fontStyle: 'italic' }}>No products have been submitted for this application yet.</p>
-                )}
-              </div>
             </div>
           </div>
 
