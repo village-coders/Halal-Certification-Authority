@@ -26,6 +26,7 @@ function Applications() {
   const [editLoading, setEditLoading] = useState(false);
   const [branches, setBranches] = useState([]);
   const [branchesLoading, setBranchesLoading] = useState(false);
+  const [certificates, setCertificates] = useState([]);
 
   const [formData, setFormData] = useState({
     category: "",
@@ -91,6 +92,12 @@ function Applications() {
       positionTitle: "",
       telephoneNo: "",
       emailAddress: ""
+    },
+    primaryContact: {
+      name: "",
+      email: "",
+      positionTitle: "",
+      telephoneNo: ""
     },
     // Authorized by
     authorizedBy: {
@@ -171,7 +178,16 @@ function Applications() {
       navigate('/branches');
       return;
     }
-    setFormData(prev => ({ ...prev, category: "Initial Certification" }));
+    setFormData(prev => ({
+      ...prev,
+      category: "Initial Certification",
+      primaryContact: {
+        name: user?.fullName || user?.companyName || prev.primaryContact?.name || "",
+        email: user?.email || prev.primaryContact?.email || "",
+        positionTitle: user?.positionTitle || prev.primaryContact?.positionTitle || "",
+        telephoneNo: user?.phone || prev.primaryContact?.telephoneNo || ""
+      }
+    }));
     setShowApplicationForm(true);
     setShowRenewalForm(false);
     setShowViewModal(false);
@@ -250,6 +266,12 @@ function Applications() {
         positionTitle: "",
         telephoneNo: "",
         emailAddress: ""
+      },
+      primaryContact: {
+        name: app.primaryContact?.name || "",
+        email: app.primaryContact?.email || "",
+        positionTitle: app.primaryContact?.positionTitle || "",
+        telephoneNo: app.primaryContact?.telephoneNo || ""
       },
       authorizedBy: {
         name: app.authorizedBy?.name || "",
@@ -364,9 +386,24 @@ function Applications() {
     }
   }, []);
 
+  const fetchCertificates = useCallback(async () => {
+    try {
+      const token = JSON.parse(localStorage.getItem("accessToken"));
+      const response = await axios.get(`${API_BASE_URL}/certificates`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (response.data && Array.isArray(response.data)) {
+        setCertificates(response.data);
+      }
+    } catch (err) {
+      console.error("Error fetching certificates:", err);
+    }
+  }, []);
+
   useEffect(() => {
     fetchProducts();
     fetchBranches();
+    fetchCertificates();
     fetchApplications().then((apps) => {
       if (apps && Array.isArray(apps)) {
         // Process query params
@@ -614,6 +651,26 @@ function Applications() {
       return;
     }
 
+    if (!formData.primaryContact?.name?.trim()) {
+      toast.error("Please enter Primary Contact name");
+      return;
+    }
+
+    if (!formData.primaryContact?.email?.trim()) {
+      toast.error("Please enter Primary Contact email");
+      return;
+    }
+
+    if (!formData.primaryContact?.positionTitle?.trim()) {
+      toast.error("Please enter Primary Contact position/title");
+      return;
+    }
+
+    if (!formData.primaryContact?.telephoneNo?.trim()) {
+      toast.error("Please enter Primary Contact phone number");
+      return;
+    }
+
     if (!formData.authorizedBy.name) {
       toast.error("Please enter the name of the authorized person");
       return;
@@ -731,6 +788,12 @@ function Applications() {
         positionTitle: "",
         telephoneNo: "",
         emailAddress: ""
+      },
+      primaryContact: {
+        name: "",
+        email: "",
+        positionTitle: "",
+        telephoneNo: ""
       },
       authorizedBy: {
         name: "",
@@ -979,6 +1042,26 @@ function Applications() {
       return;
     }
 
+    if (!formData.primaryContact?.name?.trim()) {
+      toast.error("Please enter Primary Contact name");
+      return;
+    }
+
+    if (!formData.primaryContact?.email?.trim()) {
+      toast.error("Please enter Primary Contact email");
+      return;
+    }
+
+    if (!formData.primaryContact?.positionTitle?.trim()) {
+      toast.error("Please enter Primary Contact position/title");
+      return;
+    }
+
+    if (!formData.primaryContact?.telephoneNo?.trim()) {
+      toast.error("Please enter Primary Contact phone number");
+      return;
+    }
+
     if (!formData.authorizedBy.name) {
       toast.error("Please enter the name of the authorized person");
       return;
@@ -986,6 +1069,11 @@ function Applications() {
 
     if (!formData.authorizedBy.positionTitle) {
       toast.error("Please enter the position/title of the authorized person");
+      return;
+    }
+
+    if (!formData.rawMaterialsDocument) {
+      toast.error("Please upload the List of raw materials document (Compulsory)");
       return;
     }
 
@@ -1180,10 +1268,6 @@ function Applications() {
                 <h5>Basic Information</h5>
                 <div className="details-grid">
                   <div className="detail-item">
-                    <label>Manufacturing Facility</label>
-                    <p>{selectedApplication.branchId?.branchName || 'N/A'}</p>
-                  </div>
-                  <div className="detail-item">
                     <label>Category</label>
                     <p>{selectedApplication.category || 'N/A'}</p>
                   </div>
@@ -1194,6 +1278,29 @@ function Applications() {
                   <div className="detail-item">
                     <label>Requested Date</label>
                     <p>{formatDate(selectedApplication.requestedDate)}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Primary Contact */}
+              <div className="details-section">
+                <h5>Primary Contact Information</h5>
+                <div className="details-grid">
+                  <div className="detail-item">
+                    <label>Name</label>
+                    <p>{selectedApplication.primaryContact?.name || selectedApplication.authorizedBy?.name || 'N/A'}</p>
+                  </div>
+                  <div className="detail-item">
+                    <label>Email</label>
+                    <p>{selectedApplication.primaryContact?.email || selectedApplication.company?.email || 'N/A'}</p>
+                  </div>
+                  <div className="detail-item">
+                    <label>Position/Title</label>
+                    <p>{selectedApplication.primaryContact?.positionTitle || selectedApplication.authorizedBy?.positionTitle || 'N/A'}</p>
+                  </div>
+                  <div className="detail-item">
+                    <label>Phone Number</label>
+                    <p>{selectedApplication.primaryContact?.telephoneNo || selectedApplication.company?.phone || 'N/A'}</p>
                   </div>
                 </div>
               </div>
@@ -1422,6 +1529,28 @@ function Applications() {
     );
   };
 
+  const activeRenewalBranchIds = applications
+    .filter(app => app.category === "Renewal Application" && !["rejected", "issued", "certified", "cancelled"].includes(app.status?.toLowerCase()))
+    .map(app => app.branchId?._id || app.branchId);
+
+  const hasExpiredOrExpiringCert = certificates.some(cert => {
+    const status = cert.status?.toLowerCase().trim();
+    const branchId = cert.branchId?._id || cert.branchId;
+    if (activeRenewalBranchIds.includes(branchId)) return false;
+
+    if (status === 'expired' || status === 'expiring soon') return true;
+    if (cert.expiryDate) {
+      const today = new Date();
+      const expiry = new Date(cert.expiryDate);
+      const diffDays = Math.ceil((expiry - today) / (1000 * 60 * 60 * 24));
+      if (diffDays <= 90) return true;
+    }
+    return false;
+  }) || applications.some(app => {
+    const status = app.status?.toLowerCase().trim();
+    return status === 'expired' || status === 'expiring soon';
+  });
+
   return (
     <div className="dash">
       <Sidebar activeApp="active" />
@@ -1429,25 +1558,7 @@ function Applications() {
         <div className="manage-applications">
           <div className="header">
             <h2>Manage Applications</h2>
-            <div className="header-actions">
-              <button
-                className="renew-btn"
-                onClick={handleRenewApplication}
-                disabled={applications.filter(app => ["approved", "certified", "issued", "expired"].includes(app.status.toLowerCase())).length === 0 || productsLoading}
-                title={applications.filter(app => ["approved", "certified", "issued", "expired"].includes(app.status)).length === 0 ? "No eligible applications found for renewal" : ""}
-              >
-                <i className="fas fa-sync-alt"></i> Renew
-              </button>
-
-              <button
-                className="renew-btn"
-                onClick={handleAdOnApplication}
-                disabled={applications.filter(app => ["issued", "certified", "approved"].includes(app.status?.toLowerCase())).length === 0}
-                title={applications.filter(app => ["issued", "certified", "approved"].includes(app.status?.toLowerCase())).length === 0 ? "No certified sites available for Additional Certificate application" : "Apply for an Additional Certificate for a certified site"}
-                style={{ backgroundColor: '#7c3aed', borderColor: '#7c3aed' }}
-              >
-                <i className="fas fa-plus-circle"></i> Additional Certificate
-              </button>
+            <div className="header-actions">              
 
               <div className="tooltip-wrapper">
                 <button
@@ -1457,6 +1568,26 @@ function Applications() {
                   <i className="fas fa-plus"></i> New Application
                 </button>
               </div>
+
+              {hasExpiredOrExpiringCert && (
+                <button
+                  className="renew-btn"
+                  onClick={handleRenewApplication}
+                  disabled={productsLoading}
+                >
+                  <i className="fas fa-sync-alt"></i> Renew
+                </button>
+              )}
+
+              <button
+                className="renew-btn"
+                onClick={handleAdOnApplication}
+                disabled={applications.filter(app => ["issued", "certified", "approved"].includes(app.status?.toLowerCase())).length === 0}
+                title={applications.filter(app => ["issued", "certified", "approved"].includes(app.status?.toLowerCase())).length === 0 ? "No certified sites available for Additional Certificate application" : "Apply for an Additional Certificate for a certified site"}
+                style={{ backgroundColor: '#7c3aed', borderColor: '#7c3aed' }}
+              >
+                <i className="fas fa-plus-circle"></i>Appy For Additional Certificate
+              </button>
             </div>
           </div>
 
@@ -1763,6 +1894,63 @@ function Applications() {
                         onChange={handleInputChange}
                         required
                         disabled
+                      />
+                    </div>
+                  </div>
+
+                  {/* Primary Contact Information */}
+                  <div className="form-section">
+                    <h4>Primary Contact Information</h4>
+
+                    <div className="form-group">
+                      <label>Primary Contact Name *</label>
+                      <input
+                        type="text"
+                        name="primaryContact.name"
+                        value={formData.primaryContact?.name || ""}
+                        onChange={handleInputChange}
+                        placeholder="Enter primary contact name"
+                        disabled={loading}
+                        required
+                      />
+                    </div>
+
+                    <div className="form-group">
+                      <label>Primary Contact Email *</label>
+                      <input
+                        type="email"
+                        name="primaryContact.email"
+                        value={formData.primaryContact?.email || ""}
+                        onChange={handleInputChange}
+                        placeholder="Enter primary contact email"
+                        disabled={loading}
+                        required
+                      />
+                    </div>
+
+                    <div className="form-group">
+                      <label>Position/Title *</label>
+                      <input
+                        type="text"
+                        name="primaryContact.positionTitle"
+                        value={formData.primaryContact?.positionTitle || ""}
+                        onChange={handleInputChange}
+                        placeholder="Enter position or title"
+                        disabled={loading}
+                        required
+                      />
+                    </div>
+
+                    <div className="form-group">
+                      <label>Phone Number *</label>
+                      <input
+                        type="tel"
+                        name="primaryContact.telephoneNo"
+                        value={formData.primaryContact?.telephoneNo || ""}
+                        onChange={handleInputChange}
+                        placeholder="Enter phone number"
+                        disabled={loading}
+                        required
                       />
                     </div>
                   </div>
@@ -2355,12 +2543,13 @@ function Applications() {
                     </div>
 
                     <div className="form-group">
-                      <label>List of raw materials (If applicable)</label>
+                      <label>List of raw materials (Compulsory) *</label>
                       <input
                         type="file"
                         name="rawMaterialsDocument"
                         onChange={handleDocumentChange}
                         disabled={loading}
+                        required
                       />
                     </div>
                   </div>
@@ -2378,7 +2567,7 @@ function Applications() {
                   <button
                     type="submit"
                     className="btn btn-submit"
-                    disabled={loading || !formData.category || !formData.hasAppliedBefore || !formData.hasBeenSupervisedBefore || formData.foodSafetyPrograms.length === 0 || !formData.marketType || !formData.brandType || !formData.usesPorkOrDerivatives || !formData.usesAnimalMeatOrDerivatives || !formData.usesGelatinOrCapsule || !formData.containsAlcohol || !formData.additivesOrFlavourContainAlcohol || !formData.usesGlycerineOrDerivatives || formData.geographicMarkets.length === 0 || !formData.authorizedBy.name || !formData.authorizedBy.positionTitle}
+                    disabled={loading || !formData.category || !formData.primaryContact?.name || !formData.primaryContact?.email || !formData.primaryContact?.positionTitle || !formData.primaryContact?.telephoneNo || !formData.rawMaterialsDocument || !formData.hasAppliedBefore || !formData.hasBeenSupervisedBefore || formData.foodSafetyPrograms.length === 0 || !formData.marketType || !formData.brandType || !formData.usesPorkOrDerivatives || !formData.usesAnimalMeatOrDerivatives || !formData.usesGelatinOrCapsule || !formData.containsAlcohol || !formData.additivesOrFlavourContainAlcohol || !formData.usesGlycerineOrDerivatives || formData.geographicMarkets.length === 0 || !formData.authorizedBy.name || !formData.authorizedBy.positionTitle}
                   >
                     {loading ? 'Submitting...' : 'Submit Application'}
                   </button>
@@ -2457,6 +2646,63 @@ function Applications() {
                         onChange={handleInputChange}
                         required
                         disabled
+                      />
+                    </div>
+                  </div>
+
+                  {/* Primary Contact Information */}
+                  <div className="form-section">
+                    <h4>Primary Contact Information</h4>
+
+                    <div className="form-group">
+                      <label>Primary Contact Name *</label>
+                      <input
+                        type="text"
+                        name="primaryContact.name"
+                        value={formData.primaryContact?.name || ""}
+                        onChange={handleInputChange}
+                        placeholder="Enter primary contact name"
+                        disabled={editLoading}
+                        required
+                      />
+                    </div>
+
+                    <div className="form-group">
+                      <label>Primary Contact Email *</label>
+                      <input
+                        type="email"
+                        name="primaryContact.email"
+                        value={formData.primaryContact?.email || ""}
+                        onChange={handleInputChange}
+                        placeholder="Enter primary contact email"
+                        disabled={editLoading}
+                        required
+                      />
+                    </div>
+
+                    <div className="form-group">
+                      <label>Position/Title *</label>
+                      <input
+                        type="text"
+                        name="primaryContact.positionTitle"
+                        value={formData.primaryContact?.positionTitle || ""}
+                        onChange={handleInputChange}
+                        placeholder="Enter position or title"
+                        disabled={editLoading}
+                        required
+                      />
+                    </div>
+
+                    <div className="form-group">
+                      <label>Phone Number *</label>
+                      <input
+                        type="tel"
+                        name="primaryContact.telephoneNo"
+                        value={formData.primaryContact?.telephoneNo || ""}
+                        onChange={handleInputChange}
+                        placeholder="Enter phone number"
+                        disabled={editLoading}
+                        required
                       />
                     </div>
                   </div>
@@ -3013,7 +3259,7 @@ function Applications() {
                   <button
                     type="submit"
                     className="btn btn-submit"
-                    disabled={editLoading || !formData.category || !formData.hasAppliedBefore || !formData.hasBeenSupervisedBefore || formData.foodSafetyPrograms.length === 0 || !formData.marketType || !formData.brandType || !formData.usesPorkOrDerivatives || !formData.usesAnimalMeatOrDerivatives || !formData.usesGelatinOrCapsule || !formData.containsAlcohol || !formData.additivesOrFlavourContainAlcohol || !formData.usesGlycerineOrDerivatives || formData.geographicMarkets.length === 0 || !formData.authorizedBy.name || !formData.authorizedBy.positionTitle}
+                    disabled={editLoading || !formData.category || !formData.primaryContact?.name || !formData.primaryContact?.email || !formData.primaryContact?.positionTitle || !formData.primaryContact?.telephoneNo || !formData.hasAppliedBefore || !formData.hasBeenSupervisedBefore || formData.foodSafetyPrograms.length === 0 || !formData.marketType || !formData.brandType || !formData.usesPorkOrDerivatives || !formData.usesAnimalMeatOrDerivatives || !formData.usesGelatinOrCapsule || !formData.containsAlcohol || !formData.additivesOrFlavourContainAlcohol || !formData.usesGlycerineOrDerivatives || formData.geographicMarkets.length === 0 || !formData.authorizedBy.name || !formData.authorizedBy.positionTitle}
                   >
                     {editLoading ? 'Updating...' : 'Update Application'}
                   </button>
