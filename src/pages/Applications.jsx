@@ -196,7 +196,7 @@ function Applications() {
 
   const prefillFormFromApp = async (app) => {
     if (!app) return;
-
+    
     let productNames = [];
     try {
       const token = JSON.parse(localStorage.getItem("accessToken"));
@@ -1210,22 +1210,22 @@ function Applications() {
       if (!path) return '#';
       if (typeof path !== 'string') return '#';
       if (path.startsWith('http')) return path;
-
+      
       const cleanBase = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
-
+      
       let relativePath = path;
       if (relativePath.startsWith('/api/')) {
         relativePath = relativePath.slice(4);
       }
-
+      
       if (!relativePath.startsWith('/')) {
         relativePath = '/' + relativePath;
       }
-
+      
       if (!relativePath.startsWith('/files/')) {
         relativePath = '/files' + relativePath;
       }
-
+      
       return `${cleanBase}${relativePath}`;
     };
 
@@ -1554,7 +1554,7 @@ function Applications() {
         <div className="manage-applications">
           <div className="header">
             <h2>Manage Applications</h2>
-            <div className="header-actions">
+            <div className="header-actions">              
 
               <div className="tooltip-wrapper">
                 <button
