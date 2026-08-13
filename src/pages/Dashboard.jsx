@@ -21,6 +21,10 @@ function Dashboard() {
   const [certificates, setCertificates] = useState([]);
   const [branches, setBranches] = useState([]);
   const [activeRenewals, setActiveRenewals] = useState([]);
+  const [renewWindowDays, setRenewWindowDays] = useState(() => {
+    const stored = localStorage.getItem('renewWindowDays');
+    return stored ? parseInt(stored, 10) : 90;
+  });
   const [showBranchPopup, setShowBranchPopup] = useState(false);
   const [loading, setLoading] = useState({
     stats: true,
@@ -43,11 +47,20 @@ function Dashboard() {
     ...(certificates.length > 0
       ? (() => {
           const criticalCert = certificates
-            .filter(item =>
-              item.status &&
-              ["expired", "expiring soon"].includes(item.status.toLowerCase().trim()) &&
-              !activeRenewals.includes(item.branchId)
-            )
+            .filter(item => {
+              if (!item.status) return false;
+              const statusLower = item.status.toLowerCase().trim();
+              if (activeRenewals.includes(item.branchId)) return false;
+              // Always include expired certificates
+              if (statusLower === "expired") return true;
+              // For "expiring soon" or active, check if within the configured window
+              if (statusLower === "expiring soon" || statusLower === "active") {
+                if (!item.expiryDate) return false;
+                const daysLeft = Math.ceil((new Date(item.expiryDate) - new Date()) / (1000 * 60 * 60 * 24));
+                return daysLeft > 0 && daysLeft <= renewWindowDays;
+              }
+              return false;
+            })
             .sort((a, b) => new Date(a.expiryDate) - new Date(b.expiryDate))[0];
           if (criticalCert) {
             const isExpired = criticalCert.status.toLowerCase().trim() === "expired";
@@ -83,6 +96,7 @@ function Dashboard() {
 
   useEffect(() => {
     fetchDashboardData();
+    fetchRenewWindow();
   }, []);
 
   useEffect(() => {
@@ -97,6 +111,25 @@ function Dashboard() {
     }
   }, [user]);
 
+  // Fetch renew window setting from backend (source of truth)
+  const fetchRenewWindow = async () => {
+    try {
+      const token = JSON.parse(localStorage.getItem("accessToken"));
+      const response = await axios.get(`${API_BASE_URL}/settings/renewWindowDays`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {}
+      });
+      if (response.data && response.data.status === 'success') {
+        const val = response.data.data.value;
+        setRenewWindowDays(val || 90);
+        localStorage.setItem('renewWindowDays', (val || 90).toString());
+      }
+    } catch (err) {
+      console.error("Failed to fetch renew window setting:", err);
+      // Fallback: use whatever was last cached in localStorage
+      const stored = localStorage.getItem('renewWindowDays');
+      if (stored) setRenewWindowDays(parseInt(stored, 10));
+    }
+  };
 
   const fetchDashboardData = async () => {
     try {

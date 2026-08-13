@@ -13,6 +13,10 @@ function Certificate() {
   const [searchDate, setSearchDate] = useState("");
   const [searchStatus, setSearchStatus] = useState("");
   const [activeRenewals, setActiveRenewals] = useState([]);
+  const [renewWindowDays, setRenewWindowDays] = useState(() => {
+    const stored = localStorage.getItem('renewWindowDays');
+    return stored ? parseInt(stored, 10) : 90;
+  });
   const [isMobile, setIsMobile] = useState(window.innerWidth < 900);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -51,9 +55,31 @@ function Certificate() {
     window.addEventListener("resize", handleResize);
     fetchCertificates();
     fetchActiveRenewals();
+    fetchRenewWindow();
 
     return () => window.removeEventListener("resize", handleResize);
   }, []);
+
+  const fetchRenewWindow = async () => {
+    try {
+      const token = JSON.parse(localStorage.getItem("accessToken"));
+      const response = await axios.get(`${API_BASE_URL}/settings/renewWindowDays`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {}
+      });
+      if (response.data && response.data.status === 'success') {
+        const val = response.data.data.value;
+        setRenewWindowDays(val || 90);
+        localStorage.setItem('renewWindowDays', (val || 90).toString());
+      }
+    } catch (err) {
+      console.error("Failed to fetch renew window setting:", err);
+      // Fallback to localStorage if error
+      const stored = localStorage.getItem('renewWindowDays');
+      if (stored) {
+        setRenewWindowDays(parseInt(stored, 10));
+      }
+    }
+  };
 
   const fetchActiveRenewals = async () => {
     try {
@@ -442,7 +468,8 @@ function Certificate() {
                 <tbody style={{overflowY: "auto"}}>
                   {filteredCertificates.map((cert) => {
                     const daysRemaining = calculateDaysRemaining(cert.expiryDate);
-                    const isExpiringSoon = daysRemaining !== null && daysRemaining <= 30 && daysRemaining > 0;
+                    const isExpiringSoon = daysRemaining !== null && daysRemaining <= renewWindowDays && daysRemaining > 0;
+                    const isExpired = cert.status === 'Expired' || cert.status === 'expired' || (daysRemaining !== null && daysRemaining <= 0);
                     
                     return (
                       <tr key={cert._id}>
@@ -503,6 +530,7 @@ function Certificate() {
                                 disabled: downloading
                               },
                               (cert.status === 'Active' || cert.status === 'Expiring Soon' || cert.status === 'Expired' || cert.status === 'expired') && 
+                              (isExpiringSoon || isExpired) &&
                               !activeRenewals.includes(cert.branchId?._id || cert.branchId || cert.companyId || cert._id) && {
                                 label: 'Renew',
                                 icon: <i className="fas fa-sync-alt"></i>,
