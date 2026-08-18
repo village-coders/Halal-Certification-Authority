@@ -73,7 +73,8 @@ const Invoice = () => {
       "Issued": "#f59e0b",
       "Overdue": "#ef4444",
       "Requested": "#6366f1",
-      "Processing": "#8b5cf6"
+      "Processing": "#8b5cf6",
+      "Proof Rejected": "#ef4444"
     };
     return colors[status] || "#6b7280";
   };
@@ -144,7 +145,7 @@ const Invoice = () => {
     // Status Filter
     switch (activeTab) {
       case "pending":
-        filtered = filtered.filter(inv => ["Requested", "Issued", "Processing"].includes(inv.status));
+        filtered = filtered.filter(inv => ["Requested", "Issued", "Processing", "Proof Rejected"].includes(inv.status));
         break;
       case "paid":
         filtered = filtered.filter(inv => inv.status === "Paid");
@@ -390,6 +391,12 @@ const Invoice = () => {
                           >
                             {invoice.status || "Unknown"}
                           </span>
+                          {invoice.proofRejectionReason && invoice.status === 'Proof Rejected' && (
+                            <div style={{ marginTop: '4px', fontSize: '11px', color: '#b91c1c', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                              <i className="fas fa-exclamation-triangle"></i>
+                              <span>Proof Rejected: {invoice.proofRejectionReason}</span>
+                            </div>
+                          )}
                         </td>
                         <td>
                           <TableActions 
@@ -404,8 +411,8 @@ const Invoice = () => {
                                 icon: <i className="fas fa-file-invoice"></i>,
                                 onClick: () => handleDownloadInvoice(invoice)
                               },
-                              (invoice.status === 'Issued' || invoice.status === 'Invoice Sent') && {
-                                label: 'Upload Proof of Payment',
+                              (invoice.status === 'Issued' || invoice.status === 'Invoice Sent' || invoice.status === 'Proof Rejected') && {
+                                label: invoice.status === 'Proof Rejected' ? 'Re-upload Proof of Payment' : 'Upload Proof of Payment',
                                 icon: <i className="fas fa-upload" style={{ color: 'var(--primary-color)' }}></i>,
                                 onClick: () => openUploadModal(invoice)
                               },
@@ -531,6 +538,33 @@ const Invoice = () => {
                       Attached payment records and details for this invoice
                     </p>
                   </div>
+
+                  {/* Rejection Alert Banner */}
+                  {selectedInvoice.proofRejectionReason && (
+                    <div style={{
+                      backgroundColor: '#fef2f2',
+                      border: '1px solid #fecaca',
+                      borderRadius: '8px',
+                      padding: '14px 16px',
+                      marginBottom: '16px',
+                      display: 'flex',
+                      alignItems: 'flex-start',
+                      gap: '12px',
+                      textAlign: 'left'
+                    }}>
+                      <i className="fas fa-exclamation-circle" style={{ color: '#dc2626', fontSize: '20px', marginTop: '2px' }}></i>
+                      <div>
+                        <strong style={{ color: '#991b1b', fontSize: '14px' }}>Proof of Payment Rejected</strong>
+                        <p style={{ margin: '4px 0 0 0', color: '#b91c1c', fontSize: '13px' }}>
+                          <strong>Reason:</strong> {selectedInvoice.proofRejectionReason}
+                        </p>
+                        <p style={{ margin: '4px 0 0 0', color: '#7f1d1d', fontSize: '12px' }}>
+                          Please re-upload a valid proof of payment document to enable us to verify and approve your payment.
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
                   <div style={{
                     border: '1px solid #d1d5db',
                     borderRadius: '4px',
@@ -544,10 +578,14 @@ const Invoice = () => {
                   }}>
                     {selectedInvoice.proofOfPayment ? (
                       <>
-                        <i className="fas fa-file-invoice-dollar" style={{ fontSize: '48px', color: '#10b981', marginBottom: '16px' }}></i>
-                        <h3 style={{ color: '#111827', marginBottom: '10px' }}>Proof of Payment Submitted</h3>
+                        <i className={`fas ${selectedInvoice.status === 'Proof Rejected' ? 'fa-file-invoice-dollar' : 'fa-file-invoice-dollar'}`} style={{ fontSize: '48px', color: selectedInvoice.status === 'Proof Rejected' ? '#ef4444' : '#10b981', marginBottom: '16px' }}></i>
+                        <h3 style={{ color: '#111827', marginBottom: '10px' }}>
+                          {selectedInvoice.status === 'Proof Rejected' ? 'Proof of Payment (Rejected)' : 'Proof of Payment Submitted'}
+                        </h3>
                         <p style={{ color: '#6b7280', marginBottom: '20px' }}>
-                          A documentation has been uploaded for verification.
+                          {selectedInvoice.status === 'Proof Rejected' 
+                            ? 'The previously uploaded document was rejected. A new document is required.' 
+                            : 'A documentation has been uploaded for verification.'}
                         </p>
                         <a 
                           href={getFileUrl(selectedInvoice.proofOfPayment)}
@@ -558,7 +596,7 @@ const Invoice = () => {
                             background: 'white', border: '1px solid #d1d5db', color: '#374151', padding: '8px 16px', borderRadius: '6px', cursor: 'pointer', textDecoration: 'none'
                           }}
                         >
-                          <i className="fas fa-external-link-alt"></i> View Proof
+                          <i className="fas fa-external-link-alt"></i> View Uploaded Proof
                         </a>
                       </>
                     ) : (
@@ -588,7 +626,7 @@ const Invoice = () => {
                   >
                      <i className="fas fa-file-invoice"></i> View Invoice
                   </button>
-                  {(selectedInvoice.status === 'Issued' || selectedInvoice.status === 'Invoice Sent') && (
+                  {(selectedInvoice.status === 'Issued' || selectedInvoice.status === 'Invoice Sent' || selectedInvoice.status === 'Proof Rejected') && (
                     <>
                       <button 
                         type="button" 
@@ -599,19 +637,21 @@ const Invoice = () => {
                         }}
                         style={{ background: 'var(--primary-color)', color: 'white' }}
                       >
-                        <i className="fas fa-upload"></i> Upload Proof of Payment
+                        <i className="fas fa-upload"></i> {selectedInvoice.status === 'Proof Rejected' ? 'Re-upload Proof of Payment' : 'Upload Proof of Payment'}
                       </button>
-                      <button 
-                        type="button" 
-                        className="btn btn-cancel"
-                        onClick={() => {
-                          setShowInvoiceDetails(false);
-                          setShowRejectModal(true);
-                        }}
-                        style={{ background: '#ef4444', color: 'white', border: 'none' }}
-                      >
-                        <i className="fas fa-times-circle"></i> Reject Invoice
-                      </button>
+                      {(selectedInvoice.status === 'Issued' || selectedInvoice.status === 'Invoice Sent') && (
+                        <button 
+                          type="button" 
+                          className="btn btn-cancel"
+                          onClick={() => {
+                            setShowInvoiceDetails(false);
+                            setShowRejectModal(true);
+                          }}
+                          style={{ background: '#ef4444', color: 'white', border: 'none' }}
+                        >
+                          <i className="fas fa-times-circle"></i> Reject Invoice
+                        </button>
+                      )}
                     </>
                   )}
                 </div>
@@ -620,13 +660,13 @@ const Invoice = () => {
           </div>
         )}
 
-        {/* Upload Modal Clone */}
+        {/* Upload Modal */}
         {showUploadReceipt && selectedInvoice && (
           <div className="modal modal-large">
             <div className="modal-content">
               <div className="modal-header">
                 <h3>
-                  <i className="fas fa-upload"></i> Upload Proof of Payment
+                  <i className="fas fa-upload"></i> {selectedInvoice.status === 'Proof Rejected' ? 'Re-upload Proof of Payment' : 'Upload Proof of Payment'}
                 </h3>
                 <button 
                   className="close-btn" 
@@ -638,11 +678,33 @@ const Invoice = () => {
               </div>
               
               <div style={{ padding: '24px' }}>
+                {/* Rejection Notice in Upload Modal */}
+                {selectedInvoice.proofRejectionReason && (
+                  <div style={{
+                    backgroundColor: '#fef2f2',
+                    border: '1px solid #fecaca',
+                    borderRadius: '8px',
+                    padding: '12px 16px',
+                    marginBottom: '16px',
+                    display: 'flex',
+                    alignItems: 'flex-start',
+                    gap: '10px'
+                  }}>
+                    <i className="fas fa-exclamation-triangle" style={{ color: '#ef4444', marginTop: '2px' }}></i>
+                    <div>
+                      <strong style={{ color: '#991b1b', fontSize: '13px' }}>Previous Rejection Reason:</strong>
+                      <p style={{ margin: '2px 0 0 0', color: '#b91c1c', fontSize: '12.5px' }}>
+                        {selectedInvoice.proofRejectionReason}
+                      </p>
+                    </div>
+                  </div>
+                )}
+
                 <div className="renewal-notice" style={{ marginBottom: '24px' }}>
                   <i className="fas fa-receipt"></i>
                   <p>
                     <strong>Invoice #{selectedInvoice.invoiceNumber}</strong><br/>
-                    Please upload the proof of payment document for verification.
+                    Please upload a clear proof of payment document (bank receipt / deposit slip) for verification.
                   </p>
                 </div>
                 
