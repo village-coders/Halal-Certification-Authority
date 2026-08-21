@@ -50,7 +50,22 @@ function Dashboard() {
             .filter(item => {
               if (!item.status) return false;
               const statusLower = item.status.toLowerCase().trim();
-              if (activeRenewals.includes(item.branchId)) return false;
+              
+              const isRenewalActive = activeRenewals.some(app => {
+                const appRenewedCertId = (app.renewedCertificateId?._id || app.renewedCertificateId)?.toString();
+                const appRenewedAppId = (app.renewedApplicationId?._id || app.renewedApplicationId)?.toString();
+                const appBranchId = (app.branchId?._id || app.branchId)?.toString();
+                const certId = (item._id?.toString() || item._id);
+                const certAppId = (item.applicationId?._id || item.applicationId)?.toString();
+                const certBranchId = (item.branchId?._id || item.branchId)?.toString();
+
+                if (appRenewedCertId && appRenewedCertId === certId) return true;
+                if (appRenewedAppId && certAppId && appRenewedAppId === certAppId) return true;
+                if (!appRenewedCertId && !appRenewedAppId && appBranchId === certBranchId) return true;
+                return false;
+              });
+
+              if (isRenewalActive) return false;
               // Always include expired certificates
               if (statusLower === "expired") return true;
               // For "expiring soon" or active, check if within the configured window
@@ -264,7 +279,7 @@ function Dashboard() {
         const renewals = response.data.filter(app => 
           app.category === "Renewal Application" && 
           !["issued", "rejected", "expired"].includes(app.status?.toLowerCase())
-        ).map(app => app.branchId?._id || app.branchId || app.companyId);
+        );
         
         setActiveRenewals(renewals);
         setApplications(response.data);

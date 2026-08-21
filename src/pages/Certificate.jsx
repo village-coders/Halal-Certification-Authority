@@ -91,12 +91,37 @@ function Certificate() {
         const renewals = response.data.filter(app => 
           app.category === "Renewal Application" && 
           !["issued", "rejected", "expired"].includes(app.status?.toLowerCase())
-        ).map(app => app.branchId?._id || app.branchId || app.companyId);
+        );
         setActiveRenewals(renewals);
       }
     } catch (err) {
       console.error(err);
     }
+  };
+
+  const isCertificateRenewalActive = (cert) => {
+    if (!cert || !activeRenewals || activeRenewals.length === 0) return false;
+    const certId = (cert._id?.toString() || cert._id);
+    const certAppId = (cert.applicationId?._id || cert.applicationId)?.toString();
+    const certBranchId = (cert.branchId?._id || cert.branchId)?.toString();
+
+    return activeRenewals.some(app => {
+      const appRenewedCertId = (app.renewedCertificateId?._id || app.renewedCertificateId)?.toString();
+      const appRenewedAppId = (app.renewedApplicationId?._id || app.renewedApplicationId)?.toString();
+      const appBranchId = (app.branchId?._id || app.branchId)?.toString();
+
+      // 1. Direct match with renewed certificate
+      if (appRenewedCertId && appRenewedCertId === certId) return true;
+
+      // 2. Direct match with renewed application
+      if (appRenewedAppId && certAppId && appRenewedAppId === certAppId) return true;
+
+      // 3. Fallback for legacy renewals without renewedCertificateId: match branch only if no specific cert was designated
+      if (!appRenewedCertId && !appRenewedAppId && appBranchId === certBranchId) {
+        return true;
+      }
+      return false;
+    });
   };
 
   const fetchCertificates = async () => {
@@ -530,8 +555,9 @@ function Certificate() {
                                 disabled: downloading
                               },
                               (cert.status === 'Active' || cert.status === 'Expiring Soon' || cert.status === 'Expired' || cert.status === 'expired') && 
+                              cert.status !== 'Inactive' &&
                               (isExpiringSoon || isExpired) &&
-                              !activeRenewals.includes(cert.branchId?._id || cert.branchId || cert.companyId || cert._id) && {
+                              !isCertificateRenewalActive(cert) && {
                                 label: 'Renew',
                                 icon: <i className="fas fa-sync-alt"></i>,
                                 onClick: () => handleRenewCertificate(cert)
@@ -754,7 +780,8 @@ function Certificate() {
                     )}
                   </button>
                   {(selectedCertificate.status === 'Active' || selectedCertificate.status === 'Expiring Soon' || selectedCertificate.status === 'Expired' || selectedCertificate.status === 'expired') && 
-                    !activeRenewals.includes(selectedCertificate.branchId?._id || selectedCertificate.branchId || selectedCertificate.companyId || selectedCertificate._id) && (
+                    selectedCertificate.status !== 'Inactive' &&
+                    !isCertificateRenewalActive(selectedCertificate) && (
                     <button 
                       type="button" 
                       className="btn renew-btn"

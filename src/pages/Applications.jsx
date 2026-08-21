@@ -18,6 +18,7 @@ function Applications() {
   const [showFilters, setShowFilters] = useState(false);
   const [showApplicationForm, setShowApplicationForm] = useState(false);
   const [showRenewalForm, setShowRenewalForm] = useState(false);
+  const [showRenewalSelectModal, setShowRenewalSelectModal] = useState(false);
   const [showViewModal, setShowViewModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [selectedApplication, setSelectedApplication] = useState(null);
@@ -31,6 +32,8 @@ function Applications() {
   const [formData, setFormData] = useState({
     category: "",
     branchId: "",
+    renewedCertificateId: "",
+    renewedApplicationId: "",
     product: "",
     productId: "",
     description: "",
@@ -194,52 +197,60 @@ function Applications() {
     setShowEditModal(false);
   };
 
-  const prefillFormFromApp = async (app) => {
-    if (!app) return;
-    
+  const prefillFormFromApp = async (app, cert = null) => {
     let productNames = [];
-    try {
-      const token = JSON.parse(localStorage.getItem("accessToken"));
-      const prodRes = await axios.get(`${API_BASE_URL}/products?applicationId=${app._id}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      if (prodRes.data && Array.isArray(prodRes.data.products)) {
-        productNames = prodRes.data.products.map(p => p.name);
+    if (cert && cert.product && Array.isArray(cert.product) && cert.product.length > 0) {
+      productNames = cert.product;
+    } else if (app) {
+      try {
+        const token = JSON.parse(localStorage.getItem("accessToken"));
+        const prodRes = await axios.get(`${API_BASE_URL}/products?applicationId=${app._id}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (prodRes.data && Array.isArray(prodRes.data.products)) {
+          productNames = prodRes.data.products.map(p => p.name);
+        }
+      } catch (err) {
+        console.error("Error prefilling products:", err);
       }
-    } catch (err) {
-      console.error("Error prefilling products:", err);
+      if (productNames.length === 0 && app.productList && Array.isArray(app.productList)) {
+        productNames = app.productList;
+      }
     }
 
+    const appObj = app || {};
     setFormData({
       category: "Renewal Application",
-      branchId: app.branchId?._id || app.branchId || "",
-      product: app.product || "",
-      productId: app.productId || "",
+      renewedCertificateId: cert?._id || "",
+      renewedApplicationId: appObj._id || cert?.applicationId?._id || cert?.applicationId || "",
+      branchId: appObj.branchId?._id || appObj.branchId || cert?.branchId?._id || cert?.branchId || "",
+      product: appObj.product || "",
+      productId: appObj.productId || "",
       productList: productNames,
-      description: app.description || "",
+      description: `Renewal for Certificate ${cert?.certificateNumber || appObj.applicationNumber || ''}`,
       requestedDate: new Date().toISOString().split("T")[0],
-      hasAppliedBefore: app.hasAppliedBefore || "",
-      previousHalalAgency: app.previousHalalAgency || "",
-      hasBeenSupervisedBefore: app.hasBeenSupervisedBefore || "",
-      supervisingHalalAgency: app.supervisingHalalAgency || "",
-      foodSafetyPrograms: app.foodSafetyPrograms || [],
-      otherFoodSafetyProgram: app.otherFoodSafetyProgram || "",
-      marketType: app.marketType || "",
-      marketTypeOther: app.marketTypeOther || "",
-      brandType: app.brandType || "",
-      brandTypeOther: app.brandTypeOther || "",
-      usesPorkOrDerivatives: app.usesPorkOrDerivatives || "",
-      usesAnimalMeatOrDerivatives: app.usesAnimalMeatOrDerivatives || "",
-      usesGelatinOrCapsule: app.usesGelatinOrCapsule || "",
-      containsAlcohol: app.containsAlcohol || "",
-      additivesOrFlavourContainAlcohol: app.additivesOrFlavourContainAlcohol || "",
-      usesGlycerineOrDerivatives: app.usesGlycerineOrDerivatives || "",
-      geographicMarkets: app.geographicMarkets || [],
-      geographicMarketsOther: app.geographicMarketsOther || "",
-      geopoliticalRegion: app.geopoliticalRegion || "",
-      nigerianState: app.nigerianState || "",
-      manufacturingFacilitySame: app.manufacturingFacilitySame ?? true,
-      manufacturingFacility: app.manufacturingFacility || {
+      hasAppliedBefore: appObj.hasAppliedBefore || "yes",
+      previousHalalAgency: appObj.previousHalalAgency || "Halal Certification Authority",
+      hasBeenSupervisedBefore: appObj.hasBeenSupervisedBefore || "",
+      supervisingHalalAgency: appObj.supervisingHalalAgency || "",
+      foodSafetyPrograms: appObj.foodSafetyPrograms || [],
+      otherFoodSafetyProgram: appObj.otherFoodSafetyProgram || "",
+      marketType: appObj.marketType || "",
+      marketTypeOther: appObj.marketTypeOther || "",
+      brandType: appObj.brandType || "",
+      brandTypeOther: appObj.brandTypeOther || "",
+      usesPorkOrDerivatives: appObj.usesPorkOrDerivatives || "",
+      usesAnimalMeatOrDerivatives: appObj.usesAnimalMeatOrDerivatives || "",
+      usesGelatinOrCapsule: appObj.usesGelatinOrCapsule || "",
+      containsAlcohol: appObj.containsAlcohol || "",
+      additivesOrFlavourContainAlcohol: appObj.additivesOrFlavourContainAlcohol || "",
+      usesGlycerineOrDerivatives: appObj.usesGlycerineOrDerivatives || "",
+      geographicMarkets: appObj.geographicMarkets || [],
+      geographicMarketsOther: appObj.geographicMarketsOther || "",
+      geopoliticalRegion: appObj.geopoliticalRegion || "",
+      nigerianState: appObj.nigerianState || "",
+      manufacturingFacilitySame: appObj.manufacturingFacilitySame ?? true,
+      manufacturingFacility: appObj.manufacturingFacility || {
         companyName: "",
         address: "",
         localGovtArea: "",
@@ -253,9 +264,9 @@ function Applications() {
         webAddress: "",
         governmentPlantCode: ""
       },
-      additionalFacilities: app.additionalFacilities || [],
-      hasSeparatePackagingPlant: app.packagingPlant?.exists ?? false,
-      packagingPlant: app.packagingPlant || {
+      additionalFacilities: appObj.additionalFacilities || [],
+      hasSeparatePackagingPlant: appObj.packagingPlant?.exists ?? false,
+      packagingPlant: appObj.packagingPlant || {
         companyName: "",
         address: "",
         localGovtArea: "",
@@ -268,15 +279,15 @@ function Applications() {
         emailAddress: ""
       },
       primaryContact: {
-        name: app.primaryContact?.name || "",
-        email: app.primaryContact?.email || "",
-        positionTitle: app.primaryContact?.positionTitle || "",
-        telephoneNo: app.primaryContact?.telephoneNo || ""
+        name: appObj.primaryContact?.name || "",
+        email: appObj.primaryContact?.email || "",
+        positionTitle: appObj.primaryContact?.positionTitle || "",
+        telephoneNo: appObj.primaryContact?.telephoneNo || ""
       },
       authorizedBy: {
-        name: app.authorizedBy?.name || "",
+        name: appObj.authorizedBy?.name || "",
         dateAuthorized: new Date().toISOString().split("T")[0],
-        positionTitle: app.authorizedBy?.positionTitle || ""
+        positionTitle: appObj.authorizedBy?.positionTitle || ""
       },
       mancapDocument: null,
       nafdacDocument: null,
@@ -287,12 +298,46 @@ function Applications() {
   };
 
   const handleRenewApplication = async () => {
+    // Active renewal applications
+    const activeRenewalApps = applications.filter(app => 
+      app.category === "Renewal Application" && 
+      !["issued", "rejected", "expired"].includes(app.status?.toLowerCase())
+    );
+
+    // Find eligible certificates that are not already in active renewal
+    const eligibleCerts = certificates.filter(cert => {
+      const certId = (cert._id?.toString() || cert._id);
+      const certAppId = (cert.applicationId?._id || cert.applicationId)?.toString();
+      const isUnderRenewal = activeRenewalApps.some(app => {
+        const appRenewedCertId = (app.renewedCertificateId?._id || app.renewedCertificateId)?.toString();
+        const appRenewedAppId = (app.renewedApplicationId?._id || app.renewedApplicationId)?.toString();
+        return (appRenewedCertId && appRenewedCertId === certId) || (appRenewedAppId && certAppId && appRenewedAppId === certAppId);
+      });
+      return !isUnderRenewal;
+    });
+
+    if (eligibleCerts.length > 1) {
+      setShowRenewalSelectModal(true);
+      return;
+    }
+
+    if (eligibleCerts.length === 1) {
+      const cert = eligibleCerts[0];
+      const targetApp = applications.find(a => (a._id === (cert.applicationId?._id || cert.applicationId)));
+      await prefillFormFromApp(targetApp, cert);
+      setShowApplicationForm(true);
+      setShowRenewalForm(false);
+      setShowViewModal(false);
+      setShowEditModal(false);
+      return;
+    }
+
     const eligibleApps = applications.filter(app =>
       ["Accepted", "Certified", "Expired", "Issued", "Renewal", "Renewal Application", "renewal", "expired"].includes(app.status)
     );
 
     if (eligibleApps.length === 0) {
-      toast.error("No eligible applications found for renewal");
+      toast.error("No eligible certificates or applications found for renewal");
       return;
     }
 
@@ -415,16 +460,39 @@ function Applications() {
             setShowApplicationForm(true);
           }, 500);
         } else if (action === 'renew') {
+          const certId = searchParams.get('certId');
           setTimeout(async () => {
-            const eligibleApps = apps.filter(app =>
-              ["Accepted", "Certified", "Expired", "Issued", "Renewal", "Renewal Application", "renewal", "expired"].includes(app.status)
-            );
-            if (eligibleApps.length > 0) {
-              await prefillFormFromApp(eligibleApps[0]);
-            } else {
-              setFormData(prev => ({ ...prev, category: "Renewal Application" }));
+            let targetCert = null;
+            let targetApp = null;
+            if (certId && certificates && certificates.length > 0) {
+              targetCert = certificates.find(c => (c._id?.toString() === certId || c._id === certId));
             }
-            setShowApplicationForm(true);
+            if (targetCert) {
+              const targetAppId = (targetCert.applicationId?._id || targetCert.applicationId)?.toString();
+              targetApp = apps.find(a => a._id?.toString() === targetAppId);
+              await prefillFormFromApp(targetApp, targetCert);
+              setShowApplicationForm(true);
+            } else {
+              const eligibleCerts = (certificates || []).filter(c => ['active', 'expiring soon', 'expired'].includes(c.status?.toLowerCase()));
+              if (eligibleCerts.length > 1) {
+                setShowRenewalSelectModal(true);
+              } else if (eligibleCerts.length === 1) {
+                const cert = eligibleCerts[0];
+                const tApp = apps.find(a => (a._id === (cert.applicationId?._id || cert.applicationId)));
+                await prefillFormFromApp(tApp, cert);
+                setShowApplicationForm(true);
+              } else {
+                const eligibleApps = apps.filter(app =>
+                  ["Accepted", "Certified", "Expired", "Issued", "Renewal", "Renewal Application", "renewal", "expired"].includes(app.status)
+                );
+                if (eligibleApps.length > 0) {
+                  await prefillFormFromApp(eligibleApps[0]);
+                } else {
+                  setFormData(prev => ({ ...prev, category: "Renewal Application" }));
+                }
+                setShowApplicationForm(true);
+              }
+            }
           }, 500);
         } else if (action === 'addon') {
           setTimeout(() => {
@@ -727,6 +795,7 @@ function Applications() {
   const handleCloseForm = () => {
     setShowApplicationForm(false);
     setShowRenewalForm(false);
+    setShowRenewalSelectModal(false);
     setShowViewModal(false);
     setShowEditModal(false);
     setSelectedApplication(null);
@@ -736,6 +805,9 @@ function Applications() {
   const resetForm = () => {
     setFormData({
       category: "",
+      branchId: "",
+      renewedCertificateId: "",
+      renewedApplicationId: "",
       product: "",
       productId: "",
       description: "",
@@ -1525,14 +1597,23 @@ function Applications() {
     );
   };
 
-  const activeRenewalBranchIds = applications
-    .filter(app => app.category === "Renewal Application" && !["rejected", "issued", "certified", "cancelled"].includes(app.status?.toLowerCase()))
-    .map(app => app.branchId?._id || app.branchId);
+  const activeRenewalApps = applications.filter(app => 
+    app.category === "Renewal Application" && 
+    !["rejected", "issued", "certified", "cancelled", "expired"].includes(app.status?.toLowerCase())
+  );
 
   const hasExpiredOrExpiringCert = certificates.some(cert => {
     const status = cert.status?.toLowerCase().trim();
-    const branchId = cert.branchId?._id || cert.branchId;
-    if (activeRenewalBranchIds.includes(branchId)) return false;
+    const certId = (cert._id?.toString() || cert._id);
+    const certAppId = (cert.applicationId?._id || cert.applicationId)?.toString();
+
+    const isUnderRenewal = activeRenewalApps.some(app => {
+      const appRenewedCertId = (app.renewedCertificateId?._id || app.renewedCertificateId)?.toString();
+      const appRenewedAppId = (app.renewedApplicationId?._id || app.renewedApplicationId)?.toString();
+      return (appRenewedCertId && appRenewedCertId === certId) || (appRenewedAppId && certAppId && appRenewedAppId === certAppId);
+    });
+
+    if (isUnderRenewal) return false;
 
     if (status === 'expired' || status === 'expiring soon') return true;
     if (cert.expiryDate) {
@@ -3267,6 +3348,147 @@ function Applications() {
 
         {/* View Application Modal */}
         {showViewModal && <ViewApplicationModal />}
+
+        {/* Renewal Certificate Selection Modal */}
+        {showRenewalSelectModal && (
+          <div className="modal" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.6)', zIndex: 1000 }}>
+            <div className="modal-content" style={{ maxWidth: '680px', width: '100%', borderRadius: '16px', overflow: 'hidden', padding: '0', background: '#fff', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)' }}>
+              <div className="modal-header" style={{ padding: '20px 24px', borderBottom: '1px solid #e5e7eb', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#f9fafb' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: '#e8f5e9', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#00853b' }}>
+                    <i className="fas fa-sync-alt fa-lg"></i>
+                  </div>
+                  <div>
+                    <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 700, color: '#111827' }}>Select Certificate to Renew</h3>
+                    <p style={{ margin: 0, fontSize: '13px', color: '#6b7280' }}>Choose which certificate or endorsement you wish to renew</p>
+                  </div>
+                </div>
+                <button
+                  className="close-btn"
+                  onClick={() => setShowRenewalSelectModal(false)}
+                  style={{ background: 'none', border: 'none', fontSize: '18px', cursor: 'pointer', color: '#9ca3af' }}
+                >
+                  <i className="fas fa-times"></i>
+                </button>
+              </div>
+
+              <div style={{ padding: '24px', maxHeight: '60vh', overflowY: 'auto' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                  {certificates.map((cert) => {
+                    const isAdOn = cert.certificateType?.toLowerCase().includes('ad-on') || cert.remarks?.toLowerCase().includes('ad-on');
+                    const branch = branches.find(b => (b._id === (cert.branchId?._id || cert.branchId)));
+                    const facilityName = branch?.branchName || cert.branchId?.branchName || "Main Facility";
+                    
+                    const certId = (cert._id?.toString() || cert._id);
+                    const certAppId = (cert.applicationId?._id || cert.applicationId)?.toString();
+                    const isUnderRenewal = activeRenewalApps.some(app => {
+                      const appRenewedCertId = (app.renewedCertificateId?._id || app.renewedCertificateId)?.toString();
+                      const appRenewedAppId = (app.renewedApplicationId?._id || app.renewedApplicationId)?.toString();
+                      return (appRenewedCertId && appRenewedCertId === certId) || (appRenewedAppId && certAppId && appRenewedAppId === certAppId);
+                    });
+
+                    return (
+                      <div 
+                        key={cert._id}
+                        style={{
+                          border: isUnderRenewal ? '1px solid #e5e7eb' : '1.5px solid #d1d5db',
+                          borderRadius: '12px',
+                          padding: '16px 20px',
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                          backgroundColor: isUnderRenewal ? '#f9fafb' : '#ffffff',
+                          opacity: isUnderRenewal ? 0.65 : 1,
+                          transition: 'all 0.2s ease',
+                          gap: '16px'
+                        }}
+                      >
+                        <div style={{ flex: 1 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
+                            <span 
+                              style={{ 
+                                fontSize: '11px', 
+                                fontWeight: 700, 
+                                padding: '2px 8px', 
+                                borderRadius: '6px',
+                                textTransform: 'uppercase',
+                                backgroundColor: isAdOn ? '#ede9fe' : '#dcfce7',
+                                color: isAdOn ? '#7c3aed' : '#15803d'
+                              }}
+                            >
+                              {isAdOn ? 'Additional Certificate (Ad-On)' : 'Initial Certificate'}
+                            </span>
+                            <span style={{ fontWeight: 700, fontSize: '14px', color: '#111827' }}>
+                              {cert.certificateNumber}
+                            </span>
+                          </div>
+                          
+                          <p style={{ margin: '0 0 4px 0', fontSize: '13px', color: '#4b5563', fontWeight: 500 }}>
+                            <i className="fas fa-map-marker-alt" style={{ marginRight: '6px', color: '#9ca3af' }}></i>
+                            {facilityName}
+                          </p>
+
+                          {cert.product && cert.product.length > 0 && (
+                            <p style={{ margin: '0 0 4px 0', fontSize: '12px', color: '#6b7280' }}>
+                              <strong>Products:</strong> {cert.product.join(', ')}
+                            </p>
+                          )}
+
+                          <p style={{ margin: 0, fontSize: '11px', color: '#9ca3af' }}>
+                            Expires: {cert.expiryDate ? new Date(cert.expiryDate).toLocaleDateString('en-GB') : 'N/A'}
+                          </p>
+                        </div>
+
+                        <div>
+                          {isUnderRenewal ? (
+                            <span style={{ fontSize: '12px', fontWeight: 600, color: '#f59e0b', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                              <i className="fas fa-spinner fa-spin"></i> Renewal in progress
+                            </span>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={async () => {
+                                setShowRenewalSelectModal(false);
+                                const targetApp = applications.find(a => (a._id === (cert.applicationId?._id || cert.applicationId)));
+                                await prefillFormFromApp(targetApp, cert);
+                                setShowApplicationForm(true);
+                              }}
+                              style={{
+                                padding: '8px 16px',
+                                background: '#00853b',
+                                color: '#ffffff',
+                                border: 'none',
+                                borderRadius: '8px',
+                                fontSize: '13px',
+                                fontWeight: 700,
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '6px'
+                              }}
+                            >
+                              <i className="fas fa-sync-alt"></i> Renew
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="modal-footer" style={{ padding: '16px 24px', borderTop: '1px solid #e5e7eb', display: 'flex', justifyContent: 'flex-end', backgroundColor: '#f9fafb' }}>
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => setShowRenewalSelectModal(false)}
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
 
       </main>

@@ -66,7 +66,6 @@ const TrackApplication = () => {
     { id: 7, label: 'Audited' },
     { id: 8, label: 'NC Reports' },
     { id: 9, label: 'NC Reports Closed' },
-    { id: 10, label: 'Audit Report Submitted' },
     // Row 3
     { id: 11, label: "Application Sent to Shari'a Board" },
     { id: 12, label: 'Application Successful for Certification' },
@@ -86,7 +85,6 @@ const TrackApplication = () => {
     const hasAudited = !!pd.audit?.auditedAt;
     const hasNcReport = !!pd.audit?.ncReport;
     const hasNcClosed = !!pd.audit?.ncClosedAt;
-    const hasAuditReport = !!pd.audit?.auditReportSubmittedAt;
     const hasCertApproval = !!pd.certificationApprovedAt;
     const hasShariaSent = !!pd.shariaBoardSentAt;
     const hasProcessing = !!pd.processingStartedAt;
@@ -98,12 +96,11 @@ const TrackApplication = () => {
       case 2: return isAccepted ? 'completed' : 'active';
       case 4: return (hasInvoice || hasPaidInvoice || hasAuditDate) ? 'completed' : isAccepted ? 'active' : 'pending';
       case 5: return (hasPaidInvoice || hasAuditDate) ? 'completed' : hasInvoice ? 'active' : 'pending';
-      case 6: return (hasAuditDate || hasAudited || hasNcReport || hasAuditReport || hasNcClosed) ? 'completed' : hasPaidInvoice ? 'active' : 'pending';
-      case 7: return (hasAudited || hasNcReport || hasNcClosed || hasAuditReport) ? 'completed' : (hasAuditDate || pd.audit?.subStep > 0) ? 'active' : 'pending';
-      case 8: return (hasNcReport || hasNcClosed || hasAuditReport) ? 'completed' : hasAudited ? 'active' : 'pending';
-      case 9: return (hasNcClosed || hasAuditReport) ? 'completed' : hasNcReport ? 'active' : 'pending';
-      case 10: return (hasAuditReport && (pd.audit?.subStep >= 6 || hasCertApproval)) ? 'completed' : (hasAuditReport || hasNcClosed || (hasAudited && !hasNcReport)) ? 'active' : 'pending';
-      case 11: return (hasShariaSent || hasCertApproval || hasProcessing || isIssued) ? 'completed' : (hasAuditReport && pd.audit?.subStep >= 6) ? 'active' : 'pending';
+      case 6: return (hasAuditDate || hasAudited || hasNcReport || hasNcClosed) ? 'completed' : hasPaidInvoice ? 'active' : 'pending';
+      case 7: return (hasAudited || hasNcReport || hasNcClosed) ? 'completed' : (hasAuditDate || pd.audit?.subStep > 0) ? 'active' : 'pending';
+      case 8: return (hasNcReport || hasNcClosed) ? 'completed' : hasAudited ? 'active' : 'pending';
+      case 9: return hasNcClosed ? 'completed' : hasNcReport ? 'active' : 'pending';
+      case 11: return (hasShariaSent || hasCertApproval || hasProcessing || isIssued) ? 'completed' : (hasNcClosed || (hasAudited && !hasNcReport)) ? 'active' : 'pending';
       case 12: return (hasCertApproval || hasProcessing || isIssued) ? 'completed' : hasShariaSent ? 'active' : 'pending';
       case 13: return (hasProcessing || isIssued) ? 'completed' : hasCertApproval ? 'active' : 'pending';
       case 14: return isIssued ? 'completed' : hasProcessing ? 'active' : 'pending';
@@ -158,10 +155,10 @@ const TrackApplication = () => {
           <div className="stepper-container">
             <div className="stepper-title">STEP PROCESSING</div>
             <div className="stepper-grid">
-              {/* Split steps into rows: 5, 5, 3 */}
-              {[0, 5, 10].map((startIndex) => (
+              {/* Split steps into 3 clean rows: 4, 4, 4 */}
+              {[0, 4, 8].map((startIndex) => (
                 <div key={startIndex} className="stepper-row">
-                  {steps.slice(startIndex, startIndex + 5).map((step) => {
+                  {steps.slice(startIndex, startIndex + 4).map((step) => {
                     const status = getStepStatus(step.id);
                     return (
                       <div key={step.id} className={`step-item ${status}`}>
