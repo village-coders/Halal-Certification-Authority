@@ -28,6 +28,17 @@ const getFileUrl = (path) => {
   return `${base}${normalizedPath}`;
 };
 
+const hasSubmittedNcCorrection = (audit) => {
+  if (!audit?.ncCorrectionFile) return false;
+  if (Array.isArray(audit.ncCorrectionFile)) {
+    return audit.ncCorrectionFile.filter(Boolean).length > 0;
+  }
+  if (typeof audit.ncCorrectionFile === 'string') {
+    return audit.ncCorrectionFile.trim().length > 0;
+  }
+  return false;
+};
+
 const Audit = () => {
     const [audits, setAudits] = useState([]);
     const location = useLocation();
@@ -148,6 +159,7 @@ const Audit = () => {
                         setShowNegotiateModal(true);
                     } else if (action === 'nc_correction') {
                         setSelectedAudit(audit);
+                        setNcCorrectionFiles([null]);
                         setShowNcCorrectionModal(true);
                     } else if (highlightId) {
                         setTimeout(() => {
@@ -353,18 +365,18 @@ const Audit = () => {
                                                                          onClick: () => window.open(getFileUrl(audit.ncReport), '_blank')
                                                                      },
                                                                      ...((audit.status === 'NC Flagged' || audit.status === 'Correction Needed') ? [{
-                                                                         label: audit.ncRejectReason ? '⚠ Re-upload Corrections (Rejected)' : audit.ncCorrectionFile && audit.ncCorrectionFile.length > 0 ? 'Re-upload NC Correction' : 'Upload NC Correction',
+                                                                         label: audit.ncRejectReason ? '⚠ Re-upload Corrections (Rejected)' : hasSubmittedNcCorrection(audit) ? 'Re-upload NC Correction' : 'Upload NC Correction',
                                                                          icon: <Upload size={16} />,
                                                                          style: audit.ncRejectReason ? { color: '#dc2626', fontWeight: 700 } : {},
                                                                          onClick: () => { setSelectedAudit(audit); setNcCorrectionFiles([null]); setShowNcCorrectionModal(true); }
                                                                      }] : [])
                                                                  ] : []),
-                                                                 ...(audit.ncCorrectionFile && audit.ncCorrectionFile.length > 0 ? [
+                                                                 ...(hasSubmittedNcCorrection(audit) ? [
                                                                      {
                                                                          label: 'View Submitted Correction',
                                                                          icon: <MdFileDownload size={16} />,
                                                                          onClick: () => {
-                                                                             const files = Array.isArray(audit.ncCorrectionFile) ? audit.ncCorrectionFile : [audit.ncCorrectionFile];
+                                                                             const files = (Array.isArray(audit.ncCorrectionFile) ? audit.ncCorrectionFile : [audit.ncCorrectionFile]).filter(Boolean);
                                                                              files.forEach(f => window.open(getFileUrl(f), '_blank'));
                                                                          }
                                                                      }
@@ -497,7 +509,7 @@ const Audit = () => {
                                             )}
 
                                             {/* NC Correction Files submitted by the client */}
-                                            {selectedAudit.ncCorrectionFile && selectedAudit.ncCorrectionFile.length > 0 && (
+                                            {hasSubmittedNcCorrection(selectedAudit) && (
                                                 <div className="details-section" style={{marginTop: '20px'}}>
                                                     <h3 className="details-title">Your Submitted NC Correction Files</h3>
                                                     {selectedAudit.ncRejectReason && (
@@ -506,7 +518,7 @@ const Audit = () => {
                                                         </div>
                                                     )}
                                                     <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                                                        {(Array.isArray(selectedAudit.ncCorrectionFile) ? selectedAudit.ncCorrectionFile : [selectedAudit.ncCorrectionFile]).map((f, idx) => (
+                                                        {(Array.isArray(selectedAudit.ncCorrectionFile) ? selectedAudit.ncCorrectionFile : [selectedAudit.ncCorrectionFile]).filter(Boolean).map((f, idx) => (
                                                             <a
                                                                 key={idx}
                                                                 href={getFileUrl(f)}
@@ -734,7 +746,7 @@ const Audit = () => {
                     <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: '540px', width: '100%', maxHeight: '90vh', overflowY: 'auto' }}>
                         <div className="modal-header">
                             <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 600, color: '#1e293b' }}>
-                                Upload NC Correction
+                                {hasSubmittedNcCorrection(selectedAudit) ? 'Re-upload NC Correction' : 'Upload NC Correction'}
                             </h3>
                             <button className="close-btn" onClick={() => setShowNcCorrectionModal(false)}>
                                 <MdClose size={20} />
@@ -770,12 +782,12 @@ const Audit = () => {
                                 </div>
                             )}
                             
-                             {selectedAudit.ncCorrectionFile && !selectedAudit.ncRejectReason && (
+                             {hasSubmittedNcCorrection(selectedAudit) && !selectedAudit.ncRejectReason && (
                                 <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', padding: '12px', borderRadius: '8px', marginBottom: '16px' }}>
                                     <p style={{ margin: '0 0 4px 0', fontSize: '13px', color: '#166534', fontWeight: 600 }}>Correction already submitted.</p>
                                     {Array.isArray(selectedAudit.ncCorrectionFile) ? (
                                         <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                                            {selectedAudit.ncCorrectionFile.map((fileUrl, idx) => (
+                                            {selectedAudit.ncCorrectionFile.filter(Boolean).map((fileUrl, idx) => (
                                                 <a key={idx} href={getFileUrl(fileUrl)} target="_blank" rel="noreferrer" style={{ fontSize: '13px', color: '#15803d', textDecoration: 'underline' }}>
                                                     View correction doc #{idx + 1}
                                                 </a>
@@ -873,7 +885,7 @@ const Audit = () => {
                                     disabled={!ncCorrectionFiles.some(f => f !== null) || uploading === selectedAudit._id}
                                 >
                                     {uploading === selectedAudit._id ? <i className="fas fa-spinner fa-spin"></i> : <Upload size={16} />}
-                                    Upload
+                                    {hasSubmittedNcCorrection(selectedAudit) ? 'Re-upload' : 'Upload'}
                                 </button>
                             </div>
                         </div>
