@@ -7,7 +7,8 @@ import { toast } from "sonner";
 import { useSocket } from "../contexts/SocketContext";
 import {
   FaPaperPlane, FaPaperclip, FaTimes, FaPlus, FaTicketAlt,
-  FaCheckCircle, FaClock, FaExclamationCircle, FaLock
+  FaCheckCircle, FaClock, FaExclamationCircle, FaLock,
+  FaFileAlt, FaDownload, FaEye, FaImage, FaExternalLinkAlt
 } from "react-icons/fa";
 import { format } from "date-fns";
 
@@ -45,6 +46,7 @@ function Message() {
     priority: "Medium"
   });
   const [isCreating, setIsCreating] = useState(false);
+  const [selectedImageModal, setSelectedImageModal] = useState(null);
 
   const messagesEndRef = useRef(null);
   const fileInputRef = useRef(null);
@@ -230,6 +232,14 @@ function Message() {
     try { return format(new Date(d), "hh:mm a"); } catch { return ""; }
   };
 
+  const isImageAttachment = (att) => {
+    if (!att) return false;
+    if (att.fileType && typeof att.fileType === "string" && att.fileType.startsWith("image/")) return true;
+    if (att.url && typeof att.url === "string" && /\.(jpg|jpeg|png|gif|webp|bmp|svg)(\?.*)?$/i.test(att.url)) return true;
+    if (att.filename && typeof att.filename === "string" && /\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i.test(att.filename)) return true;
+    return false;
+  };
+
   const filteredTickets = statusFilter === "all" ? tickets : tickets.filter(t => t.status === statusFilter);
   const openCount = tickets.filter(t => t.status === "open").length;
   const inProgressCount = tickets.filter(t => t.status === "in-progress").length;
@@ -413,13 +423,126 @@ function Message() {
                               }}>
                                 <p style={{ margin: 0, fontSize: "14px", lineHeight: "1.5" }}>{msg.content}</p>
                                 {msg.attachments?.length > 0 && (
-                                  <div style={{ marginTop: "8px", display: "flex", flexDirection: "column", gap: "4px" }}>
-                                    {msg.attachments.map((att, ai) => (
-                                      <a key={ai} href={att.url} target="_blank" rel="noopener noreferrer"
-                                        style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "12px", color: isMe ? "rgba(255,255,255,0.9)" : "#3b82f6", textDecoration: "underline" }}>
-                                        <FaPaperclip size={11} /> {att.filename}
-                                      </a>
-                                    ))}
+                                  <div style={{ marginTop: "10px", display: "flex", flexDirection: "column", gap: "8px" }}>
+                                    {msg.attachments.map((att, ai) => {
+                                      const isImg = isImageAttachment(att);
+                                      if (isImg) {
+                                        return (
+                                          <div key={ai} style={{
+                                            borderRadius: "10px",
+                                            overflow: "hidden",
+                                            border: isMe ? "1px solid rgba(255,255,255,0.2)" : "1px solid #e2e8f0",
+                                            background: isMe ? "rgba(0,0,0,0.15)" : "#f8fafc",
+                                            maxWidth: "320px"
+                                          }}>
+                                            <img
+                                              src={att.url}
+                                              alt={att.filename || "Attachment"}
+                                              style={{ width: "100%", maxHeight: "200px", objectFit: "cover", display: "block", cursor: "pointer" }}
+                                              onClick={() => setSelectedImageModal({ url: att.url, filename: att.filename })}
+                                            />
+                                            <div style={{
+                                              padding: "6px 10px",
+                                              display: "flex",
+                                              justifyContent: "space-between",
+                                              alignItems: "center",
+                                              fontSize: "12px",
+                                              background: isMe ? "rgba(0,0,0,0.3)" : "#ffffff",
+                                              borderTop: isMe ? "none" : "1px solid #f1f5f9"
+                                            }}>
+                                              <span style={{
+                                                maxWidth: "180px",
+                                                overflow: "hidden",
+                                                textOverflow: "ellipsis",
+                                                whiteSpace: "nowrap",
+                                                color: isMe ? "#ffffff" : "#334155",
+                                                fontWeight: 500
+                                              }}>
+                                                {att.filename}
+                                              </span>
+                                              <div style={{ display: "flex", gap: "6px" }}>
+                                                <button
+                                                  type="button"
+                                                  onClick={() => setSelectedImageModal({ url: att.url, filename: att.filename })}
+                                                  style={{ background: "none", border: "none", color: isMe ? "white" : "#00853b", cursor: "pointer", padding: "2px" }}
+                                                  title="View Full Image"
+                                                >
+                                                  <FaEye size={12} />
+                                                </button>
+                                                <a
+                                                  href={att.url}
+                                                  download={att.filename}
+                                                  target="_blank"
+                                                  rel="noopener noreferrer"
+                                                  style={{ color: isMe ? "white" : "#00853b", padding: "2px", display: "inline-flex" }}
+                                                  title="Download Image"
+                                                >
+                                                  <FaDownload size={12} />
+                                                </a>
+                                              </div>
+                                            </div>
+                                          </div>
+                                        );
+                                      }
+                                      return (
+                                        <div
+                                          key={ai}
+                                          style={{
+                                            display: "flex",
+                                            alignItems: "center",
+                                            justifyContent: "space-between",
+                                            gap: "10px",
+                                            padding: "8px 12px",
+                                            borderRadius: "8px",
+                                            background: isMe ? "rgba(255,255,255,0.15)" : "#f8fafc",
+                                            border: isMe ? "1px solid rgba(255,255,255,0.25)" : "1px solid #e2e8f0"
+                                          }}
+                                        >
+                                          <div style={{ display: "flex", alignItems: "center", gap: "8px", minWidth: 0 }}>
+                                            <FaFileAlt style={{ color: isMe ? "white" : "#00853b", flexShrink: 0 }} />
+                                            <div style={{ minWidth: 0 }}>
+                                              <div style={{
+                                                fontSize: "12px",
+                                                fontWeight: 600,
+                                                color: isMe ? "white" : "#1e293b",
+                                                maxWidth: "180px",
+                                                overflow: "hidden",
+                                                textOverflow: "ellipsis",
+                                                whiteSpace: "nowrap"
+                                              }}>
+                                                {att.filename}
+                                              </div>
+                                              {att.size ? (
+                                                <div style={{ fontSize: "10px", color: isMe ? "rgba(255,255,255,0.8)" : "#64748b" }}>
+                                                  {(att.size / 1024).toFixed(0)} KB
+                                                </div>
+                                              ) : null}
+                                            </div>
+                                          </div>
+                                          <div style={{ display: "flex", alignItems: "center", gap: "8px", flexShrink: 0 }}>
+                                            <a
+                                              href={att.url}
+                                              target="_blank"
+                                              rel="noopener noreferrer"
+                                              style={{ color: isMe ? "white" : "#3b82f6", display: "inline-flex" }}
+                                              title="Open document"
+                                            >
+                                              <FaExternalLinkAlt size={12} />
+                                            </a>
+                                            <a
+                                              href={att.url}
+                                              download={att.filename}
+                                              target="_blank"
+                                              rel="noopener noreferrer"
+                                              style={{ color: isMe ? "white" : "#64748b", display: "inline-flex" }}
+                                              title="Download"
+                                            >
+                                              <FaDownload size={12} />
+                                            </a>
+                                          </div>
+                                        </div>
+                                      );
+                                    })}
                                   </div>
                                 )}
                               </div>
@@ -579,6 +702,75 @@ function Message() {
                   </button>
                 </div>
               </form>
+            </div>
+          </div>
+        )}
+
+        {/* Image Preview Lightbox Modal */}
+        {selectedImageModal && (
+          <div
+            onClick={() => setSelectedImageModal(null)}
+            style={{
+              position: "fixed",
+              inset: 0,
+              background: "rgba(0,0,0,0.8)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              zIndex: 2000,
+              padding: "20px"
+            }}
+          >
+            <div
+              onClick={e => e.stopPropagation()}
+              style={{
+                background: "#1e293b",
+                borderRadius: "16px",
+                overflow: "hidden",
+                maxWidth: "800px",
+                maxHeight: "90vh",
+                width: "100%",
+                display: "flex",
+                flexDirection: "column",
+                boxShadow: "0 25px 50px -12px rgba(0,0,0,0.5)"
+              }}
+            >
+              <div style={{
+                padding: "12px 20px",
+                background: "#0f172a",
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                color: "white"
+              }}>
+                <span style={{ fontSize: "14px", fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "500px" }}>
+                  {selectedImageModal.filename || "Image Preview"}
+                </span>
+                <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                  <a
+                    href={selectedImageModal.url}
+                    download={selectedImageModal.filename}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{ background: "#334155", color: "white", padding: "6px 12px", borderRadius: "8px", textDecoration: "none", fontSize: "12px", display: "flex", alignItems: "center", gap: "6px" }}
+                  >
+                    <FaDownload size={11} /> Download
+                  </a>
+                  <button
+                    onClick={() => setSelectedImageModal(null)}
+                    style={{ background: "#334155", color: "white", border: "none", borderRadius: "8px", padding: "6px 10px", cursor: "pointer" }}
+                  >
+                    <FaTimes size={12} />
+                  </button>
+                </div>
+              </div>
+              <div style={{ flex: 1, padding: "20px", display: "flex", alignItems: "center", justifyContent: "center", overflow: "auto" }}>
+                <img
+                  src={selectedImageModal.url}
+                  alt={selectedImageModal.filename}
+                  style={{ maxWidth: "100%", maxHeight: "70vh", objectFit: "contain", borderRadius: "8px" }}
+                />
+              </div>
             </div>
           </div>
         )}
