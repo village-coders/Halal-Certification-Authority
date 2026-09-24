@@ -24,6 +24,8 @@ function Certificate() {
   const [selectedCertificate, setSelectedCertificate] = useState(null);
   const [showCertificateModal, setShowCertificateModal] = useState(false);
   const [downloading, setDownloading] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   const certificateCategories = [
     "Food Safety Certification",
@@ -163,6 +165,16 @@ function Certificate() {
     
     return matchesNumber && matchesDate && matchesStatus;
   });
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchNumber, searchDate, searchStatus]);
+
+  const totalPages = Math.ceil(filteredCertificates.length / itemsPerPage) || 1;
+  const paginatedCertificates = filteredCertificates.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
 
   const handleViewCertificate = (certificate) => {
     setSelectedCertificate(certificate);
@@ -491,7 +503,7 @@ function Certificate() {
                   </tr>
                 </thead>
                 <tbody style={{overflowY: "auto"}}>
-                  {filteredCertificates.map((cert) => {
+                  {paginatedCertificates.map((cert) => {
                     const daysRemaining = calculateDaysRemaining(cert.expiryDate);
                     const isExpiringSoon = daysRemaining !== null && daysRemaining <= renewWindowDays && daysRemaining > 0;
                     const isExpired = cert.status === 'Expired' || cert.status === 'expired' || (daysRemaining !== null && daysRemaining <= 0);
@@ -577,6 +589,26 @@ function Certificate() {
                   )}
                 </tbody>
               </table>
+            )}
+            
+            {totalPages > 1 && (
+              <div className="pagination" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '20px', gap: '15px', borderTop: '1px solid #e5e7eb' }}>
+                <button 
+                  onClick={() => setCurrentPage(p => p - 1)} 
+                  disabled={currentPage === 1}
+                  style={{ padding: '8px 16px', borderRadius: '6px', border: '1px solid #d1d5db', background: currentPage === 1 ? '#f9fafb' : 'white', cursor: currentPage === 1 ? 'not-allowed' : 'pointer', color: '#374151' }}
+                >
+                  Prev
+                </button>
+                <span style={{ fontSize: '14px', color: '#4b5563' }}>Page {currentPage} of {totalPages}</span>
+                <button 
+                  onClick={() => setCurrentPage(p => p + 1)} 
+                  disabled={currentPage === totalPages}
+                  style={{ padding: '8px 16px', borderRadius: '6px', border: '1px solid #d1d5db', background: currentPage === totalPages ? '#f9fafb' : 'white', cursor: currentPage === totalPages ? 'not-allowed' : 'pointer', color: '#374151' }}
+                >
+                  Next
+                </button>
+              </div>
             )}
           </div>
         </div>
