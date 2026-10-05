@@ -50,6 +50,7 @@ function Dashboard() {
             .filter(item => {
               if (!item.status) return false;
               const statusLower = item.status.toLowerCase().trim();
+              if (statusLower === 'renewal' || statusLower === 'pending_renewal' || statusLower === 'inactive') return false;
               
               const isRenewalActive = activeRenewals.some(app => {
                 const appRenewedCertId = (app.renewedCertificateId?._id || app.renewedCertificateId)?.toString();

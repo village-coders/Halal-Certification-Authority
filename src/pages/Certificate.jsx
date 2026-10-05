@@ -161,7 +161,20 @@ function Certificate() {
   const filteredCertificates = certificates.filter(cert => {
     const matchesNumber = cert.certificateNumber?.toLowerCase().includes(searchNumber.toLowerCase());
     const matchesDate = searchDate ? cert.issueDate?.includes(searchDate) : true;
-    const matchesStatus = searchStatus ? cert.status?.toLowerCase() === searchStatus.toLowerCase() : true;
+    let matchesStatus = true;
+    if (searchStatus) {
+      const searchLower = searchStatus.toLowerCase();
+      const certStatusLower = (cert.status || '').toLowerCase();
+      const isUnderRenewal = cert.status === 'Renewal' || cert.status === 'pending_renewal' || isCertificateRenewalActive(cert);
+
+      if (searchLower === 'renewal') {
+        matchesStatus = isUnderRenewal;
+      } else if (searchLower === 'expired' || searchLower === 'expiring soon') {
+        matchesStatus = !isUnderRenewal && certStatusLower === searchLower;
+      } else {
+        matchesStatus = certStatusLower === searchLower;
+      }
+    }
     
     return matchesNumber && matchesDate && matchesStatus;
   });
@@ -338,7 +351,11 @@ function Certificate() {
       "Expired": "#dc2626", /* Red */
       "Suspended": "#6b7280",
       "Revoked": "#dc2626",
-      "Pending": "#6366f1"
+      "Pending": "#6366f1",
+      "Renewal": "#d97706", /* Amber */
+      "Under Renewal": "#d97706",
+      "pending_renewal": "#d97706",
+      "Inactive": "#6b7280"
     };
     return colors[status] || "#6b7280";
   };
@@ -452,6 +469,7 @@ function Certificate() {
                 <option value="active">Active</option>
                 <option value="expiring soon">Expiring Soon</option>
                 <option value="expired">Expired</option>
+                <option value="renewal">Under Renewal</option>
               </select>
             </div>
             <button 
@@ -504,9 +522,11 @@ function Certificate() {
                 </thead>
                 <tbody style={{overflowY: "auto"}}>
                   {paginatedCertificates.map((cert) => {
+                    const isUnderRenewal = cert.status === 'Renewal' || cert.status === 'pending_renewal' || isCertificateRenewalActive(cert);
                     const daysRemaining = calculateDaysRemaining(cert.expiryDate);
-                    const isExpiringSoon = daysRemaining !== null && daysRemaining <= renewWindowDays && daysRemaining > 0;
-                    const isExpired = cert.status === 'Expired' || cert.status === 'expired' || (daysRemaining !== null && daysRemaining <= 0);
+                    const isExpiringSoon = !isUnderRenewal && daysRemaining !== null && daysRemaining <= renewWindowDays && daysRemaining > 0;
+                    const isExpired = !isUnderRenewal && (cert.status === 'Expired' || cert.status === 'expired' || (daysRemaining !== null && daysRemaining <= 0));
+                    const badgeColor = getStatusColor(isUnderRenewal ? 'Renewal' : cert.status);
                     
                     return (
                       <tr key={cert._id}>
@@ -533,15 +553,21 @@ function Certificate() {
                           <span 
                             className="status-badge"
                             style={{ 
-                              backgroundColor: getStatusColor(cert.status) + '20',
-                              color: getStatusColor(cert.status),
-                              border: `1px solid ${getStatusColor(cert.status)}`,
+                              backgroundColor: badgeColor + '20',
+                              color: badgeColor,
+                              border: `1px solid ${badgeColor}`,
                               fontSize: "12px",
                               textWrap: "nowrap"
                             }}
                           >
-                            {cert.status || "Unknown"}
-                            {isExpiringSoon && ` (${daysRemaining}d)`}
+                            {isUnderRenewal ? (
+                              <><i className="fas fa-sync-alt fa-spin" style={{ fontSize: '10px', marginRight: '4px' }}></i> Renewal in Progress</>
+                            ) : (
+                              <>
+                                {cert.status || "Unknown"}
+                                {isExpiringSoon && ` (${daysRemaining}d)`}
+                              </>
+                            )}
                           </span>
                         </td>
                         {/* <td>{cert?.product?.name || "N/A"}</td> */}
@@ -566,10 +592,10 @@ function Certificate() {
                                 onClick: () => handleDownloadLabel(cert),
                                 disabled: downloading
                               },
+                              !isUnderRenewal &&
                               (cert.status === 'Active' || cert.status === 'Expiring Soon' || cert.status === 'Expired' || cert.status === 'expired') && 
                               cert.status !== 'Inactive' &&
-                              (isExpiringSoon || isExpired) &&
-                              !isCertificateRenewalActive(cert) && {
+                              (isExpiringSoon || isExpired) && {
                                 label: 'Renew',
                                 icon: <i className="fas fa-sync-alt"></i>,
                                 onClick: () => handleRenewCertificate(cert)
@@ -651,15 +677,21 @@ function Certificate() {
                   <div className="info-item">
                     <span className="info-label">Status:</span>
                     <span className="info-value">
-                      <span 
-                        className="status-badge"
-                        style={{ 
-                          backgroundColor: getStatusColor(selectedCertificate.status) + '20',
-                          color: getStatusColor(selectedCertificate.status)
-                        }}
-                      >
-                        {selectedCertificate.status || "Unknown"}
-                      </span>
+                      {(() => {
+                        const isModalCertUnderRenewal = selectedCertificate.status === 'Renewal' || selectedCertificate.status === 'pending_renewal' || isCertificateRenewalActive(selectedCertificate);
+                        const modalBadgeColor = getStatusColor(isModalCertUnderRenewal ? 'Renewal' : selectedCertificate.status);
+                        return (
+                          <span 
+                            className="status-badge"
+                            style={{ 
+                              backgroundColor: modalBadgeColor + '20',
+                              color: modalBadgeColor
+                            }}
+                          >
+                            {isModalCertUnderRenewal ? 'Renewal in Progress' : (selectedCertificate.status || "Unknown")}
+                          </span>
+                        );
+                      })()}
                     </span>
                   </div>
                   <div className="info-item">
@@ -811,9 +843,11 @@ function Certificate() {
                       </>
                     )}
                   </button>
-                  {(selectedCertificate.status === 'Active' || selectedCertificate.status === 'Expiring Soon' || selectedCertificate.status === 'Expired' || selectedCertificate.status === 'expired') && 
+                  {!isCertificateRenewalActive(selectedCertificate) &&
+                    selectedCertificate.status !== 'Renewal' &&
+                    selectedCertificate.status !== 'pending_renewal' &&
                     selectedCertificate.status !== 'Inactive' &&
-                    !isCertificateRenewalActive(selectedCertificate) && (
+                    (selectedCertificate.status === 'Active' || selectedCertificate.status === 'Expiring Soon' || selectedCertificate.status === 'Expired' || selectedCertificate.status === 'expired') && (
                     <button 
                       type="button" 
                       className="btn renew-btn"
