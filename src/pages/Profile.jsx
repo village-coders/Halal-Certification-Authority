@@ -39,7 +39,7 @@ function Profile() {
     state: "",
     website: "",
     department: "",
-    position: "",
+    positionTitle: "",
     authImage: ""
   });
 
@@ -63,7 +63,7 @@ function Profile() {
         state: user.state || "",
         website: user.website || "",
         department: user.department || "",
-        position: user.position || "company",
+        positionTitle: user.positionTitle || (user.position && user.position !== "company" ? user.position : "") || "",
         authImage: user.authImage || ""
       });
     }
@@ -99,27 +99,100 @@ function Profile() {
         state: user.state || "",
         website: user.website || "",
         department: user.department || "",
-        position: user.position || "company",
+        positionTitle: user.positionTitle || (user.position && user.position !== "company" ? user.position : "") || "",
         authImage: user.authImage || ""
       });
     }
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
+    if (e) e.preventDefault();
     
     if (!user?.id) {
       toast.error("User not authenticated. Please log in again.");
       return;
     }
 
+    // Validation for compulsory fields
+    if (!formData.companyName?.trim()) {
+      toast.error("Company Name is compulsory.");
+      return;
+    }
+    if (!formData.companyContact?.trim()) {
+      toast.error("Company Contact is compulsory.");
+      return;
+    }
+    if (!formData.website?.trim()) {
+      toast.error("Website is compulsory.");
+      return;
+    }
+    if (!formData.fullName?.trim()) {
+      toast.error("Full Name (Contact Person) is compulsory.");
+      return;
+    }
+    if (!formData.contact?.trim()) {
+      toast.error("Contact Person Phone is compulsory.");
+      return;
+    }
+    if (!formData.positionTitle?.trim()) {
+      toast.error("Position / Title is compulsory.");
+      return;
+    }
+    if (!formData.address?.trim()) {
+      toast.error("Address is compulsory.");
+      return;
+    }
+    if (!formData.city?.trim()) {
+      toast.error("City is compulsory.");
+      return;
+    }
+    if (!formData.state?.trim()) {
+      toast.error("State is compulsory.");
+      return;
+    }
+    if (!formData.lga?.trim()) {
+      toast.error("Local Government Area (LGA) is compulsory.");
+      return;
+    }
+    if (!formData.country?.trim()) {
+      toast.error("Country is compulsory.");
+      return;
+    }
+
     try {
       setSaving(true);
 
-      const token = JSON.parse(localStorage.getItem("accessToken"));
+      let token = localStorage.getItem("accessToken");
+      if (token) {
+        try {
+          token = JSON.parse(token);
+        } catch {
+          // already a raw string
+        }
+      }
+
+      let websiteValue = formData.website.trim();
+      if (websiteValue && !/^https?:\/\//i.test(websiteValue)) {
+        websiteValue = `https://${websiteValue}`;
+      }
+      
+      // Prepare update payload
+      const updateData = {
+        ...formData,
+        companyName: formData.companyName.trim(),
+        companyContact: formData.companyContact.trim(),
+        website: websiteValue,
+        fullName: formData.fullName.trim(),
+        contact: formData.contact.trim(),
+        positionTitle: formData.positionTitle.trim(),
+        address: formData.address.trim(),
+        city: formData.city.trim(),
+        state: formData.state.trim(),
+        lga: formData.lga.trim(),
+        country: formData.country.trim(),
+      };
       
       // Remove fields that should not be updated
-      const updateData = { ...formData };
       delete updateData.registrationNo; // Cannot edit registration number
       delete updateData.email; // Cannot edit email
       delete updateData.position; // Cannot edit position
@@ -264,6 +337,8 @@ function Profile() {
                     Cancel
                   </button>
                   <button 
+                    type="submit"
+                    form="profile-form"
                     className="btn-save action-btn"
                     onClick={handleSubmit}
                     disabled={saving}
@@ -277,19 +352,20 @@ function Profile() {
           </div>
 
           <div className="profile-content">
-            <form onSubmit={handleSubmit}>
+            <form id="profile-form" onSubmit={handleSubmit}>
               {/* Company Information Section */}
               <div className="profile-section">
                 <h3>Company Information</h3>
                 <div className="form-grid">
                   <div className="form-group">
-                    <label>Company Name</label>
+                    <label>Company Name *</label>
                     <input
                       type="text"
                       name="companyName"
                       value={formData.companyName}
                       onChange={handleInputChange}
                       disabled={!isEditing}
+                      required
                       placeholder="Enter company name"
                     />
                   </div>
@@ -323,25 +399,27 @@ function Profile() {
                   </div>
 
                   <div className="form-group">
-                    <label>Company Contact</label>
+                    <label>Company Contact *</label>
                     <input
                       type="tel"
                       name="companyContact"
                       value={formData.companyContact}
                       onChange={handleInputChange}
                       disabled={!isEditing}
+                      required
                       placeholder="Company phone number"
                     />
                   </div>
 
                   <div className="form-group">
-                    <label>Website</label>
+                    <label>Website *</label>
                     <input
-                      type="url"
+                      type="text"
                       name="website"
                       value={formData.website}
                       onChange={handleInputChange}
                       disabled={!isEditing}
+                      required
                       placeholder="https://example.com"
                     />
                   </div>
@@ -366,29 +444,29 @@ function Profile() {
                   </div>
 
                   <div className="form-group">
-                    <label>Contact Person Phone</label>
+                    <label>Contact Person Phone *</label>
                     <input
                       type="tel"
                       name="contact"
                       value={formData.contact}
                       onChange={handleInputChange}
                       disabled={!isEditing}
+                      required
                       placeholder="Contact person phone"
                     />
                   </div>
 
                   <div className="form-group">
-                    <label>Position *</label>
+                    <label>Position / Title *</label>
                     <input
                       type="text"
-                      name="position"
-                      value={formData.position}
+                      name="positionTitle"
+                      value={formData.positionTitle}
                       onChange={handleInputChange}
-                      disabled={true} // Cannot edit position
-                      readOnly
-                      className="read-only-field"
+                      disabled={!isEditing}
+                      required
+                      placeholder="e.g. Managing Director, CEO, Manager"
                     />
-                    <small className="field-note">Default: Company</small>
                   </div>
 
                   {
@@ -417,61 +495,66 @@ function Profile() {
                 <h3>Address Information</h3>
                 <div className="form-grid">
                   <div className="form-group full-width">
-                    <label>Address</label>
+                    <label>Address *</label>
                     <input
                       type="text"
                       name="address"
                       value={formData.address}
                       onChange={handleInputChange}
                       disabled={!isEditing}
+                      required
                       placeholder="Full company address"
                     />
                   </div>
 
                   <div className="form-group">
-                    <label>City</label>
+                    <label>City *</label>
                     <input
                       type="text"
                       name="city"
                       value={formData.city}
                       onChange={handleInputChange}
                       disabled={!isEditing}
+                      required
                       placeholder="City"
                     />
                   </div>
 
                   <div className="form-group">
-                    <label>State</label>
+                    <label>State *</label>
                     <input
                       type="text"
                       name="state"
                       value={formData.state}
                       onChange={handleInputChange}
                       disabled={!isEditing}
+                      required
                       placeholder="State/Province"
                     />
                   </div>
 
                   <div className="form-group">
-                    <label>LGA (Local Government Area)</label>
+                    <label>Local Government Area (LGA) *</label>
                     <input
                       type="text"
                       name="lga"
                       value={formData.lga}
                       onChange={handleInputChange}
                       disabled={!isEditing}
+                      required
                       placeholder="Local Government Area"
                     />
                   </div>
 
                   <div className="form-group">
-                    <label>Country</label>
+                    <label>Country *</label>
                     <input
                       type="text"
                       name="country"
                       value={formData.country}
                       onChange={handleInputChange}
                       disabled={!isEditing}
+                      required
                       placeholder="Country"
                     />
                   </div>
