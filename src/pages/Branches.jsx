@@ -69,7 +69,17 @@ function Branches() {
 
   const validateForm = () => {
     const newErrors = {};
-    const requiredFields = ["branchName", "address", "lga", "city", "state", "country", "contactName", "contactNumber"];
+    const requiredFields = [
+      "branchName",
+      "address",
+      "lga",
+      "city",
+      "state",
+      "country",
+      "contactName",
+      "contactNumber",
+      "positionTitle"
+    ];
     
     requiredFields.forEach(field => {
       if (!formData[field]?.trim()) {
@@ -77,8 +87,6 @@ function Branches() {
       }
     });
 
-
-    
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -247,8 +255,17 @@ function Branches() {
                   </div>
                 </div>
                 <div className="form-group">
-                  <label>Position / Title</label>
-                  <input type="text" name="positionTitle" value={formData.positionTitle} onChange={handleChange} />
+                  <label>Position / Title *</label>
+                  <input
+                    type="text"
+                    name="positionTitle"
+                    value={formData.positionTitle}
+                    onChange={handleChange}
+                    className={errors.positionTitle ? 'error' : ''}
+                    placeholder="e.g. Factory Manager, Operations Head"
+                    required
+                  />
+                  {errors.positionTitle && <p className="error-text">{errors.positionTitle}</p>}
                 </div>
               </div>
 
