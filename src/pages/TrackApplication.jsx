@@ -208,9 +208,19 @@ const TrackApplication = () => {
                 </div>
               )}
               {invoices.length > 0 && (
-                <div className="activity-item completed">
-                  <span className="activity-date">Recently</span>
-                  <span className="activity-desc">Invoice generated for the application.</span>
+                <div className="activity-item completed" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px' }}>
+                  <div>
+                    <span className="activity-date">Recently</span>
+                    <span className="activity-desc">Invoice generated for the application.</span>
+                  </div>
+                  {invoices.some(inv => inv.status !== 'Paid') && (
+                    <button
+                      onClick={() => navigate('/invoices')}
+                      style={{ background: '#00853b', color: 'white', padding: '6px 14px', borderRadius: '6px', fontSize: '12px', border: 'none', cursor: 'pointer', fontWeight: 600 }}
+                    >
+                      View & Pay Invoice
+                    </button>
+                  )}
                 </div>
               )}
               {application?.status === 'Issued' && (
