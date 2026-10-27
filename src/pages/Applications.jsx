@@ -10,6 +10,45 @@ import { useNavigate } from "react-router-dom";
 
 const API_BASE_URL = import.meta.env.VITE_BASE_URL;
 
+const TERMS_AND_CONDITIONS = [
+  {
+    number: "1.",
+    text: "HDI is independent, neutral, and objective in its audits."
+  },
+  {
+    number: "2.",
+    text: "Audits are performed at the client’s place of operations. The type, extent and time schedule of the procedure are subject to agreement by the parties."
+  },
+  {
+    number: "3.",
+    text: "In situations where nonconformities with Islamic law and the specific requirements of a category are identified during an audit, the corrective actions must demonstrably be carried out by the client within the time frame specified in the reference document or by an appropriate agreed deadline, before a HDI certificate can be issued."
+  },
+  {
+    number: "4.",
+    text: "The certificate holder shall not reproduce in any form, the granted Halal certificate in part and/or in a way that would hinder the legibility, nor shall tamper with the original copies or photocopies of the Halal certificate. They shall not translate the certificate into other languages without the control and consent of HDI. Where there is evidence of the misuse of HDI’s label, HDI reserves the right to raise corrective actions, withdraw the certificate, publicize the transgression and if necessary, take appropriate legal action."
+  },
+  {
+    number: "6.",
+    text: "HDI reserves the right to approve or decline any proposed use of the label(s) with notification in writing. The use after such approval shall be only in accordance with HDI standard and purpose for which such approval was given."
+  },
+  {
+    number: "7.",
+    text: "In the case of a disapproval, the decertified client shall discontinue the use of the HDI Label(s) and shall not issue any statement, make a representation, or carry on its business in any form or manner as to suggest that its products/procedures are approved by the HDI. The decertified company shall also undertake to carry out any action requested by HDI with regards to unacceptable use of the Label(s)."
+  },
+  {
+    number: "8.",
+    text: "Every client has the right to have services performed within the agreed scope in such a way that expectations and requirements are fulfilled. In case of non-fulfilment, HDI requests information necessary for improvements. In case of a difference of opinion with assessors or HDI itself, each client has the right to submit an appeal or a complaint against a decision. In the first instance, complaints should be expressed verbally or in writing to the CEO of HDI. If a solution cannot be reached within 90 days between the client and the CEO, as a next level the HDI Impartiality Committee may be appealed to in writing. A failure to resolve a complaint after detailed consideration may be referred for judicial arbitration by a competent Shariah Panel/Tribunal."
+  },
+  {
+    number: "9.",
+    text: "HDI is entitled to withdraw certificates, publicise it on their website and notify relevant authorities after giving written notice of intent or declare them invalid if the conformity of processes and products with Halal specification on which it is based is not ensured or the client uses the certification in such a way as to undermine the reputation of the certification body."
+  },
+  {
+    number: "10.",
+    text: "Clients shall be given one calendar month notice of any changes to the Terms & Conditions."
+  }
+];
+
 function Applications() {
   const [applications, setApplications] = useState([]);
   const [searchNumber, setSearchNumber] = useState("");
@@ -21,6 +60,8 @@ function Applications() {
   const [showRenewalSelectModal, setShowRenewalSelectModal] = useState(false);
   const [showViewModal, setShowViewModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [showTermsModal, setShowTermsModal] = useState(false);
+  const [termsAgreed, setTermsAgreed] = useState(false);
   const [selectedApplication, setSelectedApplication] = useState(null);
   const [selectedClientProducts, setSelectedClientProducts] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -798,6 +839,8 @@ function Applications() {
     setShowRenewalSelectModal(false);
     setShowViewModal(false);
     setShowEditModal(false);
+    setShowTermsModal(false);
+    setTermsAgreed(false);
     setSelectedApplication(null);
     resetForm();
   };
@@ -1149,6 +1192,17 @@ function Applications() {
       return;
     }
 
+    // All form validations passed! Show Terms and Conditions modal before submitting
+    setTermsAgreed(false);
+    setShowTermsModal(true);
+  };
+
+  const handleAcknowledgeAndSubmit = async () => {
+    if (!termsAgreed) {
+      toast.error("Please agree to the terms and conditions to proceed");
+      return;
+    }
+
     try {
       setLoading(true);
 
@@ -1190,11 +1244,13 @@ function Applications() {
 
       if (response.data && response.data._id) {
         toast.success("Application submitted successfully!");
+        setShowTermsModal(false);
+        setTermsAgreed(false);
         fetchApplications();
 
         setTimeout(() => {
           handleCloseForm();
-        }, 2000);
+        }, 1500);
       } else {
         throw new Error("Invalid response from server");
       }
@@ -2650,6 +2706,88 @@ function Applications() {
                   </button>
                 </div>
               </form>
+            </div>
+          </div>
+        )}
+
+        {/* Terms and Conditions Modal */}
+        {showTermsModal && (
+          <div className="terms-modal-overlay" onClick={() => !loading && setShowTermsModal(false)}>
+            <div className="terms-modal-card" onClick={(e) => e.stopPropagation()}>
+              <div className="terms-modal-header">
+                <div className="terms-modal-header-title">
+                  <div className="terms-modal-icon">
+                    <i className="fas fa-file-contract"></i>
+                  </div>
+                  <div>
+                    <h3>HALAL CERTIFICATION TERMS AND CONDITIONS</h3>
+                    <p className="terms-modal-subtitle">
+                      Please review and agree to the terms below to finalize your application submission.
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  className="terms-modal-close-btn"
+                  onClick={() => !loading && setShowTermsModal(false)}
+                  disabled={loading}
+                  aria-label="Close"
+                >
+                  <i className="fas fa-times"></i>
+                </button>
+              </div>
+
+              <div className="terms-modal-body">
+                <div className="terms-items-list">
+                  {TERMS_AND_CONDITIONS.map((term, index) => (
+                    <div key={index} className="terms-item">
+                      <span className="terms-item-number">{term.number}</span>
+                      <p className="terms-item-text">{term.text}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="terms-modal-footer">
+                <label className="terms-checkbox-label">
+                  <input
+                    type="checkbox"
+                    checked={termsAgreed}
+                    onChange={(e) => setTermsAgreed(e.target.checked)}
+                    disabled={loading}
+                    className="terms-checkbox-input"
+                  />
+                  <span className="terms-checkbox-text">
+                    By continuing, you agree to our terms and conditions
+                  </span>
+                </label>
+
+                <div className="terms-modal-actions">
+                  <button
+                    type="button"
+                    className="btn btn-cancel"
+                    onClick={() => setShowTermsModal(false)}
+                    disabled={loading}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-acknowledge"
+                    onClick={handleAcknowledgeAndSubmit}
+                    disabled={loading || !termsAgreed}
+                  >
+                    {loading ? (
+                      <>
+                        <i className="fas fa-spinner fa-spin" style={{ marginRight: '8px' }}></i>
+                        Submitting...
+                      </>
+                    ) : (
+                      'Acknowledged and Continue'
+                    )}
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         )}
