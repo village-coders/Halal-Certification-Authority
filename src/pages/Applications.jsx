@@ -220,21 +220,73 @@ function Applications() {
     fetchUser();
   }, []);
 
+  const isBranchEligibleForInitial = useCallback((branchId) => {
+    if (!branchId) return false;
+    const bIdStr = branchId.toString();
+
+    // Check if this branch already has an active or completed initial application
+    const hasInitialApp = applications.some(app => {
+      const appBranchId = (app.branchId?._id || app.branchId)?.toString();
+      if (appBranchId !== bIdStr) return false;
+      const cat = (app.category || '').toLowerCase();
+      // Ad-on applications do not count as initial
+      if (cat.includes('ad-on') || cat.includes('ad on') || cat.includes('additional')) return false;
+      // Renewal applications do not count as initial
+      if (cat.includes('renewal')) return false;
+      // If rejected, client is allowed to re-apply
+      if (app.status?.toLowerCase() === 'rejected') return false;
+      return true;
+    });
+
+    if (hasInitialApp) return false;
+
+    // Check if this branch already has an existing certificate
+    const hasCert = (certificates || []).some(cert => {
+      const certBranchId = (cert.branchId?._id || cert.branchId)?.toString();
+      if (certBranchId === bIdStr) return true;
+      const certAppId = (cert.applicationId?._id || cert.applicationId)?.toString();
+      if (certAppId) {
+        const app = applications.find(a => a._id?.toString() === certAppId);
+        if (app && (app.branchId?._id || app.branchId)?.toString() === bIdStr) return true;
+      }
+      return false;
+    });
+
+    if (hasCert) return false;
+
+    return true;
+  }, [applications, certificates]);
+
   const handleNewApplication = () => {
     if (branches.length === 0) {
       toast.error("You must add at least one branch before you can create an application.");
       navigate('/branches');
       return;
     }
+
+    const eligibleBranches = branches.filter(b => isBranchEligibleForInitial(b._id));
+    if (eligibleBranches.length === 0) {
+      toast.info("All registered sites already have an application. To certify additional products for an existing site, please use 'Apply For Additional Certificate' (Ad-On Application), or add a new site under Branches.", { duration: 6000 });
+      return;
+    }
+
+    const defaultBranch = eligibleBranches.length === 1 ? eligibleBranches[0] : null;
+
     setFormData(prev => ({
       ...prev,
       category: "Initial Certification",
+      branchId: defaultBranch ? defaultBranch._id : "",
       primaryContact: {
-        name: user?.fullName || user?.companyName || prev.primaryContact?.name || "",
-        email: user?.email || prev.primaryContact?.email || "",
-        positionTitle: user?.positionTitle || prev.primaryContact?.positionTitle || "",
-        telephoneNo: user?.phone || prev.primaryContact?.telephoneNo || ""
-      }
+        name: defaultBranch?.contactPerson?.name || user?.fullName || user?.companyName || prev.primaryContact?.name || "",
+        email: defaultBranch?.contactPerson?.email || user?.email || prev.primaryContact?.email || "",
+        positionTitle: defaultBranch?.contactPerson?.designation || user?.positionTitle || prev.primaryContact?.positionTitle || "",
+        telephoneNo: defaultBranch?.contactPerson?.phone || user?.phone || prev.primaryContact?.telephoneNo || ""
+      },
+      plantDetails: defaultBranch ? {
+        plantLocation: `${defaultBranch.address?.street || ""}, ${defaultBranch.address?.city || ""}, ${defaultBranch.address?.state || ""}`,
+        headOfficeLocation: `${defaultBranch.address?.street || ""}, ${defaultBranch.address?.city || ""}, ${defaultBranch.address?.state || ""}`,
+        governmentPlantCode: defaultBranch.governmentPlantCode || ""
+      } : prev.plantDetails
     }));
     setShowApplicationForm(true);
     setShowRenewalForm(false);
@@ -394,20 +446,46 @@ function Applications() {
   };
 
   const handleAdOnApplication = () => {
-    // Check if any branch has a certified application
-    const certifiedBranchIds = applications
+    // Check if any branch has a certified application or certificate
+    const certifiedBranchIdsFromApps = applications
       .filter(app => ["issued", "certified", "approved"].includes(app.status?.toLowerCase()))
-      .map(app => app.branchId?._id || app.branchId);
+      .map(app => (app.branchId?._id || app.branchId)?.toString());
 
-    if (certifiedBranchIds.length === 0) {
-      toast.error("No certified sites found. Only sites with a certified initial application can apply for an Additional Certificate.");
+    const certifiedBranchIdsFromCerts = (certificates || [])
+      .filter(cert => ["active", "expiring soon", "expired", "renewal"].includes(cert.status?.toLowerCase()))
+      .map(cert => {
+        if (cert.branchId) return (cert.branchId?._id || cert.branchId)?.toString();
+        const certAppId = (cert.applicationId?._id || cert.applicationId)?.toString();
+        const app = applications.find(a => a._id?.toString() === certAppId);
+        return (app?.branchId?._id || app?.branchId)?.toString();
+      })
+      .filter(Boolean);
+
+    const allCertifiedBranchIds = [...new Set([...certifiedBranchIdsFromApps, ...certifiedBranchIdsFromCerts])];
+
+    if (allCertifiedBranchIds.length === 0) {
+      toast.error("No certified sites found. Only sites with an already certified initial application can apply for an Additional Certificate.");
       return;
     }
+
+    const defaultBranchId = allCertifiedBranchIds.length === 1 ? allCertifiedBranchIds[0] : "";
+    const defaultBranch = defaultBranchId ? branches.find(b => b._id === defaultBranchId) : null;
 
     setFormData(prev => ({
       ...prev,
       category: "Ad-On Application",
-      branchId: ""
+      branchId: defaultBranchId,
+      primaryContact: {
+        name: defaultBranch?.contactPerson?.name || user?.fullName || user?.companyName || prev.primaryContact?.name || "",
+        email: defaultBranch?.contactPerson?.email || user?.email || prev.primaryContact?.email || "",
+        positionTitle: defaultBranch?.contactPerson?.designation || user?.positionTitle || prev.primaryContact?.positionTitle || "",
+        telephoneNo: defaultBranch?.contactPerson?.phone || user?.phone || prev.primaryContact?.telephoneNo || ""
+      },
+      plantDetails: defaultBranch ? {
+        plantLocation: `${defaultBranch.address?.street || ""}, ${defaultBranch.address?.city || ""}, ${defaultBranch.address?.state || ""}`,
+        headOfficeLocation: `${defaultBranch.address?.street || ""}, ${defaultBranch.address?.city || ""}, ${defaultBranch.address?.state || ""}`,
+        governmentPlantCode: defaultBranch.governmentPlantCode || ""
+      } : prev.plantDetails
     }));
     setShowApplicationForm(true);
     setShowRenewalForm(false);
@@ -501,8 +579,7 @@ function Applications() {
         const action = searchParams.get('action');
         if (action === 'new') {
           setTimeout(() => {
-            setFormData(prev => ({ ...prev, category: "Initial Certification" }));
-            setShowApplicationForm(true);
+            handleNewApplication();
           }, 500);
         } else if (action === 'renew') {
           const certId = searchParams.get('certId');
@@ -1073,6 +1150,28 @@ function Applications() {
     if (!user?.registrationNo) {
       toast.error("User not authenticated. Please log in again.");
       return;
+    }
+
+    if (!formData.branchId) {
+      toast.error("Please select a site/branch");
+      return;
+    }
+
+    if (formData.category === "Initial Certification") {
+      if (!isBranchEligibleForInitial(formData.branchId)) {
+        toast.error("An initial application already exists for this site. To certify additional products for this site, please apply for an Additional Certificate (Ad-On Application).");
+        return;
+      }
+    } else if (formData.category === "Ad-On Application") {
+      const isCertified = applications.some(
+        app => (app.branchId?._id === formData.branchId || app.branchId === formData.branchId) && ["issued", "certified", "approved"].includes(app.status?.toLowerCase())
+      ) || (certificates || []).some(
+        cert => (cert.branchId?._id === formData.branchId || cert.branchId === formData.branchId)
+      );
+      if (!isCertified) {
+        toast.error("Only sites with an already certified initial application can apply for an Ad-On Application.");
+        return;
+      }
     }
 
     if (!formData.productList || formData.productList.length === 0) {
@@ -1719,11 +1818,11 @@ function Applications() {
               <button
                 className="renew-btn"
                 onClick={handleAdOnApplication}
-                disabled={applications.filter(app => ["issued", "certified", "approved"].includes(app.status?.toLowerCase())).length === 0}
-                title={applications.filter(app => ["issued", "certified", "approved"].includes(app.status?.toLowerCase())).length === 0 ? "No certified sites available for Additional Certificate application" : "Apply for an Additional Certificate for a certified site"}
+                disabled={!applications.some(app => ["issued", "certified", "approved"].includes(app.status?.toLowerCase())) && !(certificates || []).some(c => ["active", "expiring soon", "expired", "renewal"].includes(c.status?.toLowerCase()))}
+                title={(!applications.some(app => ["issued", "certified", "approved"].includes(app.status?.toLowerCase())) && !(certificates || []).some(c => ["active", "expiring soon", "expired", "renewal"].includes(c.status?.toLowerCase()))) ? "No certified sites available for Additional Certificate application" : "Apply for an Additional Certificate for a certified site"}
                 style={{ backgroundColor: '#7c3aed', borderColor: '#7c3aed' }}
               >
-                <i className="fas fa-plus-circle"></i>Appy For Additional Certificate
+                <i className="fas fa-plus-circle"></i> Apply For Additional Certificate
               </button>
             </div>
           </div>
@@ -1929,18 +2028,48 @@ function Applications() {
                       >
                         <option value="">Select Branch</option>
                         {branches.map((branch) => {
+                          const isAdOn = formData.category === "Ad-On Application";
+                          const isInitial = formData.category === "Initial Certification" || !formData.category;
+
                           const isCertified = applications.some(
                             app => (app.branchId?._id === branch._id || app.branchId === branch._id) && ["issued", "certified", "approved"].includes(app.status?.toLowerCase())
+                          ) || (certificates || []).some(
+                            cert => (cert.branchId?._id === branch._id || cert.branchId === branch._id)
                           );
-                          const isAdOn = formData.category === "Ad-On Application";
-                          const isDisabled = isAdOn && !isCertified;
+
+                          let isDisabled = false;
+                          let note = "";
+
+                          if (isAdOn) {
+                            if (!isCertified) {
+                              isDisabled = true;
+                              note = " (Not yet certified - Ad-On not available)";
+                            }
+                          } else if (isInitial) {
+                            const eligible = isBranchEligibleForInitial(branch._id);
+                            if (!eligible) {
+                              isDisabled = true;
+                              note = " (Already has an application - use Ad-On for additional products)";
+                            }
+                          }
+
                           return (
                             <option key={branch._id} value={branch._id} disabled={isDisabled}>
-                              {branch.branchName}
+                              {branch.branchName}{note}
                             </option>
                           );
                         })}
                       </select>
+                      {formData.category === "Initial Certification" && (
+                        <small style={{ display: 'block', marginTop: '6px', color: '#6b7280', fontSize: '12px' }}>
+                          A new application can only be submitted once per site. To certify additional products for an existing site, please use <strong>Apply For Additional Certificate</strong> (Ad-On Application).
+                        </small>
+                      )}
+                      {formData.category === "Ad-On Application" && (
+                        <small style={{ display: 'block', marginTop: '6px', color: '#6b7280', fontSize: '12px' }}>
+                          Ad-On applications apply only to already certified sites to certify additional products.
+                        </small>
+                      )}
                     </div>
 
                     <div className="form-group">
