@@ -618,6 +618,23 @@ const Audit = () => {
                                 2. **Propose alternatives** for up to two dates if the options are not suitable.
                             </p>
 
+                            <div style={{
+                                background: '#fefce8',
+                                border: '1px solid #fef08a',
+                                borderLeft: '4px solid #eab308',
+                                borderRadius: '8px',
+                                padding: '12px 14px',
+                                marginBottom: '18px',
+                                display: 'flex',
+                                gap: '10px',
+                                alignItems: 'flex-start'
+                            }}>
+                                <i className="fas fa-info-circle" style={{ color: '#ca8a04', fontSize: '16px', marginTop: '2px', flexShrink: 0 }}></i>
+                                <p style={{ margin: 0, fontSize: '13px', color: '#854d0e', lineHeight: 1.5, fontWeight: 500 }}>
+                                    <strong>Please Note:</strong> Adequate transportation and accommodation, where necessary, and other logistics will be borne and provided by the auditee during an audit exercise.
+                                </p>
+                            </div>
+
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginBottom: '24px' }}>
                                 {negotiateOptions.map((opt, idx) => (
                                     <div key={idx} style={{ padding: '16px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '12px' }}>
@@ -639,7 +656,7 @@ const Audit = () => {
                                                     type="button"
                                                     style={{ background: '#00853b', color: 'white', border: 'none', padding: '6px 14px', borderRadius: '6px', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}
                                                     onClick={() => {
-                                                        if (window.confirm("Are you sure you want to accept and finalize this audit schedule? Once accepted, it cannot be changed.")) {
+                                                        if (window.confirm("Adequate transportation and accommodation, where necessary, and other logistics will be borne and provided by the auditee during an audit exercise.\n\nAre you sure you want to accept and finalize this audit schedule? Once accepted, it cannot be changed.")) {
                                                             handleResponse(selectedAudit._id, 'Accepted', { chosenDate: opt.date, chosenTime: opt.fromTime || opt.time, chosenToDate: opt.toDate || opt.date });
                                                         }
                                                     }}
