@@ -818,7 +818,7 @@ const Audit = () => {
                         </div>
 
                         <p style={{ fontSize: '12px', color: '#64748b', margin: '0 0 20px 0', lineHeight: 1.5 }}>
-                            Once accepted, this audit date will be locked and cannot be changed. The HDI audit team will be notified immediately to proceed with audit arrangements.
+                            Once accepted, this audit date will be submitted and cannot be changed. The HDI audit team will be notified immediately to proceed with audit arrangements.
                         </p>
 
                         <div className="modal-actions" style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
