@@ -55,6 +55,8 @@ const Audit = () => {
     const [negotiateCheckboxes, setNegotiateCheckboxes] = useState([false, false, false]);
     const [showNcCorrectionModal, setShowNcCorrectionModal] = useState(false);
     const [ncCorrectionFiles, setNcCorrectionFiles] = useState([]);
+    const [showAcceptModal, setShowAcceptModal] = useState(false);
+    const [acceptOption, setAcceptOption] = useState(null);
 
     const handleFileUpload = async (applicationId, file) => {
         if (!file) return;
@@ -199,6 +201,8 @@ const Audit = () => {
             toast.success(`Response submitted successfully`);
             setShowRespondModal(false);
             setShowNegotiateModal(false);
+            setShowAcceptModal(false);
+            setAcceptOption(null);
             if (!showAuditDetails) setSelectedAudit(null);
             setRejectReason("");
             await fetchAudits();
@@ -656,9 +660,8 @@ const Audit = () => {
                                                     type="button"
                                                     style={{ background: '#00853b', color: 'white', border: 'none', padding: '6px 14px', borderRadius: '6px', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}
                                                     onClick={() => {
-                                                        if (window.confirm("Adequate transportation and accommodation, where necessary, and other logistics will be borne and provided by the auditee during an audit exercise.\n\nAre you sure you want to accept and finalize this audit schedule? Once accepted, it cannot be changed.")) {
-                                                            handleResponse(selectedAudit._id, 'Accepted', { chosenDate: opt.date, chosenTime: opt.fromTime || opt.time, chosenToDate: opt.toDate || opt.date });
-                                                        }
+                                                        setAcceptOption(opt);
+                                                        setShowAcceptModal(true);
                                                     }}
                                                     disabled={actionLoading}
                                                 >
@@ -752,6 +755,125 @@ const Audit = () => {
                                     </button>
                                 )}
                             </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Accept Audit Schedule Confirmation Modal */}
+            {showAcceptModal && acceptOption && selectedAudit && (
+                <div 
+                    className="modal-overlay" 
+                    style={{ zIndex: 7000, background: 'rgba(15, 23, 42, 0.7)', backdropFilter: 'blur(4px)' }}
+                    onClick={() => !actionLoading && setShowAcceptModal(false)}
+                >
+                    <div 
+                        className="modal-content" 
+                        onClick={e => e.stopPropagation()} 
+                        style={{ maxWidth: '520px', width: '92%', padding: '28px', borderRadius: '16px', border: '1px solid #e2e8f0', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.35)' }}
+                    >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '18px' }}>
+                            <div style={{ width: '42px', height: '42px', borderRadius: '10px', background: '#ecfdf5', color: '#059669', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px', flexShrink: 0 }}>
+                                <i className="fas fa-calendar-check"></i>
+                            </div>
+                            <div>
+                                <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 700, color: '#0f172a' }}>Accept Audit Schedule</h3>
+                                <p style={{ margin: '2px 0 0 0', fontSize: '13px', color: '#64748b' }}>Please confirm your acceptance of the scheduled date</p>
+                            </div>
+                        </div>
+
+                        {/* Selected Date Summary */}
+                        <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '14px 16px', marginBottom: '18px' }}>
+                            <div style={{ fontSize: '12px', textTransform: 'uppercase', color: '#64748b', fontWeight: 700, marginBottom: '4px', letterSpacing: '0.5px' }}>
+                                Selected Audit Schedule
+                            </div>
+                            <div style={{ fontSize: '15px', fontWeight: 700, color: '#1e293b' }}>
+                                {formatDate(acceptOption.date)}
+                                {acceptOption.toDate && acceptOption.date !== acceptOption.toDate ? ` to ${formatDate(acceptOption.toDate)}` : ''}
+                                {acceptOption.fromTime ? ` at ${acceptOption.fromTime}` : acceptOption.time ? ` at ${acceptOption.time}` : ''}
+                            </div>
+                        </div>
+
+                        {/* Logistics Alert Box */}
+                        <div style={{
+                            background: '#fefce8',
+                            border: '1.5px solid #fde047',
+                            borderLeft: '5px solid #ca8a04',
+                            borderRadius: '10px',
+                            padding: '14px 16px',
+                            marginBottom: '20px',
+                            display: 'flex',
+                            gap: '12px',
+                            alignItems: 'flex-start'
+                        }}>
+                            <i className="fas fa-exclamation-triangle" style={{ color: '#ca8a04', fontSize: '18px', marginTop: '2px', flexShrink: 0 }}></i>
+                            <div>
+                                <div style={{ fontSize: '13px', fontWeight: 700, color: '#854d0e', marginBottom: '4px' }}>
+                                    Important Logistics Notice
+                                </div>
+                                <p style={{ margin: 0, fontSize: '13px', color: '#713f12', lineHeight: 1.55 }}>
+                                    Adequate transportation and accommodation, where necessary, and other logistics will be borne and provided by the auditee during an audit exercise.
+                                </p>
+                            </div>
+                        </div>
+
+                        <p style={{ fontSize: '12px', color: '#64748b', margin: '0 0 20px 0', lineHeight: 1.5 }}>
+                            Once accepted, this audit date will be locked and cannot be changed. The HDI audit team will be notified immediately to proceed with audit arrangements.
+                        </p>
+
+                        <div className="modal-actions" style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
+                            <button
+                                type="button"
+                                onClick={() => setShowAcceptModal(false)}
+                                disabled={actionLoading}
+                                style={{
+                                    padding: '10px 18px',
+                                    borderRadius: '8px',
+                                    border: '1px solid #d1d5db',
+                                    background: 'white',
+                                    color: '#374151',
+                                    fontWeight: 600,
+                                    fontSize: '13px',
+                                    cursor: 'pointer'
+                                }}
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                type="button"
+                                onClick={async () => {
+                                    await handleResponse(selectedAudit._id, 'Accepted', {
+                                        chosenDate: acceptOption.date,
+                                        chosenTime: acceptOption.fromTime || acceptOption.time,
+                                        chosenToDate: acceptOption.toDate || acceptOption.date
+                                    });
+                                    setShowAcceptModal(false);
+                                    setAcceptOption(null);
+                                }}
+                                disabled={actionLoading}
+                                style={{
+                                    padding: '10px 22px',
+                                    borderRadius: '8px',
+                                    border: 'none',
+                                    background: '#00853b',
+                                    color: 'white',
+                                    fontWeight: 700,
+                                    fontSize: '13px',
+                                    cursor: actionLoading ? 'not-allowed' : 'pointer',
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '8px',
+                                    opacity: actionLoading ? 0.7 : 1
+                                }}
+                            >
+                                {actionLoading ? (
+                                    <>
+                                        <i className="fas fa-spinner fa-spin"></i> Finalizing...
+                                    </>
+                                ) : (
+                                    'Accept & Finalize Schedule'
+                                )}
+                            </button>
                         </div>
                     </div>
                 </div>

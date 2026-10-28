@@ -46,6 +46,10 @@ const TERMS_AND_CONDITIONS = [
   {
     number: "10.",
     text: "Clients shall be given one calendar month notice of any changes to the Terms & Conditions."
+  },
+  {
+    number: "11.",
+    text: "Adequate transportation and accommodation, where necessary, and other logistics will be borne and provided by the auditee during an audit exercise."
   }
 ];
 
