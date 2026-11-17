@@ -212,7 +212,16 @@ const DashboardHeader = ({title}) => {
                         <X className="notification-clear-icon-svg" />
                       </button>
                       <p className="notification-item-title">{notif.title}</p>
-                      <p className="notification-item-message">{notif.message}</p>
+                      <div className="notification-item-message">
+                        {String(notif.message || '').split('\n\n').map((para, pIdx) => (
+                          <p 
+                            key={pIdx} 
+                            style={para.startsWith('NOTE:') ? { color: '#dc2626', fontWeight: 'bold', marginTop: '4px', marginBottom: 0 } : { margin: 0 }}
+                          >
+                            {para}
+                          </p>
+                        ))}
+                      </div>
                       <p className="notification-item-time">{new Date(notif.createdAt).toLocaleString()}</p>
                     </div>
                   ))

@@ -490,6 +490,22 @@ const Audit = () => {
                                                         </span>
                                                     </div>
                                                 )}
+                                                <div style={{
+                                                    background: '#fef2f2',
+                                                    border: '1px solid #fca5a5',
+                                                    borderLeft: '4px solid #dc2626',
+                                                    borderRadius: '8px',
+                                                    padding: '12px 14px',
+                                                    marginTop: '16px',
+                                                    display: 'flex',
+                                                    gap: '10px',
+                                                    alignItems: 'flex-start'
+                                                }}>
+                                                    <i className="fas fa-exclamation-circle" style={{ color: '#dc2626', fontSize: '16px', marginTop: '2px', flexShrink: 0 }}></i>
+                                                    <p style={{ margin: 0, fontSize: '13px', color: '#b91c1c', lineHeight: 1.5, fontWeight: 700 }}>
+                                                        NOTE: Adequate transportation and accommodation (for audit exceeding one day), and other logistics will be borne and provided by the auditee during an audit exercise.
+                                                    </p>
+                                                </div>
                                             </div>
 
                                             {selectedAudit.prepDocuments && selectedAudit.prepDocuments.length > 0 && (
@@ -623,9 +639,9 @@ const Audit = () => {
                             </p>
 
                             <div style={{
-                                background: '#fefce8',
-                                border: '1px solid #fef08a',
-                                borderLeft: '4px solid #eab308',
+                                background: '#fef2f2',
+                                border: '1px solid #fca5a5',
+                                borderLeft: '4px solid #dc2626',
                                 borderRadius: '8px',
                                 padding: '12px 14px',
                                 marginBottom: '18px',
@@ -633,9 +649,9 @@ const Audit = () => {
                                 gap: '10px',
                                 alignItems: 'flex-start'
                             }}>
-                                <i className="fas fa-info-circle" style={{ color: '#ca8a04', fontSize: '16px', marginTop: '2px', flexShrink: 0 }}></i>
-                                <p style={{ margin: 0, fontSize: '13px', color: '#854d0e', lineHeight: 1.5, fontWeight: 500 }}>
-                                    <strong>Please Note:</strong> Adequate transportation and accommodation, where necessary, and other logistics will be borne and provided by the auditee during an audit exercise.
+                                <i className="fas fa-exclamation-circle" style={{ color: '#dc2626', fontSize: '16px', marginTop: '2px', flexShrink: 0 }}></i>
+                                <p style={{ margin: 0, fontSize: '13px', color: '#b91c1c', lineHeight: 1.5, fontWeight: 700 }}>
+                                    NOTE: Adequate transportation and accommodation (for audit exceeding one day), and other logistics will be borne and provided by the auditee during an audit exercise.
                                 </p>
                             </div>
 
@@ -796,9 +812,9 @@ const Audit = () => {
 
                         {/* Logistics Alert Box */}
                         <div style={{
-                            background: '#fefce8',
-                            border: '1.5px solid #fde047',
-                            borderLeft: '5px solid #ca8a04',
+                            background: '#fef2f2',
+                            border: '1.5px solid #fca5a5',
+                            borderLeft: '5px solid #dc2626',
                             borderRadius: '10px',
                             padding: '14px 16px',
                             marginBottom: '20px',
@@ -806,13 +822,13 @@ const Audit = () => {
                             gap: '12px',
                             alignItems: 'flex-start'
                         }}>
-                            <i className="fas fa-exclamation-triangle" style={{ color: '#ca8a04', fontSize: '18px', marginTop: '2px', flexShrink: 0 }}></i>
+                            <i className="fas fa-exclamation-triangle" style={{ color: '#dc2626', fontSize: '18px', marginTop: '2px', flexShrink: 0 }}></i>
                             <div>
-                                <div style={{ fontSize: '13px', fontWeight: 700, color: '#854d0e', marginBottom: '4px' }}>
+                                <div style={{ fontSize: '13px', fontWeight: 700, color: '#991b1b', marginBottom: '4px' }}>
                                     Important Logistics Notice
                                 </div>
-                                <p style={{ margin: 0, fontSize: '13px', color: '#713f12', lineHeight: 1.55 }}>
-                                    Adequate transportation and accommodation, where necessary, and other logistics will be borne and provided by the auditee during an audit exercise.
+                                <p style={{ margin: 0, fontSize: '13px', color: '#b91c1c', lineHeight: 1.55, fontWeight: 700 }}>
+                                    NOTE: Adequate transportation and accommodation (for audit exceeding one day), and other logistics will be borne and provided by the auditee during an audit exercise.
                                 </p>
                             </div>
                         </div>

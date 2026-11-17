@@ -71,7 +71,18 @@ const NotifCard = ({ notif, onTakeAction, onDismiss, loading }) => {
 
       {/* Body */}
       <h4 className="inm-card-title">{notif.title}</h4>
-      <p className="inm-card-message">{notif.message}</p>
+      <div className="inm-card-message">
+        {String(notif.message || '').split('\n\n').map((paragraph, pIdx) => {
+          if (paragraph.startsWith('NOTE:')) {
+            return (
+              <p key={pIdx} style={{ margin: '8px 0 0 0', color: '#dc2626', fontWeight: 'bold', fontSize: '12.5px', lineHeight: 1.5 }}>
+                {paragraph}
+              </p>
+            );
+          }
+          return <p key={pIdx} style={{ margin: pIdx > 0 ? '6px 0 0 0' : 0 }}>{paragraph}</p>;
+        })}
+      </div>
       <span className="inm-card-date">
         {new Date(notif.createdAt).toLocaleString('en-GB', {
           day: '2-digit', month: 'short', year: 'numeric',
