@@ -277,14 +277,28 @@ function Applications() {
       category: "Initial Certification",
       branchId: defaultBranch ? defaultBranch._id : "",
       primaryContact: {
-        name: defaultBranch?.contactPerson?.name || user?.fullName || user?.companyName || prev.primaryContact?.name || "",
+        name: defaultBranch?.contactName || defaultBranch?.contactPerson?.name || user?.fullName || user?.companyName || prev.primaryContact?.name || "",
         email: defaultBranch?.contactPerson?.email || user?.email || prev.primaryContact?.email || "",
-        positionTitle: defaultBranch?.contactPerson?.designation || user?.positionTitle || prev.primaryContact?.positionTitle || "",
-        telephoneNo: defaultBranch?.contactPerson?.phone || user?.phone || prev.primaryContact?.telephoneNo || ""
+        positionTitle: defaultBranch?.positionTitle || defaultBranch?.contactPerson?.designation || user?.positionTitle || prev.primaryContact?.positionTitle || "",
+        telephoneNo: defaultBranch?.contactNumber || defaultBranch?.contactPerson?.phone || user?.companyContact || user?.contact || user?.phone || prev.primaryContact?.telephoneNo || ""
       },
+      manufacturingFacility: defaultBranch ? {
+        companyName: defaultBranch.branchName || "",
+        address: defaultBranch.address || "",
+        localGovtArea: defaultBranch.lga || "",
+        city: defaultBranch.city || "",
+        state: defaultBranch.state || "",
+        country: defaultBranch.country || "",
+        plantContact: defaultBranch.contactName || "",
+        positionTitle: defaultBranch.positionTitle || "",
+        telephoneNo: defaultBranch.contactNumber || "",
+        emailAddress: user?.email || "",
+        webAddress: defaultBranch.webAddress || "",
+        governmentPlantCode: defaultBranch.governmentPlantCode || ""
+      } : prev.manufacturingFacility,
       plantDetails: defaultBranch ? {
-        plantLocation: `${defaultBranch.address?.street || ""}, ${defaultBranch.address?.city || ""}, ${defaultBranch.address?.state || ""}`,
-        headOfficeLocation: `${defaultBranch.address?.street || ""}, ${defaultBranch.address?.city || ""}, ${defaultBranch.address?.state || ""}`,
+        plantLocation: `${defaultBranch.address || ""}, ${defaultBranch.city || ""}, ${defaultBranch.state || ""}`,
+        headOfficeLocation: `${defaultBranch.address || ""}, ${defaultBranch.city || ""}, ${defaultBranch.state || ""}`,
         governmentPlantCode: defaultBranch.governmentPlantCode || ""
       } : prev.plantDetails
     }));
