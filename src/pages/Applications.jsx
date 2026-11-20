@@ -1029,8 +1029,8 @@ function Applications() {
     const { name, files } = e.target;
     if (files && files.length > 0) {
       const file = files[0];
-      if (file.size > 5 * 1024 * 1024) {
-        toast.error(`File "${file.name}" exceeds the 5MB size limit.`);
+      if (file.size > 20 * 1024 * 1024) {
+        toast.error(`File "${file.name}" exceeds the 20MB size limit.`);
         e.target.value = "";
         return;
       }

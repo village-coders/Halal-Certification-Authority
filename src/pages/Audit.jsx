@@ -988,8 +988,8 @@ const Audit = () => {
                                                             const selectedFile = e.target.files[0];
                                                             if (!selectedFile) return;
                                                             
-                                                            if (selectedFile.size > 5 * 1024 * 1024) {
-                                                                toast.error(`File "${selectedFile.name}" exceeds the 5MB size limit.`);
+                                                            if (selectedFile.size > 20 * 1024 * 1024) {
+                                                                toast.error(`File "${selectedFile.name}" exceeds the 20MB size limit.`);
                                                                 e.target.value = "";
                                                                 return;
                                                             }

@@ -218,9 +218,9 @@ function Message() {
   const handleFileUpload = (e) => {
     const files = Array.from(e.target.files);
     const validFiles = files.filter(file => {
-      // Limit file size to 10MB
-      if (file.size > 10 * 1024 * 1024) {
-        toast.error(`${file.name} exceeds 10MB limit`);
+      // Limit file size to 20MB
+      if (file.size > 20 * 1024 * 1024) {
+        toast.error(`${file.name} exceeds 20MB limit`);
         return false;
       }
       return true;
@@ -616,7 +616,7 @@ function Message() {
               <div className="modal-input-footer">
                 <p className="file-hint">
                   <i className="fas fa-info-circle"></i>
-                  Maximum file size: 10MB • Supported: Images, PDF, Documents
+                  Maximum file size: 20MB • Supported: Images, PDF, Documents
                 </p>
               </div>
             </form>

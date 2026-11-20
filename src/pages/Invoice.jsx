@@ -175,8 +175,8 @@ const Invoice = () => {
   // --- Event Handlers ---
   const handleFileChange = (e) => {
     const file = e.target.files[0];
-    if (file && file.size > 5 * 1024 * 1024) { // 5MB Limit
-      toast.error("File is too large. Max limit is 5MB.");
+    if (file && file.size > 20 * 1024 * 1024) { // 20MB Limit
+      toast.error("File is too large. Max limit is 20MB.");
       return;
     }
     setUploadFile(file);
@@ -713,7 +713,7 @@ const Invoice = () => {
                   <label htmlFor="receipt-upload" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '40px', border: '2px dashed #d1d5db', borderRadius: '8px', cursor: 'pointer', background: '#f9fafb', transition: 'all 0.2s' }}>
                     <i className="fas fa-cloud-upload-alt" style={{ fontSize: '48px', color: 'var(--primary-color)', marginBottom: '16px' }}></i>
                     <span style={{ color: '#111827', fontSize: '16px', fontWeight: 500, marginBottom: '8px' }}>{uploadFile ? uploadFile.name : "Click to select file"}</span>
-                    <span style={{ color: '#6b7280', fontSize: '14px' }}>PDF, JPG, PNG (Max 5MB)</span>
+                    <span style={{ color: '#6b7280', fontSize: '14px' }}>PDF, JPG, PNG (Max 20MB)</span>
                   </label>
                 </div>
                 

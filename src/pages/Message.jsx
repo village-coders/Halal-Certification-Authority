@@ -211,7 +211,7 @@ function Message() {
   const handleFileChange = (e) => {
     const files = Array.from(e.target.files);
     const valid = files.filter(f => {
-      if (f.size > 10 * 1024 * 1024) { toast.error(`${f.name} exceeds 10MB`); return false; }
+      if (f.size > 20 * 1024 * 1024) { toast.error(`${f.name} exceeds 20MB`); return false; }
       return true;
     });
     setAttachments(prev => [...prev, ...valid]);
@@ -673,7 +673,7 @@ function Message() {
                       onClick={() => fileInputRef.current.click()}
                       style={{ border: "2px dashed #e2e8f0", borderRadius: "10px", padding: "20px", textAlign: "center", cursor: "pointer", color: "#94a3b8", fontSize: "13px" }}>
                       <FaPaperclip style={{ marginBottom: "6px", fontSize: "20px" }} />
-                      <p style={{ margin: 0 }}>Click to attach files (max 10MB each)</p>
+                      <p style={{ margin: 0 }}>Click to attach files (max 20MB each)</p>
                       <input ref={fileInputRef} type="file" multiple style={{ display: "none" }} onChange={handleFileChange} />
                     </div>
                     {attachments.length > 0 && (

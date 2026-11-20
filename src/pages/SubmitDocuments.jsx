@@ -51,8 +51,8 @@ function SubmitDocuments() {
   const handleFileChange = (e) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
-      if (file.size > 5 * 1024 * 1024) {
-        toast.error(`File "${file.name}" exceeds the 5MB size limit.`);
+      if (file.size > 20 * 1024 * 1024) {
+        toast.error(`File "${file.name}" exceeds the 20MB size limit.`);
         e.target.value = "";
         return;
       }
