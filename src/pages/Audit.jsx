@@ -367,14 +367,14 @@ const Audit = () => {
                                                                          label: 'View NC Report', 
                                                                          icon: <FileText size={16} />, 
                                                                          onClick: () => window.open(getFileUrl(audit.ncReport), '_blank')
-                                                                     },
-                                                                     ...((audit.status === 'NC Flagged' || audit.status === 'Correction Needed') ? [{
-                                                                         label: audit.ncRejectReason ? '⚠ Re-upload Corrections (Rejected)' : hasSubmittedNcCorrection(audit) ? 'Re-upload NC Correction' : 'Upload NC Correction',
-                                                                         icon: <Upload size={16} />,
-                                                                         style: audit.ncRejectReason ? { color: '#dc2626', fontWeight: 700 } : {},
-                                                                         onClick: () => { setSelectedAudit(audit); setNcCorrectionFiles([null]); setShowNcCorrectionModal(true); }
-                                                                     }] : [])
+                                                                     }
                                                                  ] : []),
+                                                                 ...((audit.status === 'NC Flagged' || audit.status === 'Correction Needed') ? [{
+                                                                     label: audit.ncRejectReason ? '⚠ Re-upload Corrections (Rejected)' : hasSubmittedNcCorrection(audit) ? 'Re-upload NC Correction' : 'Upload NC Correction',
+                                                                     icon: <Upload size={16} />,
+                                                                     style: audit.ncRejectReason ? { color: '#dc2626', fontWeight: 700 } : {},
+                                                                     onClick: () => { setSelectedAudit(audit); setNcCorrectionFiles([null]); setShowNcCorrectionModal(true); }
+                                                                 }] : []),
                                                                  ...(hasSubmittedNcCorrection(audit) ? [
                                                                      {
                                                                          label: 'View Submitted Correction',
